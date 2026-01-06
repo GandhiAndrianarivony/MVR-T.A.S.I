@@ -1,0 +1,112 @@
+\documentclass[12pt, a4paper, oneside]{extbook}
+\usepackage[T1]{fontenc}
+\usepackage[provide=*,french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[top=2cm,right=3cm,left=2cm]{geometry}
+\usepackage{soul}
+
+\usepackage{amsmath, amssymb, amsthm, mathrsfs}
+\usepackage{xcolor}
+\usepackage{import}
+\usepackage{bbm}
+\usepackage{comment}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{cleveref}
+
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{matlab-prettifier}
+\usepackage{float}
+\usepackage{minted}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+
+
+
+% Show Prop, Lemma and other label near them
+% \usepackage{showkeys}
+
+\numberwithin{equation}{chapter}
+
+% \setcounter{chapter}{-1}
+
+% ================================================================
+\theoremstyle{definition}
+\newtheorem{definition}{Définition}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{lemme}{Lemme}[section]
+\newtheorem{corollaire}[proposition]{Corollaire}
+\newtheorem{property}[proposition]{Propriété}
+% ================================================================
+
+% =================================================================
+\title{\Huge Reconstruction d'images issues d'IRM/CI}
+\author{
+    Réalisé par \\\Large Frederic Andrianarivony\vspace{2cm}\\
+    Option: \\ M2VR T.A.S.I
+}
+\date{\today} % You can also specify a date manually or leave it blank
+% =================================================================
+
+% =================================================================
+\begingroup
+    \makeatletter
+    \g@addto@macro\th@definition{\normalfont}
+    \makeatother
+\endgroup
+% =================================================================
+
+\let\cleardoublepage\clearpage
+\setminted{frame=lines, framesep=2mm, fontsize=\scriptsize, linenos}
+
+% ================================================================
+% PAGE NUMBERING STYLE
+\pagestyle{fancy}
+\fancyhf{} % Clear all header and footer fields
+\fancyfoot[C]{\thepage} % Page number in the center of the footer
+\renewcommand{\headrulewidth}{0pt} % Remove header rule
+\renewcommand{\footrulewidth}{0pt} % Remove footer rule if you want
+\fancyhead{} % Clear all header content
+% ================================================================
+
+
+
+\begin{document}
+    \maketitle
+
+    \pagenumbering{roman}
+    \setcounter{page}{1}
+    \tableofcontents
+
+    \newpage
+    \pagenumbering{arabic}
+    \setcounter{page}{1}
+
+    % ================================================================
+    % ADD CHAPTERS HERE
+    \input{chapters/1. Introduction générale.tex}
+    \input{chapters/Méthodes de traitement et d'amélioration des images.tex}
+    \input{chapters/2. Méthodes analytiques directes de reconstruction d'images.tex}
+    \input{chapters/3. Méthodes variationnelles, parcimonieuses et Compressive Sensing.tex}
+    \input{chapters/4. Inverse Problem-based Image Reconstruction using Neural Regularizers.tex}
+    % ================================================================
+
+    % ================================================================
+    % ADD BIBILIOGRAPHY HERE
+    \bibliographystyle{unsrt}
+    \begin{thebibliography}{100} % 100 is a random guess of the total number of references
+        \bibitem{1} Wei Zou, Jiajun Wang, David Dagan Feng, \emph{Image reconstruction of fluorescent molecular
+            tomography based on the tree structured Schur complement decomposition}
+        \bibitem{2}RANDRIANARISON N.Tsirilala, RANDRIAMITANTSOA P. Auguste, RAMAFIARISON H. Malalatiana, \emph{Performance of K-SVD algorithm in digital Optical Coherence Tomography}
+        \bibitem{3} Linwei Fan, Fan Zhang, Hui Fan, and Caiming Zhang, \emph{Brief review of image denoising techniques}
+        \bibitem{4} Michael S. Hansen, and Peter Kellman, \emph{Image reconstruction: an overview from clinicians}
+        \bibitem{5} Joshua Trzasko*, Member, IEEE, and Armando Manduca, Member, IEEE, \emph{Highly Undersampled Magnetic Resonance Image Reconstruction via Homotopic `0-Minimization}
+        \bibitem{6} Helmholtz Imaging, Deutsches Elektronen-Synchrotron DESY, Notkestr. 85, 22607 Hamburg, Germany, \emph{ntroduction to Regularization and Learning Methods for Inverse Problems}
+    \end{thebibliography}
+    % ================================================================
+
+\end{document}

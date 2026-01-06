@@ -1,0 +1,593 @@
+%===========================================================
+% Chapitre 3 — Méthodes variationnelles, parcimonieuses et Compressive Sensing
+%===========================================================
+\chapter{Reconstruction d'images : problèmes inverses et compressive sensing}
+
+\section{Cadre des problèmes inverses}
+
+Un aspect important des sciences physiques consiste à inférer des paramètres physiques à partir de données. En général, les lois de la physique permettent de calculer les valeurs des données étant donné un modèle. C'est ce qu'on appelle le problème direct.
+
+Le \textbf{problème inverse}, quant à lui, vise à reconstruire le modèle à partir d'un ensemble de mesures. Ce paradigme trouve une application centrale dans le domaine de la \textbf{reconstruction d'image}, où l'on s'efforce de retrouver une image -- représentant par exemple une distribution de densité, une structure anatomique ou une source astrophysique -- à partir de données acquises de manière indirecte, sous-échantillonnée ou bruitée. Que ce soit en tomographie, en imagerie par résonance magnétique (IRM) ou en astronomie, la reconstruction repose sur l'inversion d'un modèle direct qui décrit le processus physique d'acquisition.
+
+Dans le cas idéal, il existe une théorie exacte qui prescrit comment les données doivent être transformées pour reproduire le modèle ou l'image recherchée. Pour certains problèmes bien conditionnés et avec des données complètes, une telle théorie existe, en supposant que des ensembles de données infinis et exempts de bruit seraient disponibles. Toutefois, la plupart des situations pratiques en reconstruction d'image se heurtent à la mal-positude du problème inverse, nécessitant des approches régularisées pour obtenir des solutions stables et physiquement plausibles.
+
+\subsection{Le problème inverse : formulation générale}
+Un problème inverse consiste à estimer une quantité inconnue (ici, une image) à partir d'observations indirectes, bruitées et souvent incomplètes. Formellement, ce processus peut être modélisé par :
+
+\begin{equation}
+    \mathbf{y} = \mathcal{A}\mathbf{x} + \mathbf{n}
+    \label{eq:inverse_problem}
+\end{equation}
+
+où :
+\begin{itemize}
+    \item[-] $\mathbf{x} \in \mathbb{R}^n$ représente l'image à reconstruire (inconnue),
+    \item[-] $\mathbf{y} \in \mathbb{R}^m$ correspond aux données acquises (observations),
+    \item[-] $\mathcal{A} : \mathbb{R}^n \rightarrow \mathbb{R}^m$ est l'opérateur direct modélisant le processus de dégradation (flou, projection, sous-échantillonnage, etc.),
+    \item[-] $\mathbf{n} \in \mathbb{R}^m$ désigne le bruit de mesure additif.
+\end{itemize}
+
+L'opérateur $\mathcal{A}$ est typiquement \textit{mal conditionné} voire non inversible ($m < n$ dans le cas sous-déterminé), rendant la reconstruction de $\mathbf{x}$ à partir de $\mathbf{y}$ intrinsèquement difficile.
+
+\subsection{Quelques exemples de problèmes inverse}
+\subsubsection*{Déconvolution}
+Dans la déconvolution \cite{6}, on suppose que la mesure est une version convoluée de l'image réelle. L'opérateur est donc défini comme la convolution \( A : u \mapsto g \ast u \) avec un filtre \( g \). Dans le cas le plus simple, le filtre de convolution \( g \) est supposé connu. Un des exemples les plus connus est celui du débruitage, où le filtre utilisé est souvent le filtre gaussien, voir \Cref{fig:inverse_examples}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/deconvolution.png}
+    \caption{Dans le débruitage, l'objectif est de retrouver une image nette à partir d'une image floue, celle-ci étant obtenue par convolution avec un filtre gaussien.}
+    \label{fig:inverse_examples}
+\end{figure}
+\subsubsection*{Computed Tomography (CT)}
+Les examens par tomodensitométrie (CT) sont une méthode courante pour obtenir des images internes du corps humain. En gros, des rayons \(\mathbf{X}\) sont envoyés à travers le corps selon différentes directions. Pendant leur traversée, les rayons \(\mathbf{X}\) sont atténués en fonction de la densité des matériaux qu'ils rencontrent. Cette diminution d'intensité est ensuite mesurée sur le côté opposé du corps. L'ensemble de toutes ces mesures est appelé un \textit{sinogramme}.
+L'opérateur linéaire utilisé pour décrire le processus de scan est appelé la \textit{transformée de Radon} \(\mathcal{R}\), étudiée par Johann Radon bien avant son utilisation pratique.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/computed_tomography.png}
+    \caption{\textbf{Exemple de tomodensitométrie (CT) avec le modèle de Shepp-Logan.} La colonne de gauche montre la rotation de la source de rayonnement, la colonne du milieu les mesures du détecteur pour un angle spécifique, et la colonne de droite l'évolution du sinogramme.}
+    \label{fig:computed_tomography}
+\end{figure}
+
+\subsection{Mal-positude au sens de Hadamard}
+Lors de la résolution de problèmes inverses, nous devons faire face à certaines difficultés :
+\begin{itemize}
+    \item \textbf{Le premier problème} survient s'il n'existe aucune solution au problème inverse. Cela peut se produire si la mesure est bruitée et que \(\mathbf{y}\) n'appartient pas à la plage de données supposée. Le problème de non-existence peut souvent être surmonté par une modélisation appropriée.
+
+    \item \textbf{Le deuxième problème} survient si la solution du problème inverse n'est pas \textbf{unique}, c'est-à-dire s'il existe plusieurs entrées \(\mathbf{x}\) qui génèrent la même mesure \(\mathbf{y}\).
+
+    \item \textbf{Le troisième problème, et le plus difficile}, survient si la résolution du problème inverse n'est pas \textbf{stable}, c'est-à-dire si le comportement de la solution ne varie pas continûment par rapport à la mesure \(\mathbf{y}\). Si le problème est instable, même de petites perturbations du bruit \(\varepsilon\) dans la mesure peuvent entraîner des artefacts importants dans la solution.
+\end{itemize}
+
+\begin{definition}
+    Un problème est dit \textbf{bien posé} au sens de Hadamard s'il vérifie simultanément trois conditions :
+    \begin{enumerate}
+        \item \textbf{Existence :} Il existe au moins un $\mathbf{x} \in \mathbb{R}^n$ tel que $\mathcal{A} \mathbf{x} = \mathbf{y}$.
+        
+        \item \textbf{Unicité :} Cette solution est unique ; c'est-à-dire que si $\mathbf{z} \in \mathbb{R}^n$ vérifie $\mathcal{A} \mathbf{z} = \mathbf{y}$, alors nécessairement $\mathbf{z} = \mathbf{x}$.
+        
+        \item \textbf{Stabilité :} La solution dépend continûment des données $\mathbf{y}$. Plus précisément, pour toute suite $\{\mathbf{x}_n\}_{n\in\mathbb{N}} \subset \mathbb{R}^n$ telle que $\mathcal{A} \mathbf{x}_n \to \mathbf{y}$ (convergence dans $\mathbb{R}^m$), on a également $\mathbf{x}_n \to \mathbf{x}$ (convergence dans $\mathbb{R}^n$).
+    \end{enumerate}
+    Si l'une de ces trois conditions n'est pas vérifiée, le problème \eqref{eq:inverse_problem} est dit \emph{mal posé} au sens de Hadamard.\vspace{5pt}
+\end{definition}
+
+La majorité des problèmes inverses en imagerie violent au moins une de ces conditions, les rendant \textbf{mal posés}. La mal-positude se manifeste notamment par une grande sensibilité au bruit : de infimes variations des données $\mathbf{y}$ peuvent provoquer des changements arbitrairement grands dans la solution estimée.\vspace{5pt}
+
+En pratique, les observations $\mathbf{y}$ sont corrompues par différents types de bruit (photonique, électronique, quantique, etc.) et sont souvent acquises de manière incomplète ($m \ll n$) pour des raisons techniques ou temporelles. Cette sous-détermination aggrave la mal-positude et rend le problème \textit{indéterminé} (multiples solutions possibles).\vspace{5pt}
+
+La résolution d'un problème inverse mal posé nécessite l'injection d'\textit{information a priori} sur la solution recherchée. Ces contraintes peuvent être de différentes natures :
+\begin{itemize}
+    \item[-] Contraintes physiques (positivité, support limité, etc.)
+    \item[-] Propriétés statistiques (distribution du bruit, régularité spatiale)
+    \item[-] Structures spécifiques (parcimonie dans une base appropriée, bas rang, etc.)
+\end{itemize}
+L'intégration judicieuse de ces informations constitue le cœur des méthodes modernes de reconstruction.
+
+% ================================
+\section{Approches variationnelles} 
+% ================================
+Lors de la résolution de problèmes inverses, l'objectif est de retrouver une quantité inconnue \(\mathbf{x}\) à partir de données mesurées \(\mathbf{y}\). Comme les exemples précédents l'ont montré, cette tâche peut s'avérer difficile. Même si l'opérateur \(\mathcal{A}\) admet un inverse bien défini sur son image, c'est-à-dire que \(\mathcal{A}^{-1}: \mathbb{R}^m \rightarrow \mathbb{R}^n\) existe, rien ne garantit que les données bruitées appartiennent encore à l'image de l'opérateur. On peut également n'avoir accès qu'à des mesures partielles, ce qui mène à des systèmes sous-déterminés et rend l'inversion directe impossible, même sur des données non bruitées.\vspace{5pt}\\
+\textbf{Régularisation.} Une approche pour obtenir des solutions significatives dans les scénarios décrits est appelée \textit{régularisation}. Une régularisation \(\mathfrak{R}_{\alpha}:\mathbb{R}^m \rightarrow \mathbb{R}^n\) associe à tout point de données une solution favorable. Intuitivement, on espère que la régularisation étend approximativement la notion d'inverse au cadre bruité et potentiellement mal posé, c'est-à-dire
+\begin{equation}
+    \mathfrak{R}_{\alpha}(\mathcal{A}\mathbf{x}+\varepsilon)\approx \mathbf{x}.
+\end{equation}
+Une stratégie typique est la régularisation dite \textit{de type Tikhonov} ou \textit{variationnelle}, où la sortie de l'application de régularisation est définie comme la solution du problème suivant
+
+\begin{equation}
+    \underset{\mathbf{x}\in\mathbb{R}^n}{\arg\min}
+    \underbrace{\left\|{\mathcal{A}\mathbf{x}-\mathbf{y}} \right\|_{L^{2}}^{2}}_{\text{fidélité aux données}}+\alpha\underbrace{{\mathcal{R}}(\mathbf{x}) }_{\text{régularisant}}.
+\end{equation}
+
+
+Les termes s'interprètent comme suit :
+
+\begin{itemize}
+    \item \textbf{Fidélité aux données :} Ce terme indique à quel point notre estimation \(\mathbf{x}\) correspond aux données observées \(\mathbf{y}\). Bien que nous souhaitions minimiser la fidélité aux données, il n'est pas toujours pertinent de l'annuler dans le cas bruité, car nous cherchons \(\hat{\mathbf{x}}\) tel que \({\mathcal{A}}\hat{\mathbf{x}}=\mathbf{y}-\varepsilon\), où potentiellement \({\mathcal{A}}\hat{\mathbf{x}}\neq \mathbf{y}\).
+
+    \item \textbf{Régularisant :} Le régularisant nous permet d'incorporer des informations supplémentaires sur la solution recherchée. Dans le cas classique, nous savons déjà que \(\mathbf{x}\) doit être proche d'un certain point \(\mu\), c'est-à-dire que nous voulons pénaliser la distance entre la solution \(\mathbf{x}\) et \(\mu\). De plus, on souhaite souvent pénaliser certaines directions plus que d'autres, pour lesquelles nous considérons un opérateur unitaire \(\mathcal{Q}:\mathbb{R}^{n}\to\mathbb{R}^{n}\) et choisissons ensuite
+        \[{\mathcal{R}}(\mathbf{x})=\|\mathbf{x}-\mu\|_{L^{2},\mathcal{Q}}^{2}:=\langle \mathbf{x}-\mu,\mathcal{Q}(\mathbf{x}-\mu)\rangle\,,\] 
+        ce qui est appelé \textit{régularisation de Tikhonov}\footnote{parfois appelée « régularisation aux moindres carrés »}.
+
+    \item \textbf{Paramètre de régularisation \(\alpha\) :} Le paramètre \(\alpha>0\) contrôle la force du régularisant. Dans certaines formulations, ce paramètre est inclus dans la définition du régularisant.
+\end{itemize}
+
+Le terme de régularisation $\mathcal{R}(\mathbf{x})$ joue un rôle central dans la qualité de reconstruction obtenue. Il encode des hypothèses structurelles sur l'image recherchée et conditionne à la fois l'aspect visuel de la solution et la complexité numérique de l'algorithme utilisé.\newpage
+% \subsubsection{Régularisation quadratique (Tikhonov)}
+
+% La régularisation la plus classique est celle de Tikhonov :
+% \begin{equation}
+%     \mathcal{R}_{\text{Tik}}(\mathbf{x}) = \|\mathbf{\Gamma x}\|_2^2,
+% \end{equation}
+% où $\mathbf{\Gamma}$ est typiquement l'identité, le gradient ou le laplacien discret. Cette régularisation favorise des solutions lisses mais tend à lisser excessivement les contours.
+
+% \subsubsection{Régularisation par variation totale}
+
+% La régularisation par variation totale (TV) s'écrit :
+% \begin{equation}
+%     \mathcal{R}_{\text{TV}}(\mathbf{x}) = \|\nabla \mathbf{x}\|_1,
+% \end{equation}
+% et favorise des images à régions quasi constantes séparées par des discontinuités nettes. Elle permet de mieux préserver les bords mais peut induire des effets d'escalier.
+
+% \subsubsection{Régularisation parcimonieuse}
+
+% Dans les approches parcimonieuses, on suppose que l'image possède une représentation clairsemée dans une base ou un dictionnaire :
+% \begin{equation}
+%     \mathcal{R}_{\text{sparse}}(\mathbf{x}) = \|\mathbf{\Psi x}\|_1,
+% \end{equation}
+% où $\mathbf{\Psi}$ peut représenter une transformée en ondelettes, DCT ou un dictionnaire appris. Cette régularisation est étroitement liée à la théorie du \emph{Compressed Sensing}.
+
+% \subsubsection{Critères de choix}
+
+Le choix du régularisateur dépend :
+\begin{itemize}
+    \item[-] du type d'images traitées,
+    \item[-] de la nature du bruit,
+    \item[-] de la structure de l'opérateur $\mathbf{A}$,
+    \item[-] des contraintes de temps de calcul.
+\end{itemize}
+Des régularisations hybrides, combinant par exemple variation totale et parcimonie, sont fréquemment utilisées pour améliorer la qualité de reconstruction.
+
+%===========================================================
+\section{Régularisation classique}
+%===========================================================
+La régularisation classique désigne l'ensemble des méthodes visant à stabiliser la résolution des problèmes inverses en introduisant des contraintes supplémentaires sur la solution. Ces contraintes imposent des propriétés de l'image reconstruite telles que la régularité, la parcimonie des gradients ou la similarité avec des voisins. Les principales familles comprennent la régularisation quadratique de Tikhonov, la variation totale, les approches non locales et les méthodes multi-échelles.
+
+% -------------------------------
+\subsection{Régularisation de Tikhonov ($L^2$)}
+% -------------------------------
+
+La régularisation de Tikhonov constitue l'une des approches les plus anciennes et les plus étudiées. Elle consiste à minimiser une fonctionnelle de la forme :
+\begin{equation}
+    \hat{\mathbf{x}} = \arg\min_{\mathbf{x}} 
+    \left\{
+    \frac{1}{2}\|\mathbf{A}\mathbf{x} - \mathbf{y}\|_2^2 
+    + \alpha \|\mathbf{\Gamma x}\|_2^2
+    \right\},
+\end{equation}
+où $\mathbf{\Gamma}$ est un opérateur linéaire (identité, gradient, laplacien).  
+
+Cette approche présente plusieurs caractéristiques importantes :
+\begin{itemize}
+    \item le problème est convexe et admet une solution unique,
+    \item la solution peut souvent être obtenue analytiquement,
+    \item elle pénalise fortement les grandes variations locales.
+\end{itemize}
+
+Cependant, la régularisation quadratique a tendance à produire des images trop lissées et à effacer les discontinuités importantes telles que les contours.
+
+% -------------------------------
+\subsection{Variation Totale (TV)}
+% -------------------------------
+
+Afin de pallier les limitations de la régularisation quadratique, la régularisation par variation totale a été introduite pour préserver les discontinuités. Dans sa forme isotrope, elle est définie par :
+\begin{equation}
+    \mathcal{R}_{\text{TV}}(\mathbf{x}) 
+    = \sum_{i,j} \sqrt{(\nabla_x x_{i,j})^2 + (\nabla_y x_{i,j})^2}
+    = \|\nabla \mathbf{x}\|_1.
+\end{equation}
+
+L'emploi de la norme $L^1$ du gradient conduit à :
+\begin{itemize}
+    \item la préservation des bords nets,
+    \item la suppression efficace du bruit,
+    \item la production d'images par morceaux quasi-constants.
+\end{itemize}
+
+La minimisation associée est cependant non lisse et nécessite des méthodes itératives de type primal-dual, ADMM ou Split-Bregman. Un inconvénient notable est l'apparition du phénomène dit de \emph{staircasing}, caractérisé par des paliers artificiels.
+
+% -------------------------------
+\subsection{Méthodes non locales}
+% -------------------------------
+
+Les méthodes non locales exploitent la redondance statistique présente dans l'image en considérant des similarités entre pixels spatialement éloignés. Plutôt que de ne considérer que le voisinage local, elles s'appuient sur une mesure de similarité entre patchs.
+
+Une formulation typique repose sur la pénalisation :
+\begin{equation}
+    \mathcal{R}_{\text{NL}}(\mathbf{x}) =
+    \sum_{i,j} w_{ij} \, (x_i - x_j)^2,
+\end{equation}
+où $w_{ij}$ représente un poids mesurant la similarité entre les régions autour des pixels $i$ et $j$.
+
+Ces approches permettent :
+\begin{itemize}
+    \item meilleure préservation des textures,
+    \item réduction du bruit sans sur-lissage,
+    \item exploitation de structures répétitives.
+\end{itemize}
+
+Elles sont à la base des méthodes telles que \textit{Non-Local Means} et des approches basées patchs pour la débruitage et la défloutage.
+
+% -------------------------------
+\subsection{Approches multi-échelles (ondelettes, curvelets)}
+% -------------------------------
+
+Les approches multi-échelles s'appuient sur le fait que les images naturelles présentent des structures à plusieurs résolutions. Les représentations dans des bases telles que les ondelettes, les curvelets ou les contourlets permettent de capturer efficacement :
+
+\begin{itemize}
+    \item les singularités orientées,
+    \item les contours,
+    \item les textures fines.
+\end{itemize}
+
+La régularisation consiste alors à imposer la parcimonie des coefficients transformés :
+\begin{equation}
+    \mathcal{R}_{\text{MS}}(\mathbf{x}) = \|\mathbf{\Psi x}\|_1,
+\end{equation}
+où $\mathbf{\Psi}$ désigne une transformée multi-résolution.
+
+Les ondelettes sont particulièrement adaptées aux singularités ponctuelles, tandis que les curvelets et shearlets offrent une meilleure représentation des structures anisotropes et courbes. Ces méthodes constituent un lien direct avec le \textit{Compressed Sensing} et les modèles parcimonieux modernes.
+
+
+%===========================================================
+\section{Modèles parcimonieux}
+%===========================================================
+
+Les modèles parcimonieux reposent sur l’hypothèse qu’une image ou un signal peut être représenté par un nombre réduit de coefficients significatifs dans une base appropriée ou un dictionnaire sur-complet. Cette propriété est à la base de nombreuses techniques modernes de reconstruction d’images, de compression et de \textit{Compressed Sensing}. L’objectif est de promouvoir des représentations compactes permettant de régulariser les problèmes inverses mal posés.
+
+% -------------------------------
+\subsection{Bases orthogonales vs dictionnaires}
+% -------------------------------
+
+Une représentation parcimonieuse peut être obtenue soit dans une \textbf{base orthogonale}, soit dans un \textbf{dictionnaire sur-complet}.
+
+\paragraph{Bases orthogonales}
+
+Une base orthogonale $\{\mathbf{\phi}_k\}_{k=1}^{N}$ de $\mathbb{R}^n$ permet d’écrire :
+\begin{equation}
+    \mathbf{x} = \sum_{k=1}^{N} \alpha_k \mathbf{\phi}_k,
+\end{equation}
+où les coefficients $\alpha_k$ sont uniques. Exemples courants :
+\begin{itemize}
+    \item ondelettes orthogonales,
+    \item base de Fourier,
+    \item transformée discrète du cosinus (DCT).
+\end{itemize}
+
+Les bases orthogonales ont l’avantage de garantir l’unicité des coefficients et de permettre des calculs rapides via des transformées rapides (FFT, DWT, DCT).
+
+\paragraph{Dictionnaires sur-complets}
+
+Un dictionnaire $\mathbf{D} \in \mathbb{R}^{N \times K}$ avec $K > n$ est dit sur-complet. Dans ce cas, un signal peut avoir plusieurs décompositions possibles :
+\begin{equation}
+    \mathbf{x} = \mathbf{D}\mathbf{\alpha},
+\end{equation}
+où $\mathbf{\alpha} \in \mathbb{R}^{K}$ est un vecteur de coefficients.
+
+Les dictionnaires sur-complets offrent :
+\begin{itemize}
+    \item une meilleure capacité d’adaptation aux structures complexes,
+    \item des représentations plus parcimonieuses,
+    \item la possibilité d’apprentissage à partir des données.
+\end{itemize}
+Cependant, la décomposition n’est plus unique et nécessite la résolution de problèmes d’optimisation.
+
+% -------------------------------
+\subsection{Modèles sparse : $L^0$ et $L^1$}
+% -------------------------------
+
+La parcimonie consiste à rechercher une représentation comportant le moins de coefficients non nuls possible. Le problème fondamental est :
+\begin{equation}
+    \min_{\mathbf{\alpha}} \|\mathbf{\alpha}\|_0 
+    \quad \text{sous la contrainte} \quad 
+    \mathbf{x} = \mathbf{D}\mathbf{\alpha},
+\end{equation}
+où $\|\mathbf{\alpha}\|_0$ désigne le nombre de coefficients non nuls. Ce problème est combinatoire et NP-difficile.
+
+Pour rendre la résolution praticable, on remplace la norme $L^0$ par la norme convexe $L^1$ :
+\begin{equation}
+    \min_{\mathbf{\alpha}} \|\mathbf{\alpha}\|_1 
+    \quad \text{sous} \quad 
+    \mathbf{x} = \mathbf{D}\mathbf{\alpha},
+\end{equation}
+ou, en présence de bruit,
+\begin{equation}
+    \min_{\mathbf{\alpha}} 
+    \left\{
+    \frac{1}{2}\|\mathbf{x} - \mathbf{D}\mathbf{\alpha}\|_2^2 + 
+    \alpha \|\mathbf{\alpha}\|_1
+    \right\}.
+\end{equation}
+
+La relaxation $L^1$ constitue la base mathématique des approches de \textit{Basis Pursuit}, \textit{LASSO} et du \textit{Compressed Sensing}.
+
+% -------------------------------
+\subsection{Algorithmes d'approximation parcimonieuse}
+% -------------------------------
+
+Plusieurs classes d’algorithmes permettent de résoudre les problèmes parcimonieux.
+
+\paragraph{Méthodes gloutonnes}
+
+Ces méthodes sélectionnent itérativement les atomes du dictionnaire qui expliquent au mieux le signal résiduel. Parmi elles :
+\begin{itemize}
+    \item Matching Pursuit (MP),
+    \item Orthogonal Matching Pursuit (OMP),
+    \item Stagewise OMP (StOMP).
+\end{itemize}
+
+Elles présentent un faible coût de calcul et sont adaptées aux dictionnaires de grande taille.
+
+\paragraph{Méthodes par seuillage}
+
+Ces méthodes reposent sur le seuillage doux ou dur des coefficients :
+\begin{itemize}
+    \item ISTA (Iterative Shrinkage-Thresholding Algorithm),
+    \item FISTA (version accélérée),
+    \item algorithmes proximal-gradient.
+\end{itemize}
+
+Elles sont particulièrement adaptées à la minimisation de fonctionnelles $L^2$–$L^1$ convexes.
+
+% -------------------------------
+\subsection{K-SVD : apprentissage de dictionnaire}
+% -------------------------------
+
+Le K-SVD est un algorithme d’apprentissage de dictionnaire visant à construire un dictionnaire sur-complet directement à partir d’un ensemble d’images ou de patchs. L’objectif est de résoudre :
+\begin{equation}
+    \min_{\mathbf{D},\mathbf{\alpha}_i}
+    \sum_{i}
+    \left\|
+    \mathbf{x}_i - \mathbf{D}\mathbf{\alpha}_i
+    \right\|_2^2
+    \quad
+    \text{sous la contrainte}
+    \quad
+    \|\mathbf{\alpha}_i\|_0 \leq T_0,
+\end{equation}
+où $\{\mathbf{x}_i\}$ sont les signaux d’apprentissage et $T_0$ fixe le niveau de parcimonie.
+
+L’algorithme alterne :
+\begin{enumerate}
+    \item une étape de \textbf{codage parcimonieux} des coefficients,
+    \item une étape de \textbf{mise à jour du dictionnaire} atome par atome via la décomposition en valeurs singulières (SVD).
+\end{enumerate}
+
+Le K-SVD permet de construire des dictionnaires adaptés aux structures réelles des images, conduisant à d’excellentes performances en :
+\begin{itemize}
+    \item débruitage,
+    \item défloutage,
+    \item inpainting,
+    \item super-résolution.
+\end{itemize}
+
+
+% ============================================================
+\section{Théorie du Compressive Sensing}
+% ============================================================
+
+Le compressed sensing fournit un cadre rigoureux pour la reconstruction de signaux parcimonieux ou compressibles à partir de mesures linéaires fortement sous-échantillonnées. Il offre une solution fondée sur des principes solides aux problèmes inverses sous-déterminés, via des méthodes d'optimisation favorisant la parcimonie ou des algorithmes d'approximation gloutons. Cette approche a un impact majeur en imagerie médicale, imagerie computationnelle, résolution de problèmes inverses et systèmes de communication modernes.
+\begin{definition}
+    Le \emph{compressed sensing} (CS) est un cadre mathématique et algorithmique qui permet la reconstruction de signaux de grande dimension à partir d'un nombre de mesures significativement inférieur à celui requis par les méthodes traditionnelles.
+\end{definition}
+\begin{definition}
+    Soit $x\in \mathbb{R}^{n}$ un signal inconnu. On dit que $x$  est \(k\)-parcimonieux dans une base (ou dictionnaire) \(\Psi\) (ex: Fourier, wavelet, DCT) si
+    \[
+        x=\Psi \alpha, \qquad \text{où } \alpha \text{ possède au plus } k \ll n \text{ coefficients non nuls}.   
+    \]
+\end{definition}
+% Le principe fondamental repose sur la \textbf{parcimonie}. 
+En pratique, de nombreux signaux ne sont pas parcimonieux dans leur domaine original (canonique), mais le deviennent après l'application d'une transformation linéaire. 
+On observe des mesures linéaires de la forme
+\[
+y = A x,
+\]
+où \(A \in \mathbb{R}^{m \times n}\) avec \(m \ll n\). La théorie classique de l'échantillonnage exige \(m = n\) mesures indépendantes pour une reconstruction exacte, tandis que le compressed sensing montre que
+\[
+m \gtrsim k \log(n/k)
+\]
+est suffisant pour une reconstruction exacte ou stable, sous des conditions appropriées sur \(A\), telles que la propriété d'isométrie restreinte (\emph{Restricted Isometry Property}, RIP) ou l'incohérence.\\
+
+Les résultats classiques de l'échantillonnage, tels que le théorème de Nyquist--Shannon, imposent qu'un signal soit échantillonné à une fréquence proportionnelle à sa bande passante. Le compressed sensing remet en cause ce paradigme en observant que de nombreux signaux réels (images, données médicales, spectres) sont parcimonieux ou compressibles dans une base de transformation (par exemple ondelettes, Fourier, DCT). Par conséquent, leur dimension effective est bien plus faible que le nombre d'échantillons disponibles. Le compressed sensing exploite cette redondance pour réduire drastiquement les coûts d'acquisition. Le compressed sensing s'attaque au problème général suivant :
+\begin{center}
+    \vspace*{\fill}
+        Comment reconstruire un signal parcimonieux de grande dimension à partir d'un ensemble sous-déterminé de mesures linéaires ?
+    \vspace*{\fill}
+\end{center}
+Ce cadre permet de résoudre plusieurs limitations pratiques :
+\paragraph{Réduction du nombre de mesures.}\text{}\\ 
+De nombreux systèmes d'acquisition sont limités par le coût, le temps ou l'énergie. Le compressed sensing permet :
+\begin{itemize}
+    \item[-] une acquisition plus rapide des données,
+    \item[-] une réduction de la complexité matérielle,
+    \item[-] une diminution de la dose de radiation (par exemple en tomodensitométrie),
+    \item[-] une réduction des coûts de stockage et de transmission.
+\end{itemize}
+
+\paragraph{Problèmes inverses mal posés (ill-posed inverse problems).}\text{}\\
+Lorsque le nombre de mesures est insuffisant pour garantir une solution unique, le CS introduit une régularisation fondée sur la parcimonie, permettant une reconstruction stable. Les principales applications incluent :
+\begin{itemize}
+    \item[-] la tomographie (CT, IRM, PET),
+    \item[-] l'imagerie à super-résolution,
+    \item[-] la déconvolution,
+    \item[-] les inversions géophysiques et les essais non destructifs.
+\end{itemize}
+
+\paragraph{Robustesse au bruit et aux données incomplètes.} \text{}\\
+Le CS garantit une reconstruction stable même en présence de bruit, de corruptions ou d'observations manquantes.
+
+\subsection{Reconstruction de signaux par Compressed Sensing}
+
+\subsubsection{Reconstruction par optimisation}
+La formulation canonique de la reconstruction est
+\[
+\min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad y = A \Psi \alpha,
+\]
+ou, en présence de bruit,
+\[
+\min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad \|A \Psi \alpha - y\|_{2} \le \epsilon.
+\]
+Cela correspond aux formulations de type \emph{Basis Pursuit} ou \emph{LASSO}. La minimisation de la norme \(\ell_1\) favorise la parcimonie tout en conservant un problème d'optimisation convexe et calculable efficacement.
+
+\subsubsection{Algorithmes gloutons}
+
+Des alternatives plus rapides incluent :
+\begin{itemize}
+    \item l'\emph{Orthogonal Matching Pursuit} (OMP),
+    \item le \emph{Compressive Sampling Matching Pursuit} (CoSaMP),
+    \item l'\emph{Iterative Hard Thresholding} (IHT).
+\end{itemize}
+Ces méthodes échangent une partie de la précision contre un coût computationnel réduit.
+
+\subsection{Applications du Compressed Sensing}
+
+\paragraph{Imagerie médicale.}
+\begin{itemize}
+    \item acquisition IRM accélérée,
+    \item CT à dose réduite,
+    \item échographie à haute cadence d'images.
+\end{itemize}
+
+\paragraph{Imagerie computationnelle.}
+\begin{itemize}
+    \item caméras à pixel unique,
+    \item imagerie à ouverture codée,
+    \item reconstruction hyperspectrale.
+\end{itemize}
+
+\paragraph{Télédétection et géophysique.}
+\begin{itemize}
+    \item inversion sismique parcimonieuse,
+    \item imagerie radar et radar à synthèse d'ouverture (SAR).
+\end{itemize}
+
+\paragraph{Communications sans fil.}
+\begin{itemize}
+    \item estimation parcimonieuse de canaux,
+    \item réduction des pilotes dans les systèmes MIMO massifs.
+\end{itemize}
+
+\paragraph{Apprentissage automatique et traitement du signal.}
+\begin{itemize}
+    \item régression parcimonieuse (LASSO),
+    \item apprentissage de dictionnaires,
+    \item ACP robuste et modèles de rang faible apparentés.
+\end{itemize}
+
+
+% Le compressed sensing (CS) est un cadre mathématique et algorithmique qui permet de reconstruire des signaux de grande dimension à partir d'un nombre de mesures bien inférieur à celui requis par les approches traditionnelles. Il exploite la parcimonie (sparsity) comme principal a priori structurel.
+% \subsection{Hypothèse de parcimonie}
+% Si un signal est parcimonieux ou compressible dans une certaine base, alors il peut être reconstruit exactement (ou avec une erreur contrôlée) à partir d'un nombre de mesures linéaires bien inférieur à sa dimension ambiante.
+% \subsection{Incohérence et propriété de RIP}
+% \subsection{Basis Pursuit et LASSO}
+% \subsection{OMP et algorithmes gloutons}
+
+
+%===========================================================
+\section{Méthodes d'optimisation}
+%===========================================================
+
+Les problèmes inverses régularisés et les modèles parcimonieux conduisent le plus souvent à la minimisation de fonctionnelles non différentiables, voire contraintes. Le choix d'une méthode d'optimisation adaptée conditionne la qualité de la reconstruction, la rapidité de convergence et la robustesse numérique. Les approches modernes reposent notamment sur les méthodes proximales, les schémas de décomposition de type ADMM, ainsi que les méthodes de gradient projeté.
+
+% -------------------------------
+\subsection{Méthodes proximales}
+% -------------------------------
+
+Les méthodes proximales constituent le cadre de référence pour l'optimisation de fonctionnelles comportant des termes non lisses. Soit une fonction convexe propre et semi-continue inférieurement $f : \mathbb{R}^n \rightarrow \mathbb{R}\cup\{+\infty\}$. L'opérateur proximal associé est défini par :
+\begin{equation}
+    \mathrm{prox}_{\alpha f}(\mathbf{x}) =
+    \arg\min_{\mathbf{z}} 
+    \left\{
+        f(\mathbf{z}) + \frac{1}{2\alpha}\|\mathbf{z} - \mathbf{x}\|_2^2
+    \right\}.
+\end{equation}
+
+Cet opérateur permet de traiter naturellement des pénalités non différentiables telles que :
+\begin{itemize}
+    \item la norme $\ell_1$ (seuilage doux),
+    \item la variation totale,
+    \item les contraintes indicatrices de convexes fermés.
+\end{itemize}
+
+Les algorithmes emblématiques incluent :
+\begin{itemize}
+    \item Forward–Backward Splitting,
+    \item FISTA (accéléré de Nesterov),
+    \item Primal–Dual de Chambolle–Pock.
+\end{itemize}
+
+Ils sont particulièrement adaptés aux problèmes de la forme :
+\begin{equation}
+    \min_{\mathbf{x}} \; f(\mathbf{x}) + g(\mathbf{x}),
+\end{equation}
+où $f$ est différentiable à gradient lipschitzien et $g$ est convexe éventuellement non lisse.
+
+% -------------------------------
+\subsection{Méthodes ADMM}
+% -------------------------------
+
+L'Alternating Direction Method of Multipliers (ADMM) est une méthode de décomposition permettant de résoudre des problèmes séparables en introduisant des variables auxiliaires. On considère typiquement le problème :
+\begin{equation}
+    \min_{\mathbf{x},\mathbf{z}} \;
+    f(\mathbf{x}) + g(\mathbf{z})
+    \quad \text{sous la contrainte} \quad
+    \mathbf{Kx} = \mathbf{z}.
+\end{equation}
+
+Le schéma itératif repose sur :
+\begin{enumerate}
+    \item minimisation alternée sur $\mathbf{x}$ et $\mathbf{z}$,
+    \item mise à jour des multiplicateurs de Lagrange.
+\end{enumerate}
+
+Les avantages majeurs d'ADMM sont :
+\begin{itemize}
+    \item traitement naturel des contraintes linéaires,
+    \item parallélisation possible des sous-problèmes,
+    \item robustesse pour les grands problèmes mal conditionnés.
+\end{itemize}
+
+ADMM est aujourd'hui une référence pour la résolution de problèmes de variation totale, de débruitage parcimonieux et d'apprentissage de dictionnaire.
+
+% -------------------------------
+\subsection{Méthodes de gradient projeté}
+% -------------------------------
+
+Les méthodes de gradient projeté visent la résolution de problèmes d'optimisation sous contraintes convexes :
+\begin{equation}
+    \min_{\mathbf{x} \in C} f(\mathbf{x}),
+\end{equation}
+où $C$ est un ensemble convexe fermé. L'itération générique s'écrit :
+\begin{equation}
+    \mathbf{x}^{k+1} =
+    \Pi_{C}\left(
+        \mathbf{x}^k - \alpha_k \nabla f(\mathbf{x}^k)
+    \right),
+\end{equation}
+où $\Pi_{C}$ désigne l’opérateur de projection sur $C$.
+
+Ces méthodes sont notamment utilisées pour :
+\begin{itemize}
+    \item l'imposition de contraintes de positivité,
+    \item la borne supérieure ou inférieure sur des intensités,
+    \item les contraintes de norme sur des coefficients parcimonieux.
+\end{itemize}
+
+Elles constituent des schémas simples, peu coûteux en mémoire, et très utilisés en traitement d’images et en reconstruction tomographique lorsque la fonction coût est différentiable.
+
+\subsection{Unrolling des algorithmes (vers deep learning)}
+
+\section{Synthèse critique}
+\subsection{Avantages et limites}
+\subsection{Cas où le compressive sensing excelle}
+\subsection{Motivation des approches apprises}

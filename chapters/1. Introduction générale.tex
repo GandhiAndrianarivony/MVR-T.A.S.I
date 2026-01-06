@@ -1,0 +1,76 @@
+%===========================================================
+% Chapitre 1 — Introduction générale
+%===========================================================
+
+\chapter{Introduction générale}
+
+\section{Contexte général}
+% Votre contenu existant ici...
+
+\section{Motivations scientifiques et technologiques}
+% Votre contenu existant ici...
+
+
+% ==============================================================================================================================================================
+% \section{Cadres de reconstruction d'images}
+% \subsection{Méthodes directes et régularisation algébrique}
+% Pour les problèmes linéaires ($\mathcal{A}$ représenté par une matrice $\mathbf{A}$), la méthode des moindres carrés conduit naturellement à considérer le \textbf{pseudo-inverse} de Moore-Penrose :
+
+% \begin{equation}
+%     \mathbf{x}_{\text{LS}} = \mathbf{A}^\dagger \mathbf{y} = (\mathbf{A}^T\mathbf{A})^{-1}\mathbf{A}^T\mathbf{y}
+%     \label{eq:pseudo_inverse}
+% \end{equation}
+
+% où $\mathbf{A}^\dagger$ désigne le pseudo-inverse. Cependant, cette approche naïve est généralement inapplicable en pratique à cause de la mal-positude :
+% \begin{itemize}
+%     \item[-] Si $\mathbf{A}^T\mathbf{A}$ est singulière ou mal conditionnée, son inversion amplifie démesurément le bruit.
+%     \item[-] Dans le cas sous-déterminé ($m < n$), la solution des moindres carrés n'est pas unique.
+% \end{itemize}
+
+% La \textbf{régularisation} vise à stabiliser le problème en incorporant un terme de pénalité reflétant des connaissances a priori. La régularisation de Tikhonov, par exemple, résout :
+
+% \begin{equation}
+%     \min_{\mathbf{x}} \left\{ \|\mathbf{A}\mathbf{x} - \mathbf{y}\|_2^2 + \lambda \|\mathbf{\Gamma}\mathbf{x}\|_2^2 \right\}
+%     \label{eq:tikhonov}
+% \end{equation}
+
+% où $\lambda > 0$ est un paramètre de régularisation et $\mathbf{\Gamma}$ un opérateur (souvent la dérivée première, imposant une régularité spatiale). La solution régularisée s'écrit alors :
+
+% \begin{equation}
+%     \mathbf{x}_{\lambda} = (\mathbf{A}^T\mathbf{A} + \lambda \mathbf{\Gamma}^T\mathbf{\Gamma})^{-1} \mathbf{A}^T\mathbf{y}
+%     \label{eq:tikhonov_solution}
+% \end{equation}
+
+% Cette formulation peut être interprétée comme une version \textit{corrigée} du pseudo-inverse, où l'adjonction du terme $\lambda \mathbf{\Gamma}^T\mathbf{\Gamma}$ améliore le conditionnement numérique au prix d'un biais contrôlé.
+
+% \subsection{Méthodes variationnelles et parcimonieuses}
+
+% Les méthodes variationnelles généralisent l'approche de Tikhonov en considérant des fonctionnelles de régularisation plus sophistiquées :
+
+% \begin{equation}
+%     \min_{\mathbf{x}} \left\{ \mathcal{D}(\mathbf{A}\mathbf{x}, \mathbf{y}) + \lambda \mathcal{R}(\mathbf{x}) \right\}
+%     \label{eq:variational}
+% \end{equation}
+
+% où $\mathcal{D}$ est un terme d'attache aux données (pas nécessairement quadratique) et $\mathcal{R}$ une pénalité reflétant des propriétés a priori (parcimonie, variation totale, etc.). Ces méthodes exploitent notamment la \textbf{parcimonie} des signaux d'intérêt dans des bases ou redondances appropriées.
+
+% \subsection{Théorie du Compressive Sensing}
+
+% Le \emph{Compressive Sensing} (CS) révolutionne l'acquisition en démontrant qu'un signal parcimonieux peut être exactement reconstruit à partir d'un nombre très réduit de mesures non adaptatives, pourvu que l'opérateur d'acquisition vérifie certaines propriétés (RIP, incohérence). Le problème de reconstruction en CS s'écrit typiquement :
+
+% \begin{equation}
+%     \min_{\mathbf{x}} \|\mathbf{\Psi}\mathbf{x}\|_1 \quad \text{sous la contrainte} \quad \|\mathbf{A}\mathbf{x} - \mathbf{y}\|_2 \leq \epsilon
+%     \label{eq:cs}
+% \end{equation}
+
+% où $\mathbf{\Psi}$ est une transformée (ondelettes, DCT, etc.) dans laquelle le signal est parcimonieux. Cette approche fournit un cadre théorique solide pour les problèmes fortement sous-déterminés.
+
+% \subsection{Méthodes d'apprentissage profond}
+
+% Les méthodes d'apprentissage profond, et particulièrement les réseaux de neurones, offrent une alternative puissante aux approches variationnelles. Elles apprennent directement, à partir de grandes quantités de données, un opérateur de reconstruction :
+% \begin{equation}
+%     \hat{\mathbf{x}} = f_\theta(\mathbf{y})
+%     \label{eq:deep_learning}
+% \end{equation}
+% où $f_\theta$ est un réseau de neurones paramétré par $\theta$. Ces méthodes peuvent être conçues pour imiter des algorithmes d'optimisation (\emph{unrolling}), apprendre des régularisations implicites, ou générer des reconstructions par inversion directe apprise.
+% ==============================================================================================================================================================

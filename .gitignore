@@ -1,0 +1,7 @@
+draft/
+_minted-image_reconstruction/
+*.aux
+*.log
+*.out
+*.toc
+References/*
