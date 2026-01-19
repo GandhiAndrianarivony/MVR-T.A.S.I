@@ -4,13 +4,6 @@
 \chapter{Reconstruction d'images : problèmes inverses et compressive sensing}
 
 \section{Cadre des problèmes inverses}
-
-Un aspect important des sciences physiques consiste à inférer des paramètres physiques à partir de données. En général, les lois de la physique permettent de calculer les valeurs des données étant donné un modèle. C'est ce qu'on appelle le problème direct.
-
-Le \textbf{problème inverse}, quant à lui, vise à reconstruire le modèle à partir d'un ensemble de mesures. Ce paradigme trouve une application centrale dans le domaine de la \textbf{reconstruction d'image}, où l'on s'efforce de retrouver une image -- représentant par exemple une distribution de densité, une structure anatomique ou une source astrophysique -- à partir de données acquises de manière indirecte, sous-échantillonnée ou bruitée. Que ce soit en tomographie, en imagerie par résonance magnétique (IRM) ou en astronomie, la reconstruction repose sur l'inversion d'un modèle direct qui décrit le processus physique d'acquisition.
-
-Dans le cas idéal, il existe une théorie exacte qui prescrit comment les données doivent être transformées pour reproduire le modèle ou l'image recherchée. Pour certains problèmes bien conditionnés et avec des données complètes, une telle théorie existe, en supposant que des ensembles de données infinis et exempts de bruit seraient disponibles. Toutefois, la plupart des situations pratiques en reconstruction d'image se heurtent à la mal-positude du problème inverse, nécessitant des approches régularisées pour obtenir des solutions stables et physiquement plausibles.
-
 \subsection{Le problème inverse : formulation générale}
 Un problème inverse consiste à estimer une quantité inconnue (ici, une image) à partir d'observations indirectes, bruitées et souvent incomplètes. Formellement, ce processus peut être modélisé par :
 
@@ -29,36 +22,6 @@ où :
 
 L'opérateur $\mathcal{A}$ est typiquement \textit{mal conditionné} voire non inversible ($m < n$ dans le cas sous-déterminé), rendant la reconstruction de $\mathbf{x}$ à partir de $\mathbf{y}$ intrinsèquement difficile.
 
-\subsection{Quelques exemples de problèmes inverse}
-\subsubsection*{Déconvolution}
-Dans la déconvolution \cite{6}, on suppose que la mesure est une version convoluée de l'image réelle. L'opérateur est donc défini comme la convolution \( A : u \mapsto g \ast u \) avec un filtre \( g \). Dans le cas le plus simple, le filtre de convolution \( g \) est supposé connu. Un des exemples les plus connus est celui du débruitage, où le filtre utilisé est souvent le filtre gaussien, voir \Cref{fig:inverse_examples}.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/deconvolution.png}
-    \caption{Dans le débruitage, l'objectif est de retrouver une image nette à partir d'une image floue, celle-ci étant obtenue par convolution avec un filtre gaussien.}
-    \label{fig:inverse_examples}
-\end{figure}
-\subsubsection*{Computed Tomography (CT)}
-Les examens par tomodensitométrie (CT) sont une méthode courante pour obtenir des images internes du corps humain. En gros, des rayons \(\mathbf{X}\) sont envoyés à travers le corps selon différentes directions. Pendant leur traversée, les rayons \(\mathbf{X}\) sont atténués en fonction de la densité des matériaux qu'ils rencontrent. Cette diminution d'intensité est ensuite mesurée sur le côté opposé du corps. L'ensemble de toutes ces mesures est appelé un \textit{sinogramme}.
-L'opérateur linéaire utilisé pour décrire le processus de scan est appelé la \textit{transformée de Radon} \(\mathcal{R}\), étudiée par Johann Radon bien avant son utilisation pratique.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/computed_tomography.png}
-    \caption{\textbf{Exemple de tomodensitométrie (CT) avec le modèle de Shepp-Logan.} La colonne de gauche montre la rotation de la source de rayonnement, la colonne du milieu les mesures du détecteur pour un angle spécifique, et la colonne de droite l'évolution du sinogramme.}
-    \label{fig:computed_tomography}
-\end{figure}
-
-\subsection{Mal-positude au sens de Hadamard}
-Lors de la résolution de problèmes inverses, nous devons faire face à certaines difficultés :
-\begin{itemize}
-    \item \textbf{Le premier problème} survient s'il n'existe aucune solution au problème inverse. Cela peut se produire si la mesure est bruitée et que \(\mathbf{y}\) n'appartient pas à la plage de données supposée. Le problème de non-existence peut souvent être surmonté par une modélisation appropriée.
-
-    \item \textbf{Le deuxième problème} survient si la solution du problème inverse n'est pas \textbf{unique}, c'est-à-dire s'il existe plusieurs entrées \(\mathbf{x}\) qui génèrent la même mesure \(\mathbf{y}\).
-
-    \item \textbf{Le troisième problème, et le plus difficile}, survient si la résolution du problème inverse n'est pas \textbf{stable}, c'est-à-dire si le comportement de la solution ne varie pas continûment par rapport à la mesure \(\mathbf{y}\). Si le problème est instable, même de petites perturbations du bruit \(\varepsilon\) dans la mesure peuvent entraîner des artefacts importants dans la solution.
-\end{itemize}
 
 \begin{definition}
     Un problème est dit \textbf{bien posé} au sens de Hadamard s'il vérifie simultanément trois conditions :
@@ -113,31 +76,6 @@ Les termes s'interprètent comme suit :
 \end{itemize}
 
 Le terme de régularisation $\mathcal{R}(\mathbf{x})$ joue un rôle central dans la qualité de reconstruction obtenue. Il encode des hypothèses structurelles sur l'image recherchée et conditionne à la fois l'aspect visuel de la solution et la complexité numérique de l'algorithme utilisé.\newpage
-% \subsubsection{Régularisation quadratique (Tikhonov)}
-
-% La régularisation la plus classique est celle de Tikhonov :
-% \begin{equation}
-%     \mathcal{R}_{\text{Tik}}(\mathbf{x}) = \|\mathbf{\Gamma x}\|_2^2,
-% \end{equation}
-% où $\mathbf{\Gamma}$ est typiquement l'identité, le gradient ou le laplacien discret. Cette régularisation favorise des solutions lisses mais tend à lisser excessivement les contours.
-
-% \subsubsection{Régularisation par variation totale}
-
-% La régularisation par variation totale (TV) s'écrit :
-% \begin{equation}
-%     \mathcal{R}_{\text{TV}}(\mathbf{x}) = \|\nabla \mathbf{x}\|_1,
-% \end{equation}
-% et favorise des images à régions quasi constantes séparées par des discontinuités nettes. Elle permet de mieux préserver les bords mais peut induire des effets d'escalier.
-
-% \subsubsection{Régularisation parcimonieuse}
-
-% Dans les approches parcimonieuses, on suppose que l'image possède une représentation clairsemée dans une base ou un dictionnaire :
-% \begin{equation}
-%     \mathcal{R}_{\text{sparse}}(\mathbf{x}) = \|\mathbf{\Psi x}\|_1,
-% \end{equation}
-% où $\mathbf{\Psi}$ peut représenter une transformée en ondelettes, DCT ou un dictionnaire appris. Cette régularisation est étroitement liée à la théorie du \emph{Compressed Sensing}.
-
-% \subsubsection{Critères de choix}
 
 Le choix du régularisateur dépend :
 \begin{itemize}
@@ -157,26 +95,49 @@ La régularisation classique désigne l'ensemble des méthodes visant à stabili
 \subsection{Régularisation de Tikhonov ($L^2$)}
 % -------------------------------
 
-La régularisation de Tikhonov constitue l'une des approches les plus anciennes et les plus étudiées. Elle consiste à minimiser une fonctionnelle de la forme :
-\begin{equation}
-    \hat{\mathbf{x}} = \arg\min_{\mathbf{x}} 
-    \left\{
-    \frac{1}{2}\|\mathbf{A}\mathbf{x} - \mathbf{y}\|_2^2 
-    + \alpha \|\mathbf{\Gamma x}\|_2^2
-    \right\},
-\end{equation}
-où $\mathbf{\Gamma}$ est un opérateur linéaire (identité, gradient, laplacien).  
+Une méthode bien connue et efficace est la \textit{régularisation de Tikhonov}. Dans cette approche, une solution du problème \eqref{eq:inverse_problem} est approchée par une solution du problème de minimisation
 
-Cette approche présente plusieurs caractéristiques importantes :
+\begin{equation}
+    \min \|\mathcal{A}\mathbf{x} - \mathbf{y}\|_2^2 + \alpha \|\mathbf{x} - \mathbf{x}^*\|_2^2 \quad 
+    \label{eq:tikhonov_problem}
+\end{equation}
+
+où \(\alpha > 0\) est un petit paramètre, \(\mathbf{y} \in \mathbb{R}^m\) est une approximation du membre de gauche exact \(\mathbf{y}\) du problème \eqref{eq:inverse_problem}, et \(x^*\) est une estimation a priori de la solution inconnue.\\
+% Dans le cas d'un opérateur linéaire \(\mathcal{A}\), les aspects de stabilité, de convergence et de vitesses de convergence (quand \(\delta \to 0\)) ont été largement étudiés [2]. 
+% Le rôle de la régularisation de Tikhonov pour stabiliser les problèmes d'estimation de paramètres a été examiné dans [3].
+% Dans cette étude, nous montrons qu'une solution de l'équation
+% \begin{equation}
+%     (\mathcal{A}^*\mathcal{A} + \alpha \mathbf{I})x(\alpha) = \mathcal{A}^*\mathbf{y}
+%     \label{eq:tikhonov_solution}
+% \end{equation}
+% existe et est unique, et que \(\mathcal{R}_{xy}\) défini par \(x(\alpha)\) est un régularisateur de l'équation \eqref{eq:inverse_problem} sur \(\mathbb{R}^n\), à condition que l'équation \(Ax = 0\) n'ait que la solution nulle.
+
+D'après l'article \cite{7}, la démonstration de l'existence, de l'unicité et de la stabilité de la solution du problème de minimisation de Tikhonov est principalement détaillée dans les sections 2 et 3.
+
+\subsubsection{Existence de la solution}
+L'existence d'une solution au problème de minimisation est établie à la fois par l'analyse fonctionnelle générale et par une construction opératorielle spécifique :
 \begin{itemize}
-    \item le problème est convexe et admet une solution unique,
-    \item la solution peut souvent être obtenue analytiquement,
-    \item elle pénalise fortement les grandes variations locales.
+    \item \textbf{Lemme 1 :} Les auteurs affirment qu'une solution $R_\alpha y$ du problème de minimisation $\min (\|Av - y\|^2_Y + \alpha M(v))$ \textbf{existe} . La preuve repose sur le fait que $M$ est une fonctionnelle semi-continue inférieurement et que l'ensemble $\{v \in X_M : M(v) \leq r\}$ est compact .
+    \item \textbf{Système de fonctions propres :} Dans la section 3, le texte déclare explicitement : « Tout d'abord, nous prouvons l'\textbf{existence} et l'unicité ». Cela est démontré en montrant que la solution $x(\alpha)$ peut être représentée à l'aide d'un système complet de fonctions propres $\{L_k\}$ de l'opérateur autoadjoint $\mathcal{A}^*\mathcal{A}$ .
 \end{itemize}
 
-Cependant, la régularisation quadratique a tendance à produire des images trop lissées et à effacer les discontinuités importantes telles que les contours.
+\subsubsection{Unicité de la solution}
+L'article fournit deux justifications mathématiques distinctes pour l'unicité de la solution :
+\begin{itemize}
+    \item \textbf{Détermination des composantes :} Dans la section 3, les composantes de la solution $x_k(\alpha)$ sont montrées être \textbf{déterminées de manière unique} par la formule :
+    \[ x_k(\alpha) = \frac{y^A_k}{\lambda_k + \alpha} \]
+    où $\lambda_k$ sont les valeurs propres de $\mathcal{A}^*\mathcal{A}$
+    \item \textbf{Opérateur injectif :} Les références prouvent en outre l'unicité en montrant que l'opérateur $(\mathcal{A}^*\mathcal{A} + \alpha I)$ est positif. Plus précisément, ils démontrent que le \textbf{noyau} de $(\mathcal{A}^*\mathcal{A} + \alpha I)$ est $\{0\}$, ce qui garantit que toute solution existante est nécessairement unique.
+\end{itemize}
 
-% -------------------------------
+\subsubsection{Stabilité de la solution}
+La stabilité est abordée comme la dépendance continue de la solution par rapport aux données et au paramètre $\alpha$ :
+\begin{itemize}
+    \item \textbf{Preuve de continuité :} Dans la section 3, les auteurs déclarent explicitement : « Nous montrons maintenant que $R_\alpha$, c'est-à-dire $x(\alpha)$, est \textbf{continu} » [5]. Ils fournissent une preuve montrant que lorsque la différence entre les paramètres $|\alpha' - \alpha|$ tend vers zéro, la distance entre les solutions correspondantes $\|x(\alpha) - x(\alpha')\|$ s'annule également.
+    \item \textbf{Propriété de régularisation :} Par définition, la famille d'opérateurs $R_\alpha$ est montrée être un \textbf{régulariseur}, ce qui signifie qu'elle fournit une approximation stable qui converge ponctuellement vers la solution exacte lorsque $\alpha \to 0$, sous réserve que les données soient cohérentes ($y = \mathcal{A}x$).
+\end{itemize}
+
+% % -------------------------------
 \subsection{Variation Totale (TV)}
 % -------------------------------
 
@@ -194,7 +155,7 @@ L'emploi de la norme $L^1$ du gradient conduit à :
     \item la production d'images par morceaux quasi-constants.
 \end{itemize}
 
-La minimisation associée est cependant non lisse et nécessite des méthodes itératives de type primal-dual, ADMM ou Split-Bregman. Un inconvénient notable est l'apparition du phénomène dit de \emph{staircasing}, caractérisé par des paliers artificiels.
+La minimisation associée est cependant non lisse et nécessite des méthodes itératives de type primal-dual, ADMM ou Split-Bregman \cite{8}. Un inconvénient notable est l'apparition du phénomène dit de \emph{staircasing}, caractérisé par des paliers artificiels.
 
 % -------------------------------
 \subsection{Méthodes non locales}
@@ -243,7 +204,7 @@ Les ondelettes sont particulièrement adaptées aux singularités ponctuelles, t
 \section{Modèles parcimonieux}
 %===========================================================
 
-Les modèles parcimonieux reposent sur l’hypothèse qu’une image ou un signal peut être représenté par un nombre réduit de coefficients significatifs dans une base appropriée ou un dictionnaire sur-complet. Cette propriété est à la base de nombreuses techniques modernes de reconstruction d’images, de compression et de \textit{Compressed Sensing}. L’objectif est de promouvoir des représentations compactes permettant de régulariser les problèmes inverses mal posés.
+Les modèles parcimonieux reposent sur l'hypothèse qu'une image ou un signal peut être représenté par un nombre réduit de coefficients significatifs dans une base appropriée ou un dictionnaire sur-complet. Cette propriété est à la base de nombreuses techniques modernes de reconstruction d'images, de compression et de \textit{Compressed Sensing}. L'objectif est de promouvoir des représentations compactes permettant de régulariser les problèmes inverses mal posés.
 
 % -------------------------------
 \subsection{Bases orthogonales vs dictionnaires}
@@ -253,7 +214,7 @@ Une représentation parcimonieuse peut être obtenue soit dans une \textbf{base 
 
 \paragraph{Bases orthogonales}
 
-Une base orthogonale $\{\mathbf{\phi}_k\}_{k=1}^{N}$ de $\mathbb{R}^n$ permet d’écrire :
+Une base orthogonale $\{\mathbf{\phi}_k\}_{k=1}^{N}$ de $\mathbb{R}^n$ permet d'écrire :
 \begin{equation}
     \mathbf{x} = \sum_{k=1}^{N} \alpha_k \mathbf{\phi}_k,
 \end{equation}
@@ -264,7 +225,7 @@ où les coefficients $\alpha_k$ sont uniques. Exemples courants :
     \item transformée discrète du cosinus (DCT).
 \end{itemize}
 
-Les bases orthogonales ont l’avantage de garantir l’unicité des coefficients et de permettre des calculs rapides via des transformées rapides (FFT, DWT, DCT).
+Les bases orthogonales ont l'avantage de garantir l'unicité des coefficients et de permettre des calculs rapides via des transformées rapides (FFT, DWT, DCT).
 
 \paragraph{Dictionnaires sur-complets}
 
@@ -276,11 +237,11 @@ où $\mathbf{\alpha} \in \mathbb{R}^{K}$ est un vecteur de coefficients.
 
 Les dictionnaires sur-complets offrent :
 \begin{itemize}
-    \item une meilleure capacité d’adaptation aux structures complexes,
+    \item une meilleure capacité d'adaptation aux structures complexes,
     \item des représentations plus parcimonieuses,
-    \item la possibilité d’apprentissage à partir des données.
+    \item la possibilité d'apprentissage à partir des données.
 \end{itemize}
-Cependant, la décomposition n’est plus unique et nécessite la résolution de problèmes d’optimisation.
+Cependant, la décomposition n'est plus unique et nécessite la résolution de problèmes d'optimisation.
 
 % -------------------------------
 \subsection{Modèles sparse : $L^0$ et $L^1$}
@@ -315,7 +276,7 @@ La relaxation $L^1$ constitue la base mathématique des approches de \textit{Bas
 \subsection{Algorithmes d'approximation parcimonieuse}
 % -------------------------------
 
-Plusieurs classes d’algorithmes permettent de résoudre les problèmes parcimonieux.
+Plusieurs classes d'algorithmes permettent de résoudre les problèmes parcimonieux.
 
 \paragraph{Méthodes gloutonnes}
 
@@ -343,7 +304,7 @@ Elles sont particulièrement adaptées à la minimisation de fonctionnelles $L^2
 \subsection{K-SVD : apprentissage de dictionnaire}
 % -------------------------------
 
-Le K-SVD est un algorithme d’apprentissage de dictionnaire visant à construire un dictionnaire sur-complet directement à partir d’un ensemble d’images ou de patchs. L’objectif est de résoudre :
+Le K-SVD est un algorithme d'apprentissage de dictionnaire visant à construire un dictionnaire sur-complet directement à partir d'un ensemble d'images ou de patchs. L'objectif est de résoudre :
 \begin{equation}
     \min_{\mathbf{D},\mathbf{\alpha}_i}
     \sum_{i}
@@ -355,15 +316,15 @@ Le K-SVD est un algorithme d’apprentissage de dictionnaire visant à construir
     \quad
     \|\mathbf{\alpha}_i\|_0 \leq T_0,
 \end{equation}
-où $\{\mathbf{x}_i\}$ sont les signaux d’apprentissage et $T_0$ fixe le niveau de parcimonie.
+où $\{\mathbf{x}_i\}$ sont les signaux d'apprentissage et $T_0$ fixe le niveau de parcimonie.
 
-L’algorithme alterne :
+L'algorithme alterne :
 \begin{enumerate}
     \item une étape de \textbf{codage parcimonieux} des coefficients,
     \item une étape de \textbf{mise à jour du dictionnaire} atome par atome via la décomposition en valeurs singulières (SVD).
 \end{enumerate}
 
-Le K-SVD permet de construire des dictionnaires adaptés aux structures réelles des images, conduisant à d’excellentes performances en :
+Le K-SVD permet de construire des dictionnaires adaptés aux structures réelles des images, conduisant à d'excellentes performances en :
 \begin{itemize}
     \item débruitage,
     \item défloutage,
@@ -574,7 +535,7 @@ où $C$ est un ensemble convexe fermé. L'itération générique s'écrit :
         \mathbf{x}^k - \alpha_k \nabla f(\mathbf{x}^k)
     \right),
 \end{equation}
-où $\Pi_{C}$ désigne l’opérateur de projection sur $C$.
+où $\Pi_{C}$ désigne l'opérateur de projection sur $C$.
 
 Ces méthodes sont notamment utilisées pour :
 \begin{itemize}
@@ -583,11 +544,11 @@ Ces méthodes sont notamment utilisées pour :
     \item les contraintes de norme sur des coefficients parcimonieux.
 \end{itemize}
 
-Elles constituent des schémas simples, peu coûteux en mémoire, et très utilisés en traitement d’images et en reconstruction tomographique lorsque la fonction coût est différentiable.
+Elles constituent des schémas simples, peu coûteux en mémoire, et très utilisés en traitement d'images et en reconstruction tomographique lorsque la fonction coût est différentiable.
 
-\subsection{Unrolling des algorithmes (vers deep learning)}
+% \subsection{Unrolling des algorithmes (vers deep learning)}
 
-\section{Synthèse critique}
-\subsection{Avantages et limites}
-\subsection{Cas où le compressive sensing excelle}
-\subsection{Motivation des approches apprises}
+% \section{Synthèse critique}
+% \subsection{Avantages et limites}
+% \subsection{Cas où le compressive sensing excelle}
+% \subsection{Motivation des approches apprises}

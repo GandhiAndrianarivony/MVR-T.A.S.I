@@ -1,0 +1,121 @@
+\chapter{Outils mathématiques pour la reconstruction d'image}
+
+Un sujet très précis et intéressant ! La reconstruction d'images à partir de projections est un aspect crucial de l'imagerie médicale, en particulier dans des modalités telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP).
+Les méthodes analytiques directes sont l'approche historique et mathématiquement élégante des problèmes inverses linéaires, particulièrement en tomographie. Leur positionnement répond à un impératif de rapidité de calcul dans des applications où le temps de reconstruction est critique (imagerie médicale clinique, contrôle non destructif industriel).
+
+\section{Classification des approches de reconstruction}
+Le paysage algorithmique de la tomographie se divise principalement en trois familles, distinguées par leur traitement de l'opérateur de projection.
+
+\subsection{\Large Les méthodes analytiques}
+Elles reposent sur une formulation mathématique explicite de l'inversion de l'opérateur direct. En s'appuyant sur les propriétés de la transformée de Radon, elles permettent une reconstruction directe et rapide. L'exemple le plus emblématique reste la Rétroprojection Filtrée (FBP). C'est une méthode analytique largement utilisée qui consiste à filtrer les projections et à les rétroprojeter sur la grille d'image. FBP est rapide et efficace, mais peut être sensible au bruit et aux artefacts.
+
+\subsubsection{\large La transformée de Radon}
+Imaginons qu'on ait un objet opaque constitué de différents matériaux, et que l'on souhaite savoir comment ces matériaux sont répartis à l'intérieur sans l'endommager (par exemple, l'objet peut être un malade à l'intérieur du corps duquel on aimerait voir). L'une des méthodes est le scanner  : on lance de fins faisceaux de rayons X à travers l'objet dans toutes les directions et on mesure quelle proportion de chaque faisceau a été absorbée.
+
+La tomographie est un procédé permettant de créer l'image d'un objet en deux ou trois dimensions à partir de multiples "coupes" unidimensionnelles (Voir \Cref{fig :tomography_device}). Dans un scanner CT (tomodensitométrie), ces coupes sont définies par des faisceaux de rayons $\mathbf{X}$ parallèles projetés à travers l'objet. En changeant l'orientation de la source et du détecteur (l'angle \(\theta\)), on obtient des informations sur la densité interne sous différents angles.\\
+Le fonctionnement repose sur la mesure de l'intensité des rayons $\mathbf{X}$ :
+\begin{itemize}
+    \item[-] \textbf{Perte d'énergie}  : Lorsqu'un rayon $\mathbf{X}$ traverse un objet, il perd une partie de son énergie, ce qui réduit son intensité
+    \item[-] \textbf{Coefficient d'atténuation}  : Cette perte dépend de la densité du milieu. Les objets denses (comme l'os) provoquent une variation d'intensité plus importante que les tissus moins denses. Cette caractéristique est appelée le coefficient d'atténuation ($A(x, y)$). L'atténuation mesurée pour chaque faisceau, c'est-à-dire la différence entre l'intensité incidente et l'intensité détectée, correspond à une intégrale de ligne de la structure interne de l'objet. Cette relation entre l'objet et l'ensemble de ses intégrales de ligne est formalisée par la transformée de Radon. La reconstruction de l'image originale repose alors sur l'inversion de cette transformée, qui constitue le fondement théorique de la tomographie assistée par ordinateur
+    \item[-] \textbf{Mesures}  : Le scanner enregistre l'intensité initiale émise ($I_{0}$) et l'intensité finale reçue ($I_{1}$) pour chaque faisceau afin de déduire la densité globale rencontrée sur le trajet
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/ct_device.png}
+    \caption{Un appareil de tomographie est une sorte d'anneau dans lequel on place un objet ou une personne, qui sont alors traversés par un faisceau de rayons X « suivant toutes les directions » comme illustré sur l'image ci-dessus où l'on étudie la structure d'objets anciens.}
+    \label{fig :tomography_device}
+\end{figure}
+
+\subsubsection{La fonction d'atténuation représentant l'objet étudié}
+L'objet initial, considéré comme plan, est donné par une fonction d'atténuation qui, à chaque point du plan de coordonnées $(x, y)$, va associer un nombre $A(x, y)$ correspondant à la proportion des rayons qui sont absorbés par le matériau en ce point  : en un point d'un os, $A$ sera grand, et en un point de l'air, il sera faible.
+
+\subsubsection{Une loi physique}
+En supposant dans un premier temps que la fonction d'atténuation de notre objet est constante égale à $a$, pour tout rayon lumineux traversant notre objet, pour tout couple de points d'abscisses $x$ et $x+l$ sur ce rayon, les abscisses étant croissantes dans le sens du rayon, le rapport d'intensités lumineuses $\cfrac{I(x+l)}{I(x)}$ ne dépend que de $a$ et de la longueur $l$ traversée et pas du point $x$ (position).
+
+En omettant provisoirement la dépendance par rapport à $a$ et en notant alors $p(l)$ ce rapport $\cfrac{I(x+l)}{I(x)}$ qui correspond à la proportion de photons non
+absorbés sur une longueur $l$ à partir d'un point $x$, on voit que $p$ vérifie la propriété \[p(l_1+l_2) = p(l_1)p(l_2)\]
+En Effet, la proportion de photons non absorbés sur une longueur $l_2$ à partir d'un point $x+l_1$ est $\cfrac{I(x+l_1+l_2)}{I(x+l_1)}=p(l_2)$. Donc $p(l_1)p(l_2)=\cfrac{I(x+l_1)}{I(x)} \times \cfrac{I(x+l_1+l_2)}{I(x+l_1)}=p(l_1+l_2)$. Ceci traduit juste le fait simple suivant  : les proportions de photons non
+absorbés se multiplient lors de traversées successives de milieux absorbants. La
+bonne définition de l'atténuation est précisément : 
+\begin{equation}
+    p(l)=e^{-a\, l}
+    \label{eq:init_loi_beer_lambert_attenuation}
+\end{equation}
+
+Autrement dit, pour tout $x$ et $x+l$ sur un axe  : 
+\begin{equation}
+    I(x+l)=I(x)e^{-a\, l}
+    \label{eq:init_loi_beer_lambert}
+\end{equation}
+
+Notons que si le phénomène physique d'atténuation est spécifique de la tomographie à rayons X, les méthodes de reconstruction sont en revanche plus générales et sont appliquées également dans d'autres systèmes d'imagerie, dans lesquelles des équations analogues expriment une fonction à reconstruire en fonction de projections. C'est le cas par exemple de la tomographie d'émission de simples photons utilisée en médecine nucléaire.
+
+\subsection{\Large Les méthodes itératives}
+Ces approches traitent la reconstruction comme un problème d'optimisation numérique. Elles cherchent à minimiser un critère d'erreur (souvent par les moindres carrés ou le maximum de vraisemblance) entre les projections mesurées et celles simulées à partir d'une image estimée. Elles sont particulièrement robustes face aux données bruitées ou incomplètes.
+Un aspect important des sciences physiques consiste à inférer des paramètres physiques à partir de données. En général, les lois de la physique permettent de calculer les valeurs des données étant donné un modèle. C'est ce qu'on appelle le problème direct.
+
+Le \textbf{problème inverse}, quant à lui, vise à reconstruire le modèle à partir d'un ensemble de mesures. Ce paradigme trouve une application centrale dans le domaine de la \textbf{reconstruction d'image}, où l'on s'efforce de retrouver une image -- représentant par exemple une distribution de densité, une structure anatomique ou une source astrophysique -- à partir de données acquises de manière indirecte, sous-échantillonnée ou bruitée. Que ce soit en tomographie, en imagerie par résonance magnétique (IRM) ou en astronomie, la reconstruction repose sur l'inversion d'un modèle direct qui décrit le processus physique d'acquisition.
+
+Dans le cas idéal, il existe une théorie exacte qui prescrit comment les données doivent être transformées pour reproduire le modèle ou l'image recherchée. Pour certains problèmes bien conditionnés et avec des données complètes, une telle théorie existe, en supposant que des ensembles de données infinis et exempts de bruit seraient disponibles. Toutefois, la plupart des situations pratiques en reconstruction d'image se heurtent à la mal-positude du problème inverse, nécessitant des approches régularisées pour obtenir des solutions stables et physiquement plausibles.
+
+\subsubsection*{\large Quelques exemples de problèmes inverse}
+\subsubsection{Déconvolution}
+Dans la déconvolution \cite{6}, on suppose que la mesure est une version convoluée de l'image réelle. L'opérateur est donc défini comme la convolution \( A : u \mapsto g \ast u \) avec un filtre \( g \). Dans le cas le plus simple, le filtre de convolution \( g \) est supposé connu. Un des exemples les plus connus est celui du débruitage, où le filtre utilisé est souvent le filtre gaussien, voir \Cref{fig:inverse_examples}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/deconvolution.png}
+    \caption{Dans le débruitage, l'objectif est de retrouver une image nette à partir d'une image floue, celle-ci étant obtenue par convolution avec un filtre gaussien.}
+    \label{fig:inverse_examples}
+\end{figure}
+\subsubsection*{Computed Tomography (CT)}
+Les examens par tomodensitométrie (CT) sont une méthode courante pour obtenir des images internes du corps humain. En gros, des rayons \(\mathbf{X}\) sont envoyés à travers le corps selon différentes directions. Pendant leur traversée, les rayons \(\mathbf{X}\) sont atténués en fonction de la densité des matériaux qu'ils rencontrent. Cette diminution d'intensité est ensuite mesurée sur le côté opposé du corps. L'ensemble de toutes ces mesures est appelé un \textit{sinogramme}.
+L'opérateur linéaire utilisé pour décrire le processus de scan est appelé la \textit{transformée de Radon}, étudiée par Johann Radon bien avant son utilisation pratique.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/computed_tomography.png}
+    \caption{\textbf{Exemple de tomodensitométrie (CT) avec le modèle de Shepp-Logan.} La colonne de gauche montre la rotation de la source de rayonnement, la colonne du milieu les mesures du détecteur pour un angle spécifique, et la colonne de gauche l'évolution du sinogramme.}
+    \label{fig:computed_tomography}
+\end{figure}
+
+\subsubsection{\large Mal-positude au sens de Hadamard}
+Lors de la résolution de problèmes inverses, nous devons faire face à certaines difficultés :
+\begin{itemize}
+    \item[-] \textbf{Le premier problème} survient s'il n'existe aucune solution au problème inverse. Cela peut se produire si la mesure est bruitée et que \(\mathbf{y}\) n'appartient pas à la plage de données supposée. Le problème de non-existence peut souvent être surmonté par une modélisation appropriée.
+
+    \item[-] \textbf{Le deuxième problème} survient si la solution du problème inverse n'est pas \textbf{unique}, c'est-à-dire s'il existe plusieurs entrées \(\mathbf{x}\) qui génèrent la même mesure \(\mathbf{y}\).
+
+    \item[-] \textbf{Le troisième problème, et le plus difficile}, survient si la résolution du problème inverse n'est pas \textbf{stable}, c'est-à-dire si le comportement de la solution ne varie pas continûment par rapport à la mesure \(\mathbf{y}\). Si le problème est instable, même de petites perturbations du bruit \(\varepsilon\) dans la mesure peuvent entraîner des artefacts importants dans la solution.
+\end{itemize}
+
+\subsubsection{\large Quelques approches itératives}
+\begin{itemize}
+    \item[-] Méthodes algébriques (ART, SIRT, SART)
+    \item[-] Méthodes statistiques (ML-EM, OSEM, MAP)
+    \item[-] \textbf{Méthodes variationnelles} (régularisation de Tikhonov, Total Variation)
+    \item[-] \textbf{Compressive Sensing} (reconstruction à partir de mesures sous-échantillonnées)
+\end{itemize}
+
+\subsection{\Large Méthodes basées sur l'apprentissage profond}
+Reconstruction par modèles neuronaux apprenant directement la relation données-image.
+\subsubsection{Quelques exemples}
+\begin{itemize}
+    \item[-] Réseaux feed-forward (U-Net, FBPConvNet)
+    \item[-] Architectures itératives unrolled
+    \item[-] Modèles génératifs (GAN, diffusion models)
+\end{itemize}\vspace{18pt}
+Bref, le processus est fondamentalement linéaire et mal conditionné, ce qui signifie que de petites erreurs dans les données peuvent entraîner de grandes erreurs dans l'image reconstruite. Cela rend la qualité de l'acquisition et le traitement préalable (filtrage, correction d'aberrations) essentiels.
+% \subsubsection{Le Sinogramme}
+% Les données collectées sont compilées sous forme de sinogramme. Il s'agit d'une représentation graphique en niveaux de gris où  :
+% \begin{itemize}
+%     \item[-] L'axe horizontal représente l'angle de la mesure.
+%     \item[-] L'axe vertical représente la distance du faisceau par rapport à l'origine. Une valeur de 0 (noir) indique aucun changement d'intensité, tandis qu'une valeur de 1 (blanc) signifie que le faisceau a été totalement absorbé.
+% \end{itemize}
+
+% Pour reconstruire l'image originale à partir d'un sinogramme, plusieurs outils mathématiques sont nécessaires  :
+% \begin{itemize}
+% \item[-] \textbf{Transformée de Radon}  : Elle est au cœur du processus de récupération de l'image à partir des projections.
+% \item[-] Problème inverse  : Le défi consiste à utiliser les densités mesurées (données de sortie) pour retrouver le coefficient d'atténuation interne exact.
+% \item[-] Outils de traitement  : La reconstruction utilise la transformée de Fourier, le théorème de la coupe centrale et la formule de rétroprojection (backprojection).
+% \end{itemize}
