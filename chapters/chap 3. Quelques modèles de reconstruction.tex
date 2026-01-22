@@ -2,16 +2,170 @@
 \section{Les traitements préalables à la reconstruction}
 
 \subsection{\Large Méthodes dans le domaine spatial}
+% =================== TODO ==================
 \subsubsection{\large Filtrage linéaire}
-\subsubsection{\large Filtrage non linéaire}
-\subsubsection{\large Filtres bilatéraux, médians, morphologiques}
+% =========================================
 
-\subsection{\Large Méthodes dans le domaine transformé}
-\subsubsection{\large Transformée de Fourier}
+
+% \subsection{\Large Méthodes dans le domaine transformé}
+\section{\large Transformée de Fourier}
+\begin{definition}[Transformée de Fourier]
+    Soit \( f \) une fonction absolument intégrable sur \( \mathbb{R} \).
+    La transformée de Fourier de \( f \), notée \( \mathcal{F}f \), est définie
+    pour tout nombre réel \( \xi \) par
+    \[
+    (\mathcal{F}f)(\xi)
+    = \int_{-\infty}^{\infty} f(x)\, e^{-2\pi i \xi x}\, dx.
+    \]
+\end{definition}
+La transformée de Fourier est fréquemment utilisée en analyse du signal et permet de transformer une fonction du temps en une fonction de la fréquence ; la variable $x$ représente le temps en secondes et la variable \( \xi \) représente la fréquence de la fonction en hertz.\\
+
+Il existe une définition alternative faisant intervenir la fréquence angulaire $w=2\pi \xi$, ce qui conduit à l'expression suivante.
+\[(\mathcal{F}f)(w) = \int_{-\infty}^{\infty} f(x)\, e^{-i w x}\, dx\]
+Comme pour la transformée de Radon, nous allons énumérer plusieurs propriétés de la transformée de Fourier.
+\begin{proposition}
+    Pour des constantes réelles $\alpha$ et $\beta$, et des fonctions absolument intégrables $f$ et $g$, on a:
+    \begin{itemize}
+        \item[(i)] Linéarité : $\mathcal{F}(\alpha f + \beta g)(w) = \alpha \mathcal{F}f(w) + \beta \mathcal{F}g(w)$
+        \item[(ii)] $\mathcal{F}f(w) < +\infty$
+    \end{itemize}
+\end{proposition}
+
+\begin{definition}[Transformée de Fourier inverse]
+Soit \( f \) une fonction absolument intégrable.
+La transformée de Fourier inverse de \( f \), notée \( \mathcal{F}^{-1}f \),
+évaluée en \( x \), est définie par
+\begin{equation}
+    (\mathcal{F}^{-1}f)(x)
+    = \cfrac{1}{2\pi}\int_{-\infty}^{\infty} f(w)\, e^{iw x}\, dw.
+    \label{formula:fourier_inverse}
+\end{equation}
+\end{definition}
+Ceci nous conduit immédiatement au théorème suivant.
+\begin{proposition}[Théorème d'inversion de Fourier]
+Soit $f$ une fonction absolument integrale sur $\mathbb{R}$.
+Le théorème d'inversion de Fourier affirme que, pour tout \( x \),
+\[
+(\mathcal{F}^{-1} \circ \mathcal{F})f(x)=f(x)
+\]
+\end{proposition}
+Jusqu'à présent, nous n'avons abordé la transformée de Fourier que dans une dimension. Il existe des définitions correspondantes en dimensions supérieures, mais, pour nos besoins, nous n'utiliserons que les analogues en deux dimensions.
+
+\begin{definition}[Transformée de Fourier bidimensionnelle]
+Soit \( g \) une fonction absolument intégrable définie sur \( \mathbb{R}^2 \).
+La transformée de Fourier bidimensionnelle de \( g \), notée \( \mathcal{F}_2 g \),
+est définie pour tout \((X,Y) \in \mathbb{R}^2\) par
+\begin{equation}
+    (\mathcal{F}_2 g)(X,Y) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} 
+    g(x,y)\, e^{-i (xX + yY)} \, dx\, dy.
+    \label{eq:fourier_2d}
+\end{equation}
+
+\end{definition}
+
+De manière similaire, nous définissons la transformée de Fourier inverse sur $\mathbb{R}^2$.
+\begin{definition}[Transformée de Fourier bidimensionnelle inverse]
+Soit \( g \) une fonction absolument intégrable définie sur \( \mathbb{R}^2 \).
+La transformée de Fourier bidimensionnelle inverse de \( g \), évaluée en \((x,y)\)
+et notée \( \mathcal{F}_2^{-1} g(x,y) \), est donnée par
+\[
+(\mathcal{F}_2^{-1} g)(x,y) = \cfrac{1}{4\pi^2}\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} 
+g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
+\]
+\end{definition}
+
+% ================== TODO ==================
 \subsubsection{\large Filtre de Wiener}
-\subsubsection{\large Transformée en cosinus discrète (DCT)}
-\subsubsection{\large Ondelettes, curvelets, contourlets}
-\subsubsection{\large Filtrage collaboratif BM3D}
+% 1. Filtre de Wiener
+% ✅ Oui, tout à fait applicable
+% Le filtre de Wiener est un filtre linéaire adaptatif.
+
+% Il peut être appliqué :
+%    - sur chaque projection (variable s)
+%    - ou localement sur le sinogramme
+
+% Intérêt :
+%    - réduction du bruit additif (souvent gaussien)
+%    - compromis bruit / flou optimal au sens MSE
+
+% ⚠️ Limites :
+%    - nécessite une estimation du bruit et du spectre du signal
+%    - un mauvais modèle dégrade la reconstruction
+
+% 📌 Très utilisé comme prétraitement des sinogrammes en CT à faible dose.
+
+\subsubsection{\large Curvelets}
+% 4. Curvelets
+% ✅ Oui, très pertinent
+% Les curvelets sont théoriquement bien adaptées :
+%    - excellente représentation des singularités le long de courbes
+
+% Les lignes du sinogramme correspondent à :
+%    - des courbes liées aux bords de l'objet
+
+% 📌 Très utilisé dans :
+%    - CT basse dose
+%    - Les méthodes variationnelles et itératives
+% =================================================
+
+\section{Convolution}
+\textbf{Définition 8.1.}
+Pour deux fonctions intégrables $f$ et $g$ définies sur $\mathbb{R}$,
+nous définissons la convolution de $f$ et $g$, notée $f \star g$, par
+\[
+(f \star g)(x) = \int_{-\infty}^{\infty} f(t)\,g(x - t)\,dt,
+\]
+où $x \in \mathbb{R}$.
+
+Nous pouvons facilement étendre cette définition à l'espace
+bidimensionnel. Pour les fonctions polaires, nous prenons uniquement
+l'intégrale par rapport à la variable radiale, tandis que pour les
+fonctions cartésiennes nous intégrons par rapport aux deux variables.
+Les définitions explicites sont données ci-dessous.
+
+\begin{definition}
+    Pour des fonctions polaires intégrables $f(t,\theta)$ et $g(t,\theta)$,
+    nous définissons la convolution de $f$ et $g$ par
+    \[
+        (f \star g)(t,\theta)
+        =
+        \int_{-\infty}^{\infty}
+        f(s,\theta)\,g(t - s,\theta)\,ds.
+    \]
+\end{definition}
+
+Pour des fonctions intégrables $F$ et $G$ sur $\mathbb{R}^2$,
+nous définissons la convolution de $F$ et $G$ par
+\[
+    (F \star G)(x,y)
+    =
+    \int_{-\infty}^{\infty}
+    \int_{-\infty}^{\infty}
+    F(s,t)\,G(x - s, y - t)\,ds\,dt.
+\]
+
+La convolution est une méthode mathématique permettant de moyenner
+une fonction $f$ à l'aide du déplacement d'une autre fonction $g$.
+Dans la convolution $f \star g$, la fonction $g$ est translatée à travers
+la fonction $f$, et la fonction résultante dépend de la zone de recouvrement
+au cours de cette translation.
+En un certain sens, on peut voir $g$ comme un filtre utilisé pour effectuer
+une moyenne de $f$ sur un intervalle donné.
+La fonction de filtrage agit ainsi comme un lisseur pour les données bruitées
+fournies par la fonction originale.
+
+\begin{proposition}
+    Pour des fonctions intégrables $f$, $g$, $h$ définies sur $\mathbb{R}$
+    et des constantes $\alpha, \beta \in \mathbb{R}$ :
+    
+    \begin{itemize}
+      \item[(i)] $f \star g = g \star f$ \quad (commutativité),
+      \item[(ii)] $f \star (\alpha g + \beta h)
+      = \alpha (f \star g) + \beta (f \star h)$ \quad (linéarité).
+      \item[(iii)] $\mathcal{F}(f). \mathcal{F}(g)  = \mathcal{F}(f \star g)$
+    \end{itemize}
+\end{proposition}
+
 
 % =================================================
 \section{La transformée de Radon}
@@ -50,6 +204,7 @@ Soit $I(x_0)=I_0$ la valeur initiale de l'intensité du faisceau et $I(x_1)=I_1$
 ou encore \vspace{10pt}
 \begin{equation}
     \int_{x_0}^{x_1} \mathbf{A}(x)dx = ln(\frac{I_0}{I_1})
+    \label{eq:radon_transformation}
 \end{equation}
 
 Nous sommes maintenant prêts à introduire des outils mathématiques — en particulier la transformée de Radon — qui joueront un rôle central dans la détermination du coefficient d'atténuation dans l'équation \eqref{eq:loi_beer_lambert}.
@@ -69,12 +224,22 @@ Nous connaissons tous l'idée qu'une droite \( l \) dans \( \mathbb{R}^2 \) peut
 ax + by = c
 \]
 où \( a, b, c \in \mathbb{R} \) et \( a^2 + b^2 \neq 0 \).\\ On peut alors écrire cette équation d'une droite sous la forme \[w_1x + w_2y = t\]
-où $w:=(w_1, w_2) = (\cfrac{a}{\sqrt{a^2 + b^2}}, \cfrac{b}{\sqrt{a^2 + b^2}})$ et $t=\cfrac{c}{\sqrt{a^2 + b^2}}$, que nous pouvons voir comme un point situé sur le
+où $\mathbf{w}:=(w_1, w_2) = (\cfrac{a}{\sqrt{a^2 + b^2}}, \cfrac{b}{\sqrt{a^2 + b^2}})$ et $t=\cfrac{c}{\sqrt{a^2 + b^2}}$, que nous pouvons voir comme un point situé sur le
 cercle unitaire, pour \[\left(\cfrac{a}{\sqrt{a^2 + b^2}}\right)^{2} + \left(\cfrac{b}{\sqrt{a^2 + b^2}}\right)^{2} = 1\]
-Cela implique que $w := (\cos(\theta), \sin(\theta)) \text{ est un vecteur normal unitaire }$, $\theta \in [0, 2\pi)$ représente l'orientation, et $t$ est exactement la distance à l'origine. On a \[x\cos(\theta) + y\sin(\theta) = t\]
-Notez que dans les équations ci-dessus, $t$ et $\theta$ sont fixes et déterminent une droite spécifique \( l \) dans le plan. On peut donc dire que $t$ et $\theta$ paramètrent une droite \( l_{t,\theta} \) et que $z$ détermine des points spécifiques sur cette droite \( l \). Ou encore
-\[l_{t,\theta} = \{ z \in \mathbb{R}^2 : \langle z, (\cos \theta, \sin \theta) \rangle = t \}.\]
-
+Cela implique que $\mathbf{w} := (\cos(\theta), \sin(\theta)) \text{ est un vecteur normal unitaire }$, $\theta \in [0, 2\pi)$ représente l'orientation, et $t$ est exactement la distance à l'origine. On a \[x\cos(\theta) + y\sin(\theta) = t\]
+Notez que dans les équations ci-dessus, $t$ et $\theta$ sont fixes et déterminent une droite spécifique \( l \) dans le plan. On peut donc dire que $t$ et $\theta$ paramètrent une droite \( l_{t,\theta} \) et que $\mathbf{z}$ détermine des points spécifiques sur cette droite \( l \). Ou encore
+\[l_{t,\theta} = \{ \mathbf{z} \in \mathbb{R}^2 : \langle z, (\cos \theta, \sin \theta) \rangle = t \}.\]
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/l_t_theta.png}
+    \caption{paramètrisation d'une droite \( l_{t,\theta} \) par \( t \) et \( \theta \)}
+    \label{fig:l_t_theta}
+\end{figure}
+On voit  que $(t\, \cos(\theta), t\, \sin(\theta))$ est un point situé sur la droite \( l_{t,\theta} \) (\Cref{fig:l_t_theta}) et $(-\sin(\theta), \cos(\theta))$ est un vecteur perpendiculaire au vecteur unitaire $\mathbf{w}$.\\ En géométrie affine élémentaire, une ligne est un point plus une direction. Par conséquent, nous pouvons décrire un point particulier $(x, y)$ sur $l_{t, \theta}$ en termes de nombre réel s comme suit :
+\begin{equation}
+    l_{t, \theta} = \{(t\, \cos(\theta) - s\,\sin(\theta), t\,\sin(\theta) + s\,\cos(\theta)); s\in \mathbb{R}\}
+    \label{set:l_t_theta}
+\end{equation}
 \begin{definition}[Transformée de Radon]
 Soit \( f(t,\theta) \) une fonction définie sur \( \mathbb{R}^2 \) à support compact.
 La transformée de Radon de \( f \), notée \( \mathcal{R}f \), est définie pour
@@ -85,14 +250,15 @@ La transformée de Radon de \( f \), notée \( \mathcal{R}f \), est définie pou
 \end{definition}
 
 La transformée de Radon permet de déterminer la densité totale d'une fonction $f$ le long d'une droite donnée $l$. Cette droite $l$ est définie par un angle $\theta$  par rapport à l'axe 
-$x$ et une distance $t$ par rapport à l'origine. Comme illustré à la \Cref{fig:radon}, si l'on calcule la transformée de Radon le long de plusieurs droites à des angles différents (ici $\theta_1$ et $\theta_2$), on peut déterminer plusieurs fonctions de densité pour notre objet. Intuitivement, on peut interpréter la transformée de Radon comme une version « étalée » de notre objet initial. Supposons que la région en forme de tache représentée à la \Cref{fig:radon} soit une tache d'encre ; si l'on étale cette tache le long de lignes de direction $\theta_1$
-, on s'attend à ce que les régions les plus larges de la tache correspondent à des zones plus étendues que les régions plus petites, ce qui correspond exactement à ce que l'on observe.
+$x$ et une distance $t$ par rapport à l'origine. Comme illustré à la \Cref{fig:radon}, si l'on calcule la transformée de Radon le long de plusieurs droites à des angles différents (ici $\theta_1$ et $\theta_2$), on peut déterminer plusieurs fonctions de densité pour notre objet. Intuitivement, on peut interpréter la transformée de Radon comme une version « étalée » de notre objet initial. Supposons que la région en forme de tache représentée à la \Cref{fig:radon} soit une tache d'encre; si l'on étale cette tache le long de lignes de direction $\theta_1$, on s'attend à ce que les régions les plus larges de la tache correspondent à des zones plus étendues que les régions plus petites, ce qui correspond exactement à ce que l'on observe.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{./images/radon.png}
     \caption{Transformée de Radon pour $\theta_1$ et $\theta_2$.}
     \label{fig:radon}
 \end{figure}
+L'intégrale $\mathcal{R}f(t,\theta)$ représente le membre gauche de l'équation \eqref{eq:radon_transformation}. Rappelons que, dans cette équation, $\mathbf{A}(x)$ est inconnue et que $\ln(\frac{I_1}{I_0})$ correspond à une information mesurée.
+Autrement dit, $\ln(\frac{I_1}{I_0})$ est la transformée de Radon, et la transformée de Radon représente donc des données connues issues de la mesure.
 
 L'objectif est maintenant de trouver une formule d'inversion de la transformée de Radon qui nous permettra de reconstruire la fonction initiale $f$ (ou, dans le contexte de l'imagerie médicale, 
 $\mathbf{A}(x)$). Pour ce faire, il sera utile de rappeler plusieurs propriétés de la transformée de Radon.
@@ -107,81 +273,389 @@ $\mathbf{A}(x)$). Pour ce faire, il sera utile de rappeler plusieurs propriété
     \end{itemize}
 \end{proposition}
 Nous définissons en outre le domaine naturel de la transformée de Radon comme l'ensemble des fonctions $f$ sur $\mathbb{R}^2$ telles que \[\int_{-\infty}^{\infty} |f(x(s), y(s))|\mathrm{d}s < \infty\]
-\section{Transformée de Fourier}
-\begin{definition}[Transformée de Fourier]
-    Soit \( f \) une fonction absolument intégrable sur \( \mathbb{R} \).
-    La transformée de Fourier de \( f \), notée \( \mathcal{F}f \), est définie
-    pour tout nombre réel \( \xi \) par
-    \[
-    (\mathcal{F}f)(\xi)
-    = \int_{-\infty}^{\infty} f(x)\, e^{-2\pi i \xi x}\, dx.
-    \]
-\end{definition}
-La transformée de Fourier est fréquemment utilisée en analyse du signal et permet de transformer une fonction du temps en une fonction de la fréquence ; la variable $x$ représente le temps en secondes et la variable \( \xi \) représente la fréquence de la fonction en hertz.\\
-
-Il existe une définition alternative faisant intervenir la fréquence angulaire $w=2\pi \xi$, ce qui conduit à l'expression suivante.
-\[(\mathcal{F}f)(w) = \int_{-\infty}^{\infty} f(x)\, e^{-i w x}\, dx\]
-Comme pour la transformée de Radon, nous allons énumérer plusieurs propriétés de la transformée de Fourier.
-\begin{proposition}
-    Pour des constantes réelles $\alpha$ et $\beta$, et des fonctions absolument intégrables $f$ et $g$, on a:
-    \begin{itemize}
-        \item[(i)] Linéarité : $\mathcal{F}(\alpha f + \beta g)(w) = \alpha \mathcal{F}f(w) + \beta \mathcal{F}g(w)$
-        \item[(ii)] $\mathcal{F}f(w) < +\infty$
-    \end{itemize}
-\end{proposition}
-
-\begin{definition}[Transformée de Fourier inverse]
-Soit \( f \) une fonction absolument intégrable.
-La transformée de Fourier inverse de \( f \), notée \( \mathcal{F}^{-1}f \),
-évaluée en \( x \), est définie par
-\[
-(\mathcal{F}^{-1}f)(x)
-= \cfrac{1}{2\pi}\int_{-\infty}^{\infty} f(w)\, e^{iw x}\, dw.
-\]
-\end{definition}
-Ceci nous conduit immédiatement au théorème suivant.
-\begin{proposition}[Théorème d'inversion de Fourier]
-Soit $f$ une fonction absolument integrale sur $\mathbb{R}$.
-Le théorème d'inversion de Fourier affirme que, pour tout \( x \),
-\[
-(\mathcal{F}^{-1} \circ \mathcal{F})f(x)=f(x)
-\]
-\end{proposition}
-Jusqu'à présent, nous n'avons abordé la transformée de Fourier que dans une dimension. Il existe des définitions correspondantes en dimensions supérieures, mais, pour nos besoins, nous n'utiliserons que les analogues en deux dimensions.
-
-\begin{definition}[Transformée de Fourier bidimensionnelle]
-Soit \( g \) une fonction absolument intégrable définie sur \( \mathbb{R}^2 \).
-La transformée de Fourier bidimensionnelle de \( g \), notée \( \mathcal{F}_2 g \),
-est définie pour tout \((X,Y) \in \mathbb{R}^2\) par
-\begin{equation}
-    (\mathcal{F}_2 g)(X,Y) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} 
-    g(x,y)\, e^{-i (xX + yY)} \, dx\, dy.
-    \label{eq:fourier_2d}
-\end{equation}
-
-\end{definition}
-
-De manière similaire, nous définissons la transformée de Fourier inverse sur $\mathbb{R}^2$.
-\begin{definition}[Transformée de Fourier bidimensionnelle inverse]
-Soit \( g \) une fonction absolument intégrable définie sur \( \mathbb{R}^2 \).
-La transformée de Fourier bidimensionnelle inverse de \( g \), évaluée en \((x,y)\)
-et notée \( \mathcal{F}_2^{-1} g(x,y) \), est donnée par
-\[
-(\mathcal{F}_2^{-1} g)(x,y) = \cfrac{1}{4\pi^2}\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} 
-g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
-\]
-\end{definition}
 
 \subsection{Le Théorème de la Coupe Centrale}
 Le théorème de la coupe centrale, également appelé théorème de projection-transforme de Fourier ou théorème de Fourier-Slice, est un résultat fondamental en traitement d'image et en tomographie. Il établit un lien profond entre la transformée de Radon (utilisée pour décrire les projections d'un objet) et la transformée de Fourier (utilisée pour analyser les fréquences spatiales). Ce théorème constitue la pierre angulaire mathématique de la plupart des méthodes de reconstruction tomographique moderne.
 
 \begin{proposition}
     Soit \( g \) une fonction absolument integrale sur \( \mathbb{R}^2 \).
-    Le theorem de la coupe centrale affirme que, pour tout $S \in \mathbb{R}$ et $\theta \in [0,2\pi]$, on a : \[\mathcal{F}_2 g(S\cos(\theta), S\sin(\theta)) = \mathcal{F}(\mathcal{R}f)(S, \theta)\]
+    Le théorème de la coupe centrale affirme que, pour tout $S \in \mathbb{R}$ et $\theta \in [0,2\pi]$, on a : \[\mathcal{F}_2 g(S\cos(\theta), S\sin(\theta)) = \mathcal{F}(\mathcal{R}g)(S, \theta)\]
 \end{proposition}
 \textbf{Preuve}: En utilisant la définition de la transformée de Fourier bidimensionnelle \eqref{eq:fourier_2d} on obtient 
 \[
     \mathcal{F}_{2}g(S\,\cos(\theta), S\,\sin(\theta)) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} g(x, y)\, e^{-iS (x\,\cos(\theta) + y\,\sin(\theta))}\, dx\, dy
 \]
-\section{Inversion analytique de la transformée de Radon}
-\section{Rétroprojection filtrée (FBP) : aspects algorithmiques}
+Nous effectuons maintenant un changement de variables conformément au système
+de coordonnées que nous avons défini à la \textit{Construction de l'orientation et de la distance}.
+Rappelons que, lors de la paramétrisation de la droite $\ell_{t,\theta}$,
+nous avons montré que, pour $s\in\mathbb{R}$, on peut écrire :
+\[
+x(s)=t\cos\theta - s\sin\theta, 
+\qquad
+y(s)=t\sin\theta + s\cos\theta,
+\qquad
+t = x\cos\theta + y\sin\theta.
+\]
+
+En examinant le déterminant du Jacobien associé à $x(s)$ et $y(s)$, on obtient :
+\[
+\det
+\begin{pmatrix}
+\dfrac{\partial x}{\partial t} & \dfrac{\partial x}{\partial s} \\[6pt]
+\dfrac{\partial y}{\partial t} & \dfrac{\partial y}{\partial s}
+\end{pmatrix}
+= 1.
+\]
+
+Nous en déduisons que
+\[
+ds\,dt = dx\,dy.
+\]
+et donc
+\[
+\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} g(x, y)\, e^{-iS (x\,\cos(\theta) + y\,\sin(\theta))}\, dx\, dy = \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}
+g(t\cos\theta - s\sin\theta,\; t\sin\theta + s\cos\theta)\,
+e^{-iSt}\,ds\,dt.
+\]
+
+Comme $e^{-iSt}$ ne dépend pas de la variable $s$, nous pouvons réarranger
+l'intégrale précédente de la manière suivante :
+\[
+\int_{-\infty}^{\infty}
+\left(
+\int_{-\infty}^{\infty}
+g(t\cos\theta - s\sin\theta,\; t\sin\theta + s\cos\theta)\,ds
+\right)
+e^{-iSt}\,dt.
+\]
+
+L'intégrale intérieure est exactement la transformée de Radon de $f$,
+évaluée en $(t,\theta)$, ce qui implique que l'expression précédente devient :
+\[
+\int_{-\infty}^{\infty}
+(Rg(t,\theta))\,e^{-iSt}\,dt.
+\]
+
+Cette dernière intégrale n'est autre que la transformée de Fourier de
+$Rg(S,\theta)$, ce qui conclut la démonstration.
+\hfill$\square$
+
+% \section{Inversion analytique de la transformée de Radon}
+\subsection{Rétroprojection filtrée (FBP)}
+Nous sommes maintenant enfin prêts à effectuer une première tentative pour retrouver la fonction de coefficient d'atténuation.
+Rappelons que, d'un point de vue physique, la transformée de Radon
+$\mathcal{R}f(t,\theta)$ nous donne la densité totale de l'objet $f$ le long d'une droite
+$\ell_{t,\theta}$.
+Nous avons déterminé cette densité en mesurant les intensités initiale et finale
+d'un faisceau de rayons $\mathbf{X}$ traversant l'objet le long de cette droite.
+En procédant ainsi pour plusieurs droites différentes, nous sommes capables de
+reconstruire une coupe unique de l'objet initial, et en faisant varier l'angle
+$\theta$ de ces rayons $\mathbf{X}$, nous pouvons définir de nombreuses coupes.
+
+Si nous sommes capables, d'une certaine manière, de « rétroprojeter » ces
+densités sur le plan, nous pourrons peut-être reconstituer l'objet initial.
+Intuitivement, on peut interpréter ce processus comme le fait de prendre les
+données du sinogramme et de les « déflouter » pour les ramener dans le plan.
+\begin{definition}
+Soit $h = h(t,\theta)$. On définit la \emph{rétroprojection},
+notée $\mathcal{B}h$, en un point $(x,y)$ par :
+\[
+\mathcal{B}h(x,y) = \frac{1}{\pi}\int_{0}^{\pi} h(x\cos\theta + y\sin\theta,\theta)\,d\theta.
+\]
+
+En appliquant cette formule de rétroprojection à la transformée de Radon, on
+obtient :
+\begin{equation}
+    \mathcal{B}\mathcal{R}f(x,y) = \frac{1}{\pi}\int_{0}^{\pi}
+    \mathcal{R}f(x\cos\theta + y\sin\theta,\theta)\,d\theta.
+    \label{eq:FBP}
+\end{equation}
+\end{definition}
+Nous sommes capables d'effectuer la rétroprojection sur les coupes que nous
+avons mesurées. Comme illustré à la \Cref{fig:FBP}, effectuer une rétroprojection
+selon seulement quelques directions $\theta$ constitue une méthode extrêmement
+imprécise pour reconstituer ne serait-ce qu'un objet simple. Toutefois, même si
+nous augmentons de manière significative le nombre de rétroprojections
+(par exemple jusqu'à $1000$ directions), il subsiste encore une quantité
+importante de bruit qui brouille l'image reconstruite.
+En réalité, quel que soit le nombre de directions selon lesquelles nous tentons
+d'effectuer la rétroprojection, nous ne serons jamais capables de reconstruire
+parfaitement l'image à l'aide de la formule de rétroprojection donnée par
+l'équation \eqref{eq:FBP}.
+Pour que ce procédé soit réellement utile, il est nécessaire de dériver une
+méthode permettant de filtrer une partie du bruit que la formule de
+rétroprojection semble introduire dans l'image, afin d'obtenir une
+représentation plus lisse de l'objet.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/fbp.png}
+    \caption{Retroprojection d'un carré dans 5, 25, 100 et 1000 directions}
+    \label{fig:FBP}
+\end{figure}
+
+Dans ce but, nous définissons une formule de \emph{rétroprojection filtrée}.
+\begin{proposition}
+    Soit $f$ une fonction absolument intégrable définie sur $\mathbb{R}^2$. Alors,
+    \begin{equation}
+        f(x,y)
+        =
+        \frac{1}{2}\,
+        \mathcal{B}\!\left\{
+        \mathcal{F}^{-1}
+        \!\left[
+        |S|\,
+        \mathcal{F}\!\left(\mathcal{R}f\right)(S,\theta)
+        \right]
+        \right\}(x,y).
+        \label{eq:FBP_filter}
+    \end{equation}
+\end{proposition}
+\textit{Démonstration.}
+Nous commençons par rappeler que, pour la transformée de Fourier bidimensionnelle
+et son inverse, on a :
+\begin{equation}
+f(x,y) = \mathcal{F}_2^{-1}\,\mathcal{F}_2 f(x,y)
+= \frac{1}{4\pi^2}
+\int_{-\infty}^{\infty}\int_{-\infty}^{\infty}
+\mathcal{F}_2 f(X,Y)\,e^{i(Xx+Yy)}\,dX\,dY.
+\label{eq:fourier_2d_inverse}
+\end{equation}
+
+Nous allons maintenant effectuer un changement de variables des coordonnées
+cartésiennes $(X,Y)$ vers les coordonnées polaires $(S,\theta)$, définies par
+\[
+X = S\cos\theta,
+\qquad
+Y = S\sin\theta,
+\]
+où $S \in \mathbb{R}$ et $\theta \in [0,\pi]$.
+Ce changement de variables conduit au déterminant jacobien suivant :
+\[\det
+\begin{pmatrix}
+    \dfrac{\partial X}{\partial s} & \dfrac{\partial X}{\partial \theta} \\[6pt]
+    \dfrac{\partial Y}{\partial s} & \dfrac{\partial Y}{\partial \theta}
+\end{pmatrix}
+=|S|
+\]
+Ce qui nous dit que $dX\,dY = |S|\,dS\,d\theta$. En incorporant ce nouveau changement de variables, l'équation \eqref{eq:fourier_2d_inverse} devient :
+\[
+f(x,y) = \frac{1}{4\pi^{2}} \int_{0}^{\pi} \int_{-\infty}^{\infty}
+\mathcal{F}_{2}f(S\cos\theta, S\sin\theta)\,
+e^{iS(x\cos\theta + y\sin\theta)}\,|S|\,dS\,d\theta.
+\]
+Et en utilisant le théorème de la tranche centrale, nous voyons que l'équation ci-dessus est en fait égale à
+\begin{equation}
+    f(x,y) = \frac{1}{4\pi^{2}} \int_{0}^{\pi} \int_{-\infty}^{\infty}
+    \mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\,
+    e^{iS(x\cos\theta + y\sin\theta)}\,|S|\,dS\,d\theta.
+    \label{eq:fourier_radon}
+\end{equation}
+Prenons maintenant un regard plus attentif sur l'intégrale intérieure de l'équation \eqref{eq:fourier_radon} et en utilisant la définition de la Transformée de Fourier inverse, on a :
+\[
+    \begin{array}{rcl}
+        \int_{-\infty}^{\infty}
+        \mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\,
+        e^{iS(x\cos\theta + y\sin\theta)}\,|S|\,dS
+        &=&
+        2\pi \left(
+        \frac{1}{2\pi} \int_{-\infty}^{\infty}
+        \mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\,
+        e^{iS(x\cos\theta + y\sin\theta)}\,|S|\,dS
+        \right)\\
+        &=&
+        2\pi\,\mathcal{F}^{-1}
+        \Bigl(
+        |S|\,\mathcal{F}\bigl(\mathcal{R}f\bigr)(S,\theta)
+        \Bigr)
+        \bigl(x\cos\theta + y\sin\theta,\theta\bigr)\\
+    \end{array}
+\]
+
+
+Autrement dit, l'intégrale intérieure de l'équation (7.4) est égale à $2\pi$ fois l'inverse de la transformée de Fourier de
+$|S|\,\mathcal{F}\bigl(\mathcal{R}f\bigr)(S,\theta)$
+au point $(x\cos\theta + y\sin\theta,\theta)$.
+Nous pouvons alors voir que l'équation (7.4) est en fait égale à
+\[
+\frac{1}{2\pi} \int_{0}^{\pi}
+\mathcal{F}^{-1}
+\Bigl(
+|S|\,\mathcal{F}\bigl(\mathcal{R}f\bigr)(S,\theta)
+\Bigr)
+\bigl(x\cos\theta + y\sin\theta,\theta\bigr)
+\,d\theta.
+\]
+
+Finalement, nous constatons que l'intégrale ci-dessus est égale à $\tfrac{1}{2}$ de la rétroprojection donnée dans la définition \eqref{eq:FBP} pour
+$\mathcal{F}^{-1}\bigl[|S|\,\mathcal{F}(\mathcal{R}f)(S,\theta)\bigr]$.
+Nous simplifions donc l'équation précédente pour obtenir
+\[
+\frac{1}{2}\,
+\mathcal{B}
+\Bigl\{
+\mathcal{F}^{-1}
+\bigl[|S|\,\mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\bigr]
+\Bigr\}(x,y).
+\]
+
+Ce qui nous conduit à la conclusion souhaitée :
+\[
+f(x,y)
+=
+\frac{1}{2}\,
+\mathcal{B}
+\Bigl\{
+\mathcal{F}^{-1}
+\bigl[|S|\,\mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\bigr]
+\Bigr\}(x,y).
+\]
+\hfill $\square$\\
+Le facteur important dans cette formule est le multiplicateur $|S|$ qui apparaît entre la transformée de Fourier et son inverse. Sans ce facteur, ces deux termes s'annuleraient mutuellement et nous nous retrouverions avec la formule standard de rétroprojection pour la transformée de Radon que nous avons rencontrée précédemment et qui, comme nous l'avons vu, ne nous donne pas directement $f(x, y)$. Nous appelons ce $|S|$ supplémentaire un \textbf{filtre} de la transformée de Radon, ce qui nous donne le nom de la formule de \textbf{rétroprojection filtrée}.
+\begin{proposition}
+    Soit $f$ et $g$ deux fonctions intégrables définies sur $\mathbb{R}$, alors
+    \[(\mathcal{B}g\star f)(X, Y) = \mathcal{B}(g\star \mathcal{R}f)(X, Y)\]
+\end{proposition}
+Considérons maintenant la relation \eqref{eq:FBP_filter} et 
+supposons qu'il existe une fonction, notée $\varphi(t)$, dont la transformée de Fourier
+soit égale à notre facteur de filtrage $|S|$. Autrement dit, supposons qu'il existe une
+fonction $\varphi(t)$ telle que
+\[
+\mathcal{F}\varphi(S) = |S|.
+\]
+Plus simplement, supposons que nous connaissions une fonction dont la transformée de
+Fourier est égale à la fonction valeur absolue. Nous pourrions alors réécrire la
+rétroprojection sous la forme suivante :
+\begin{equation}
+    f(x,y) = \frac{1}{2}\,\mathcal{B}
+    \left\{
+    \mathcal{F}^{-1}
+    \bigl[
+    \mathcal{F}\varphi \cdot \mathcal{F}(\mathcal{R}f)(S,\theta)
+    \bigr]
+    \right\}(x,y).
+    \label{eq:FBP_varphi}
+\end{equation}
+
+Cependant, le membre de droite de l'équation \eqref{eq:FBP_varphi} contient un produit de transforméesde Fourier, que nous savons être égal à la convolution des fonctions transformées
+\[
+    f(x,y)
+    =
+    \frac{1}{2}\,\mathcal{B}
+    \left\{
+    \mathcal{F}^{-1}
+    \bigl[
+    \mathcal{F}(\varphi \star \mathcal{R}f)(S,\theta)
+    \bigr]
+    \right\}(x,y).
+\]
+
+Mais ceci n'est rien d'autre que la transformée de Fourier inverse de la transformée
+de Fourier, ce qui nous ramène à la fonction de départ. Cela nous conduit à la formule
+de rétroprojection filtrée beaucoup plus simple :
+\begin{equation}
+    f(x,y) = \frac{1}{2}\,\mathcal{B}(\varphi \star \mathcal{R}f)(x,y).
+    % \tag{8.2}
+    \label{eq:FBP_varphi_simple}
+\end{equation}
+
+L'équation \eqref{eq:FBP_varphi_simple} est bien plus élégante que notre formule initiale de rétroprojection filtrée et ne semble pas difficile à appliquer. Physiquement parlant, $\mathcal{R}f$ représente nos données mesurées et l'équation \eqref{eq:FBP_varphi_simple} requiert simplement de les filtrer à l'aide de notre nouvelle fonction $\varphi$, puis d'appliquer la formule de rétroprojection, qui est une intégrale relativement simple.
+
+Malheureusement, il n'existe pas de fonction $\varphi$ dont la transformée de Fourier
+soit exactement égale à la valeur absolue. Considérons la fonction $\mathcal{F}\varphi$ :
+\[
+\mathcal{F}\varphi(\omega)
+=
+\int_{-\infty}^{\infty}
+\varphi(x)\,e^{-i\omega x}\,dx.
+\]
+
+Nous pouvons constater que, lorsque $\omega \to \infty$,
+$\mathcal{F}\varphi(\omega) \to 0$ (remarquons l'exponentielle négative).
+Cependant, pour la fonction valeur absolue $|\omega|$, lorsque $\omega \to \infty$,
+$|\omega| \to \infty$.
+Par conséquent, il est impossible de trouver une fonction $\varphi$ telle que,
+pour tout $\omega$, $\mathcal{F}\varphi(\omega) = |\omega|$.
+
+Toutefois, tout notre travail précédent n'est pas vain. Examinons plutôt le type de
+fonctions sur lesquelles nous avons restreint notre étude. Nous ne considérons notre
+fonction que sur un intervalle fini et supposons en fait qu'elle soit nulle en dehors
+de cet intervalle. En étendant cette idée à la transformée de Fourier, nous constatons
+que nous devons porter notre attention sur les \emph{fonctions à bande limitée}.
+
+\begin{definition}
+    Une fonction $\varphi$ est dite \emph{à bande limitée} s'il existe un réel $L > 0$ tel que
+    \begin{equation}
+        \mathcal{F}\varphi(\omega)
+        =
+        \int_{-\infty}^{\infty}
+        \varphi(x)\,e^{-i\omega x}\,dx
+        =
+        0
+        \quad \text{pour tout } \omega \notin [-L, L].
+        % \tag{8.3}
+        \label{eq:FBP_varphi_banded}
+    \end{equation}
+\end{definition}
+
+Le facteur de filtrage $|S|$ sert à amplifier le terme $\mathcal{F}(\mathcal{R}f)$ dans la formule de rétroprojection filtrée originale \eqref{eq:FBP_filter}. En pratique, $\mathcal{F}(\mathcal{R}f)$ est très sensible aux hautes fréquences.
+
+En concentrant notre attention sur les basses fréquences à l'aide d'une fonction à bande limitée $\varphi$, nous sommes en mesure d'éviter ce problème. Notre objectif est de remplacer $S$ par ce que l'on appelle un \emph{filtre passe-bas} (noté $S'$), qui prend en compte les effets des basses fréquences tout en atténuant les hautes fréquences. Cette fonction $S'$ doit avoir un support compact et être de la forme
+\[
+S' = \mathcal{F}\varphi
+\]
+(sur un intervalle compact).
+
+Le coût de l'utilisation de $S'(\omega)$ est que nous ne disposons plus de l'égalité présentée dans l'équation \eqref{eq:FBP_varphi_simple}. En revanche, nous obtenons :
+\begin{equation}
+    f(x,y) \approx \frac{1}{2}\,\mathcal{B}\!\left(\mathcal{F}^{-1} S' \star \mathcal{R}f \right)(x,y).
+    \label{eq:FBP_varphi_approx}
+\end{equation}
+
+De manière générale, la plupart des filtres passe-bas sont de la forme
+\[
+S'(\omega) = |\omega| \cdot F(\omega) \cdot \Pi_L(\omega),
+\]
+où $L > 0$ définit la région sur laquelle le filtrage est effectué. Différentes fonctions $F$ déterminent les caractéristiques précises du filtre, et $\Pi_L(\omega)$ est définie comme suit :
+\[
+    \Pi_L(\omega) =
+    \begin{cases}
+        1 & \text{si } |\omega| \leq L, \\
+        0 & \text{si } |\omega| > L.
+    \end{cases}
+\]
+
+Nous introduisons maintenant deux filtres couramment utilisés en imagerie numérique et en traitement du signal : le filtre \emph{Ram-Lak} et le filtre \emph{Hann}.
+
+\subsection*{Filtre Ram-Lak}
+
+Le filtre Ram-Lak est défini par :
+\[
+S'(\omega) = |\omega| \cdot \Pi_L(\omega) =
+\begin{cases}
+|\omega| & \text{si } |\omega| \leq L, \\
+0 & \text{si } |\omega| > L.
+\end{cases}
+\]
+
+Le filtre Ram-Lak constitue la base de nombreux autres filtres utilisés en analyse du signal, car il remplace simplement la fonction $F(\omega)$ par la fonction constante égale à 1. D'autres filtres, tels que le filtre Hann, consistent généralement en des produits de fonctions sinus ou cosinus destinées à éliminer le bruit indésirable.
+
+\subsection*{Filtre Hann}
+
+Le filtre Hann est donné par :
+\[
+S'(\omega) = |\omega| \cdot \frac{1}{2}
+\left( 1 + \cos\!\left( \frac{2\pi \omega}{L} \right) \right)
+\cdot \Pi_L(\omega).
+\]
+
+Le filtre Hann utilise la fonction de Hann
+\[
+\frac{1}{2}\left( 1 + \cos\!\left( \frac{2\pi \omega}{L} \right) \right)
+\]
+comme fonction $F(\omega)$,
+% et son efficacité est illustrée dans le sinogramme et la rétroprojection de la transformée de Radon de Johann, présentés à la Figure~5.
+% ====== TODO ======
+% Python implementation
+% ==================
+
