@@ -1,15 +1,50 @@
-\chapter{Outils mathématiques pour la reconstruction d'image}
+\chapter{OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES PAR LE COMPRESSED SENSING}
 
 Un sujet très précis et intéressant ! La reconstruction d'images à partir de projections est un aspect crucial de l'imagerie médicale, en particulier dans des modalités telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP).
+Le scanner de tomodensitométrie (CT) diagnostique, voir la \Cref{fig :tomography_device}, est un véritable
+chef-d'œuvre de la technologie moderne et constitue un exemple positif de l'influence des forces
+du marché libre dans la stimulation de l'innovation. Tous les principaux fabricants de scanners
+CT disposent d'équipes solides de recherche et développement, qui suivent et contribuent aux
+travaux de recherche en science de l'imagerie en plus de leurs activités internes.
+
+Les dispositifs CT peuvent être considérés comme la réalisation d'une caméra gigapixel en usage
+clinique courant. Alors qu'un scanner CT diagnostique moderne typique fournit des volumes
+composés de centaines d'images de coupes de taille $512 \times 512$ avec une résolution
+submillimétrique, les scanners micro-CT peuvent produire des volumes atteignant
+$2000$ voxels.
+
+Dans le cas de l'imagerie cardiaque par CT, une application qui a largement stimulé les avancées
+technologiques, les images volumiques peuvent être acquises avec une résolution temporelle
+pouvant descendre jusqu'à 100 millisecondes. La vitesse et la résolution de l'imagerie CT en font
+un outil indispensable pour l'imagerie cardiaque et l'évaluation des accidents vasculaires
+cérébraux.
+
+Elle est utilisée de manière routinière pour le diagnostic de diverses pathologies médicales
+affectant l'ensemble des organes internes, et son utilisation est même envisagée comme outil de
+dépistage du cancer du poumon. Les recherches actuelles visent globalement à améliorer
+l'utilité clinique sans augmenter la dose d'irradiation de l'examen, ou à maintenir cette utilité
+tout en réduisant l'exposition du patient aux rayonnements ionisants.
+
 Les méthodes analytiques directes sont l'approche historique et mathématiquement élégante des problèmes inverses linéaires, particulièrement en tomographie. Leur positionnement répond à un impératif de rapidité de calcul dans des applications où le temps de reconstruction est critique (imagerie médicale clinique, contrôle non destructif industriel).
 
 \section{Classification des approches de reconstruction}
 Le paysage algorithmique de la tomographie se divise principalement en trois familles, distinguées par leur traitement de l'opérateur de projection.
 
-\subsection{\Large Les méthodes analytiques}
-Elles reposent sur une formulation mathématique explicite de l'inversion de l'opérateur direct. En s'appuyant sur les propriétés de la transformée de Radon, elles permettent une reconstruction directe et rapide. L'exemple le plus emblématique reste la Rétroprojection Filtrée (FBP). C'est une méthode analytique largement utilisée qui consiste à filtrer les projections et à les rétroprojeter sur la grille d'image. FBP est rapide et efficace, mais peut être sensible au bruit et aux artefacts.
+\subsection{Les méthodes analytiques}
+Les méthodes analytiques de reconstruction reposent sur une formulation mathématique explicite
+de l'inversion de l'opérateur direct reliant l'objet à ses projections. En tomodensitométrie,
+cet opérateur est étroitement lié à la transformée de Radon. En exploitant ses propriétés, ces
+méthodes permettent une reconstruction directe et rapide de l'image à partir des données de
+projection.
 
-\subsubsection{\large La transformée de Radon}
+L'exemple le plus emblématique est la Rétroprojection Filtrée (\emph{Filtered Backprojection},
+FBP). Cette méthode analytique largement utilisée consiste à filtrer les projections avant de
+les rétroprojeter sur la grille de l'image. La FBP est rapide et efficace, mais elle demeure
+sensible au bruit et aux artefacts, en particulier lorsque le nombre de projections est limité
+ou que la dose d'irradiation est réduite.
+
+
+\subsubsection{La transformée de Radon}
 Imaginons qu'on ait un objet opaque constitué de différents matériaux, et que l'on souhaite savoir comment ces matériaux sont répartis à l'intérieur sans l'endommager (par exemple, l'objet peut être un malade à l'intérieur du corps duquel on aimerait voir). L'une des méthodes est le scanner  : on lance de fins faisceaux de rayons X à travers l'objet dans toutes les directions et on mesure quelle proportion de chaque faisceau a été absorbée.
 
 La tomographie est un procédé permettant de créer l'image d'un objet en deux ou trois dimensions à partir de multiples "coupes" unidimensionnelles (Voir \Cref{fig :tomography_device}). Dans un scanner CT (tomodensitométrie), ces coupes sont définies par des faisceaux de rayons $\mathbf{X}$ parallèles projetés à travers l'objet. En changeant l'orientation de la source et du détecteur (l'angle \(\theta\)), on obtient des informations sur la densité interne sous différents angles.\\
@@ -23,14 +58,30 @@ Le fonctionnement repose sur la mesure de l'intensité des rayons $\mathbf{X}$ :
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{./images/ct_device.png}
-    \caption{Un appareil de tomographie est une sorte d'anneau dans lequel on place un objet ou une personne, qui sont alors traversés par un faisceau de rayons X « suivant toutes les directions » comme illustré sur l'image ci-dessus où l'on étudie la structure d'objets anciens.}
+    \caption{Principe de fonctionnement d’un appareil de tomodensitométrie}
     \label{fig :tomography_device}
 \end{figure}
+\medskip
+\noindent
+D'un point de vue mathématique, l'ensemble des mesures acquises par le scanner correspond à
+l'application de la transformée de Radon à la fonction d'atténuation de l'objet. Le problème
+fondamental de la tomographie consiste alors à reconstruire cette fonction d'atténuation à
+partir de ses intégrales de ligne, c'est-à-dire à inverser la transformée de Radon.
+Pour une fonction d'atténuation bidimensionnelle $A(x,y)$, la transformée de Radon est définie
+par :
+\begin{equation}
+\mathcal{R}\{A\}(\theta, s) =
+\int_{\mathbb{R}^2} A(x,y)\,
+\delta(x\cos\theta + y\sin\theta - s)\,\mathrm{d}x\,\mathrm{d}y,
+\end{equation}
+où $\theta$ représente l'angle de projection, $s$ la position du détecteur, et $\delta(\cdot)$
+la distribution de Dirac. Cette expression formalise le fait que chaque projection correspond
+à une intégrale de la fonction d'atténuation le long d'une droite.
 
 \subsubsection{La fonction d'atténuation représentant l'objet étudié}
 L'objet initial, considéré comme plan, est donné par une fonction d'atténuation qui, à chaque point du plan de coordonnées $(x, y)$, va associer un nombre $A(x, y)$ correspondant à la proportion des rayons qui sont absorbés par le matériau en ce point  : en un point d'un os, $A$ sera grand, et en un point de l'air, il sera faible.
 
-\subsubsection{Une loi physique}
+\subsubsection{Loi de Beer--Lambert et modélisation de l'atténuation}
 En supposant dans un premier temps que la fonction d'atténuation de notre objet est constante égale à $a$, pour tout rayon lumineux traversant notre objet, pour tout couple de points d'abscisses $x$ et $x+l$ sur ce rayon, les abscisses étant croissantes dans le sens du rayon, le rapport d'intensités lumineuses $\cfrac{I(x+l)}{I(x)}$ ne dépend que de $a$ et de la longueur $l$ traversée et pas du point $x$ (position).
 
 En omettant provisoirement la dépendance par rapport à $a$ et en notant alors $p(l)$ ce rapport $\cfrac{I(x+l)}{I(x)}$ qui correspond à la proportion de photons non
@@ -51,71 +102,140 @@ Autrement dit, pour tout $x$ et $x+l$ sur un axe  :
 
 Notons que si le phénomène physique d'atténuation est spécifique de la tomographie à rayons X, les méthodes de reconstruction sont en revanche plus générales et sont appliquées également dans d'autres systèmes d'imagerie, dans lesquelles des équations analogues expriment une fonction à reconstruire en fonction de projections. C'est le cas par exemple de la tomographie d'émission de simples photons utilisée en médecine nucléaire.
 
-\subsection{\Large Les méthodes itératives}
-Ces approches traitent la reconstruction comme un problème d'optimisation numérique. Elles cherchent à minimiser un critère d'erreur (souvent par les moindres carrés ou le maximum de vraisemblance) entre les projections mesurées et celles simulées à partir d'une image estimée. Elles sont particulièrement robustes face aux données bruitées ou incomplètes.
-Un aspect important des sciences physiques consiste à inférer des paramètres physiques à partir de données. En général, les lois de la physique permettent de calculer les valeurs des données étant donné un modèle. C'est ce qu'on appelle le problème direct.
+\subsubsection{Filtered Backprojection (FBP)}
+À partir de la modélisation physique de l'atténuation et de la formulation mathématique de la
+transformée de Radon, plusieurs méthodes analytiques ont été proposées pour résoudre le
+problème inverse de la reconstruction tomographique.
+La reconstruction d'images en tomodensitométrie à partir des projections aux rayons X repose
+classiquement sur trois grandes approches analytiques. La première est l'inversion directe de
+Fourier, fondée sur le théorème de la coupe de Fourier, selon lequel chaque projection acquise à
+un angle donné correspond à une droite dans l'espace fréquentiel bidimensionnel de l'objet.
+En théorie, l'acquisition d'un nombre suffisant de projections permet de remplir cet espace
+fréquentiel et d'obtenir l'image par transformation de Fourier inverse. Toutefois, la nécessité
+de rééchantillonner des données organisées sur une grille polaire vers une grille cartésienne
+rend cette méthode complexe et peu utilisée en pratique. La seconde approche consiste à
+appliquer une rétroprojection directe des projections, ce qui conduit à une image floue,
+équivalente à la convolution de l'image originale avec un noyau de type
+$1/\sqrt{x^2+y^2}$. La restauration de l'image nécessite alors une déconvolution bidimensionnelle,
+opération coûteuse en temps de calcul. La troisième méthode, la rétroprojection filtrée (Filtered
+Backprojection, FBP), constitue l'approche la plus répandue en pratique. Elle repose sur le
+filtrage préalable de chaque projection unidimensionnelle par un filtre rampe dans le domaine
+fréquentiel, avant la rétroprojection. Ce traitement permet de compenser le flou inhérent à la
+rétroprojection tout en conservant une complexité de calcul réduite, puisque le filtrage est
+effectué en une dimension. Ces méthodes analytiques supposent néanmoins la disponibilité d'un
+grand nombre de projections uniformément réparties, hypothèse qui n'est plus toujours valide
+dans des contextes modernes tels que l'imagerie à faible dose ou à angles limités, où des
+approches itératives basées sur le \emph{Compressed Sensing} sont alors privilégiées.
 
-Le \textbf{problème inverse}, quant à lui, vise à reconstruire le modèle à partir d'un ensemble de mesures. Ce paradigme trouve une application centrale dans le domaine de la \textbf{reconstruction d'image}, où l'on s'efforce de retrouver une image -- représentant par exemple une distribution de densité, une structure anatomique ou une source astrophysique -- à partir de données acquises de manière indirecte, sous-échantillonnée ou bruitée. Que ce soit en tomographie, en imagerie par résonance magnétique (IRM) ou en astronomie, la reconstruction repose sur l'inversion d'un modèle direct qui décrit le processus physique d'acquisition.
+\subsection{Méthodes itératives et Compressed Sensing}
 
-Dans le cas idéal, il existe une théorie exacte qui prescrit comment les données doivent être transformées pour reproduire le modèle ou l'image recherchée. Pour certains problèmes bien conditionnés et avec des données complètes, une telle théorie existe, en supposant que des ensembles de données infinis et exempts de bruit seraient disponibles. Toutefois, la plupart des situations pratiques en reconstruction d'image se heurtent à la mal-positude du problème inverse, nécessitant des approches régularisées pour obtenir des solutions stables et physiquement plausibles.
+La réduction des données de projection et de la dose de rayonnement en tomodensitométrie n'est
+pas simplement une préférence de calcul ; elle est dictée par la sécurité clinique, l'efficacité
+opérationnelle et les contraintes physiques des systèmes d'imagerie par rayons \(\mathbf{X}\). 
+Cette approche se justifie rigoureusement des points de vue médical, physique et systémique.
 
-\subsubsection*{\large Quelques exemples de problèmes inverse}
-\subsubsection{Déconvolution}
-Dans la déconvolution \cite{6}, on suppose que la mesure est une version convoluée de l'image réelle. L'opérateur est donc défini comme la convolution \( A : u \mapsto g \ast u \) avec un filtre \( g \). Dans le cas le plus simple, le filtre de convolution \( g \) est supposé connu. Un des exemples les plus connus est celui du débruitage, où le filtre utilisé est souvent le filtre gaussien, voir \Cref{fig:inverse_examples}.
+En premier lieu, la sécurité des patients est primordiale : les rayons \(\mathbf{X}\) ionisants
+utilisés en CT peuvent endommager l'ADN et augmenter le risque de cancer radio-induit,
+en particulier chez les populations pédiatriques ou lors d'expositions répétées. Le modèle
+linéaire sans seuil (LNT), pierre angulaire de la radioprotection, postule que toute
+réduction de dose diminue proportionnellement le risque à long terme. En pratique clinique
+moderne, où les examens CT se multiplient (dépistage, suivi longitudinal, planification
+radiothérapeutique), la réduction de la dose par acquisition est essentielle pour limiter
+l'exposition cumulative.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/deconvolution.png}
-    \caption{Dans le débruitage, l'objectif est de retrouver une image nette à partir d'une image floue, celle-ci étant obtenue par convolution avec un filtre gaussien.}
-    \label{fig:inverse_examples}
-\end{figure}
-\subsubsection*{Computed Tomography (CT)}
-Les examens par tomodensitométrie (CT) sont une méthode courante pour obtenir des images internes du corps humain. En gros, des rayons \(\mathbf{X}\) sont envoyés à travers le corps selon différentes directions. Pendant leur traversée, les rayons \(\mathbf{X}\) sont atténués en fonction de la densité des matériaux qu'ils rencontrent. Cette diminution d'intensité est ensuite mesurée sur le côté opposé du corps. L'ensemble de toutes ces mesures est appelé un \textit{sinogramme}.
-L'opérateur linéaire utilisé pour décrire le processus de scan est appelé la \textit{transformée de Radon}, étudiée par Johann Radon bien avant son utilisation pratique.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/computed_tomography.png}
-    \caption{\textbf{Exemple de tomodensitométrie (CT) avec le modèle de Shepp-Logan.} La colonne de gauche montre la rotation de la source de rayonnement, la colonne du milieu les mesures du détecteur pour un angle spécifique, et la colonne de gauche l'évolution du sinogramme.}
-    \label{fig:computed_tomography}
-\end{figure}
+D'un point de vue physique, la dose est approximativement proportionnelle au nombre de
+projections et au produit courant-temps du tube. Réduire l'un ou l'autre diminue donc
+directement l'exposition, mais augmente le bruit quantique des données, rendant la
+reconstruction plus difficile. Opérationnellement, un plus petit nombre de projections
+raccourcit la durée d'acquisition, réduisant les artefacts de mouvement et améliorant le
+débit patient. Pour les populations sensibles (enfants) ou dans des contextes d'imagerie
+répétée (radiothérapie guidée par l'image), cette réduction devient une obligation clinique
+et éthique, conforme au principe ALARA (As Low As Reasonably Achievable). Le défi technique
+réside dans la résolution du problème de reconstruction sous-déterminé qui en résulte,
+nécessitant des méthodes avancées comme la reconstruction itérative ou le Compressed Sensing
+pour préserver la qualité diagnostique malgré la réduction des données.
 
-\subsubsection{\large Mal-positude au sens de Hadamard}
-Lors de la résolution de problèmes inverses, nous devons faire face à certaines difficultés :
-\begin{itemize}
-    \item[-] \textbf{Le premier problème} survient s'il n'existe aucune solution au problème inverse. Cela peut se produire si la mesure est bruitée et que \(\mathbf{y}\) n'appartient pas à la plage de données supposée. Le problème de non-existence peut souvent être surmonté par une modélisation appropriée.
+\subsubsection{Formulation générale du problème inverse}
+Dans ce contexte, la reconstruction tomographique peut être formulée comme un
+\textbf{problème inverse régularisé}. De manière générale, un problème inverse consiste
+à reconstruire un modèle à partir de mesures indirectes issues d'un processus physique
+connu. Le \textbf{problème direct} décrit la formation des données de projection à partir
+de l'image inconnue, tandis que le \textbf{problème inverse} vise à retrouver cette image à
+partir des mesures acquises.
 
-    \item[-] \textbf{Le deuxième problème} survient si la solution du problème inverse n'est pas \textbf{unique}, c'est-à-dire s'il existe plusieurs entrées \(\mathbf{x}\) qui génèrent la même mesure \(\mathbf{y}\).
+En tomodensitométrie discrète, la relation entre l'image à reconstruire et les données
+de projection peut s'écrire sous la forme d'un système linéaire :
+\begin{equation}
+    \mathbf{g} = \mathbf{H}\mathbf{f} + \boldsymbol{\varepsilon},
+\end{equation}
+où $\mathbf{f}$ représente l'image vectorisée, $\mathbf{g}$ les données de projection
+(sinogramme), $\mathbf{H}$ la matrice du système modélisant la transformée de Radon discrète,
+et $\boldsymbol{\varepsilon}$ un terme représentant le bruit de mesure.
 
-    \item[-] \textbf{Le troisième problème, et le plus difficile}, survient si la résolution du problème inverse n'est pas \textbf{stable}, c'est-à-dire si le comportement de la solution ne varie pas continûment par rapport à la mesure \(\mathbf{y}\). Si le problème est instable, même de petites perturbations du bruit \(\varepsilon\) dans la mesure peuvent entraîner des artefacts importants dans la solution.
-\end{itemize}
+Dans un cadre idéal, l'opérateur $\mathbf{H}$ serait parfaitement inversible et les données
+seraient complètes et exemptes de bruit. En pratique, ces conditions ne sont jamais réunies.
+Le problème inverse est alors généralement \textbf{mal posé au sens de Hadamard}, en raison
+d'un manque d'unicité et surtout d'un fort manque de stabilité : de faibles perturbations du
+bruit peuvent engendrer de grandes erreurs dans l'image reconstruite. Les méthodes itératives
+abordent ce problème en recherchant une solution régularisée, obtenue par la minimisation
+d'une fonction de coût combinant un terme d'adéquation aux données et un terme de
+régularisation incorporant des connaissances \emph{a priori} sur l'image.
 
-\subsubsection{\large Quelques approches itératives}
-\begin{itemize}
-    \item[-] Méthodes algébriques (ART, SIRT, SART)
-    \item[-] Méthodes statistiques (ML-EM, OSEM, MAP)
-    \item[-] \textbf{Méthodes variationnelles} (régularisation de Tikhonov, Total Variation)
-    \item[-] \textbf{Compressive Sensing} (reconstruction à partir de mesures sous-échantillonnées)
-\end{itemize}
+\subsubsection{Principe du Compressed Sensing}
+Le Compressed Sensing fournit un cadre mathématique rigoureux pour la reconstruction de
+signaux parcimonieux ou compressibles à partir de mesures linéaires sous-échantillonnées,
+sous certaines conditions sur l'opérateur de mesure. Il permet de résoudre des problèmes
+inverses sous-déterminés au moyen de méthodes d'optimisation favorisant la parcimonie ou
+d'algorithmes gloutons, avec des garanties théoriques de stabilité et de robustesse au bruit.
 
-\subsection{\Large Méthodes basées sur l'apprentissage profond}
-Reconstruction par modèles neuronaux apprenant directement la relation données-image.
-\subsubsection{Quelques exemples}
-\begin{itemize}
-    \item[-] Réseaux feed-forward (U-Net, FBPConvNet)
-    \item[-] Architectures itératives unrolled
-    \item[-] Modèles génératifs (GAN, diffusion models)
-\end{itemize}\vspace{18pt}
-Bref, le processus est fondamentalement linéaire et mal conditionné, ce qui signifie que de petites erreurs dans les données peuvent entraîner de grandes erreurs dans l'image reconstruite. Cela rend la qualité de l'acquisition et le traitement préalable (filtrage, correction d'aberrations) essentiels.
-% \subsubsection{Le Sinogramme}
-% Les données collectées sont compilées sous forme de sinogramme. Il s'agit d'une représentation graphique en niveaux de gris où  :
-% \begin{itemize}
-%     \item[-] L'axe horizontal représente l'angle de la mesure.
-%     \item[-] L'axe vertical représente la distance du faisceau par rapport à l'origine. Une valeur de 0 (noir) indique aucun changement d'intensité, tandis qu'une valeur de 1 (blanc) signifie que le faisceau a été totalement absorbé.
-% \end{itemize}
+Dans le cadre de l'imagerie tomographique, le Compressed Sensing exploite l'idée que de
+nombreuses images médicales admettent une représentation parcimonieuse dans une base ou un
+dictionnaire approprié, tel que les ondelettes ou le gradient de l'image. La reconstruction
+est alors formulée comme un problème d'optimisation sous contrainte :
+\begin{equation}
+    \min_{\mathbf{f}} \; \|\mathbf{\Psi}\mathbf{f}\|_1
+    \quad \text{sous la contrainte} \quad
+    \|\mathbf{H}\mathbf{f} - \mathbf{g}\|_2 \leq \delta,
+\end{equation}
+où $\mathbf{\Psi}$ désigne un opérateur favorisant la parcimonie et $\delta$ un paramètre
+lié au niveau de bruit des données.
 
-% Pour reconstruire l'image originale à partir d'un sinogramme, plusieurs outils mathématiques sont nécessaires  :
-% \begin{itemize}
-% \item[-] \textbf{Transformée de Radon}  : Elle est au cœur du processus de récupération de l'image à partir des projections.
-% \item[-] Problème inverse  : Le défi consiste à utiliser les densités mesurées (données de sortie) pour retrouver le coefficient d'atténuation interne exact.
-% \item[-] Outils de traitement  : La reconstruction utilise la transformée de Fourier, le théorème de la coupe centrale et la formule de rétroprojection (backprojection).
-% \end{itemize}
+Cette formulation permet de reconstruire des images de qualité acceptable à partir d'un
+nombre de projections bien inférieur à celui requis par les méthodes analytiques classiques,
+tout en assurant une certaine stabilité du problème inverse.
+
+\subsubsection{Régularisation et variation totale}
+Une régularisation particulièrement adaptée à l'imagerie tomographique est la variation
+totale (TV), qui favorise les images composées de régions quasi uniformes séparées par des
+discontinuités nettes. La reconstruction TV est généralement formulée comme :
+\begin{equation}
+    \min_{\mathbf{f}} \;
+    \frac{1}{2}\|\mathbf{H}\mathbf{f} - \mathbf{g}\|_2^2
+    + \lambda \|\nabla \mathbf{f}\|_1,
+\end{equation}
+où $\nabla$ représente l'opérateur gradient discret et $\lambda$ un paramètre de
+régularisation contrôlant le compromis entre fidélité aux données et stabilisation du
+problème inverse.
+
+Cette approche permet de réduire efficacement le bruit tout en préservant les contours,
+qualité essentielle pour l'analyse diagnostique.
+
+\subsubsection{Algorithmes itératifs}
+La résolution des problèmes d'optimisation issus du Compressed Sensing et des méthodes
+variationnelles repose sur des algorithmes itératifs, tels que les méthodes de descente de
+gradient proximal, l'algorithme ISTA/FISTA, l'ADMM ou encore les méthodes de type primal-dual.
+Ces algorithmes procèdent par mises à jour successives de l'image estimée, alternant entre la
+réduction de l'erreur de projection et l'application de la régularisation.
+
+Bien que plus coûteuses en temps de calcul que les méthodes analytiques, les méthodes
+itératives offrent une qualité de reconstruction supérieure dans les scénarios de données
+limitées et constituent aujourd'hui un axe majeur de recherche et de développement en
+tomodensitométrie moderne.
+
+\subsubsection{Comparaison avec les méthodes analytiques}
+En résumé, les méthodes analytiques privilégient la rapidité et la simplicité au prix d'une
+sensibilité accrue au bruit et aux artefacts, tandis que les méthodes itératives et basées sur
+le Compressed Sensing s'inscrivent pleinement dans le cadre des problèmes inverses
+régularisés. Elles exploitent des informations \emph{a priori} et des contraintes de parcimonie
+pour améliorer la stabilité et la qualité de reconstruction dans des conditions d'acquisition
+dégradées, répondant ainsi aux exigences de sécurité clinique et d'efficacité opérationnelle.

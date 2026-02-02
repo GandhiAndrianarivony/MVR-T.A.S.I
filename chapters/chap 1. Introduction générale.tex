@@ -2,85 +2,183 @@
 % Chapitre 1 — Introduction générale
 %===========================================================
 
-\chapter{Introduction générale}
+\chapter{RECONSTRUCTION D'IMAGE}
+L'imagerie médicale occupe aujourd'hui une place centrale dans le diagnostic, le suivi thérapeutique et la recherche biomédicale. Des modalités telles que la tomodensitométrie (CT), l'imagerie par résonance magnétique (IRM) ou la tomographie par émission de positons (TEP) permettent d'explorer de manière non invasive l'anatomie et la physiologie du corps humain avec une précision toujours croissante. Toutefois, la qualité et la fiabilité de ces images reposent sur une étape fondamentale, souvent invisible pour l'utilisateur final : la reconstruction d'image.\vspace{5pt}\\
+La reconstruction d'image médicale consiste à transformer des données de mesure brutes, acquises selon différents angles ou configurations physiques, en représentations visuelles exploitables par le clinicien. Contrairement à la photographie classique, les systèmes d'imagerie médicale ne produisent pas directement des images des organes. Ils mesurent plutôt des interactions physiques --- telles que l'atténuation des rayons X, la réponse à des champs magnétiques ou les émissions radioactives --- qui ne constituent que des projections partielles de la réalité anatomique ou fonctionnelle. La reconstruction vise alors à estimer, à partir de ces projections, la distribution spatiale des tissus ou des activités biologiques.\vspace{5pt}\\
+En tomodensitométrie, les projections correspondent à l'atténuation des rayons X traversant le corps selon de multiples directions, tandis qu'en tomographie par émission de positons, elles résultent de la détection des photons émis par un traceur radioactif à l'intérieur du patient. Dans les deux cas, les données acquises sont incomplètes, bruitées et fortement corrélées, ce qui rend la reconstruction d'image intrinsèquement complexe. Ce processus s'inscrit dans le cadre des problèmes inverses, pour lesquels on cherche à retrouver les causes physiques à partir d'observations indirectes. Ces problèmes sont généralement mal posés au sens mathématique, plusieurs solutions pouvant conduire à des mesures expérimentales similaires.\vspace{5pt}\\
+Historiquement, les premières méthodes de reconstruction, telles que la rétroprojection filtrée, ont permis le développement clinique rapide de l'imagerie tomographique grâce à leur simplicité et à leur efficacité computationnelle. Cependant, ces approches restent sensibles au bruit et aux artefacts, en particulier lorsque les conditions d'acquisition s'éloignent du cadre idéal. Afin de pallier ces limitations, des méthodes itératives ont été développées. Celles-ci reposent sur une modélisation plus fidèle du processus d'acquisition et permettent d'intégrer des connaissances a priori sur les propriétés des images médicales, au prix d'un coût de calcul plus élevé.\vspace{5pt}\\
+Plus récemment, les méthodes basées sur des modèles physiques détaillés et l'intégration de techniques d'intelligence artificielle ont profondément renouvelé le domaine de la reconstruction d'image. Ces approches permettent de mieux prendre en compte la géométrie des systèmes d'acquisition, la physique des interactions rayonnement--matière ainsi que les caractéristiques des détecteurs. Elles ouvrent également la voie à des reconstructions plus rapides, plus robustes et de meilleure qualité, répondant à des enjeux majeurs tels que la réduction de la dose de rayonnement, la correction des artefacts et l'amélioration du contraste des images.\vspace{5pt}\\
 
-\section{Historique et généralités}
-Appareils photo numériques, scanners, images météo $\cdots$ les images ont naturellement envahi notre vie quotidienne. Leur traitement est désormais devenu commun dans beaucoup de domaines.
-La reconstruction d'image est un processus fondamental en imagerie médicale, scientifique et numérique, visant à reconstituer une image 3D ou une représentation précise à partir de données acquises de manière indirecte, souvent sous forme de projections 2D.
+\section{Modalités d'imagerie médicale et reconstruction d'images}
 
+L'imagerie médicale regroupe plusieurs modalités utilisées pour le diagnostic et la surveillance de nombreuses pathologies. Chaque modalité repose sur des principes physiques distincts et présente des caractéristiques spécifiques en termes d'acquisition et de reconstruction des images. Comprendre ces différences est essentiel afin d'apprécier les forces, les limites et les défis associés à chaque technique de reconstruction.
+\subsection{Tomodensitométrie (TDM)}
+
+La tomodensitométrie repose sur l'utilisation de rayons X pour produire des images détaillées de l'intérieur du corps humain. Un tube à rayons X et un ensemble de détecteurs tournent autour du patient, permettant l'acquisition de projections sous de multiples angles. Ces projections correspondent à l'atténuation du faisceau de rayons X par les tissus traversés.\vspace{5pt}\\
+Historiquement, la rétroprojection filtrée (\emph{Filtered Backprojection}, FBP) a constitué l'algorithme de reconstruction standard en TDM. Cette méthode consiste à filtrer les données de projection afin de corriger le flou inhérent à la rétroprojection, puis à les projeter dans l'espace image. Bien que rapide et robuste, la FBP est sensible au bruit, en particulier lorsque la dose de rayonnement est réduite.\vspace{5pt}\\
+Les systèmes de tomodensitométrie modernes intègrent de plus en plus des méthodes de reconstruction itérative. Ces techniques consistent à ajuster progressivement une estimation de l'image en comparant les projections mesurées aux projections simulées à partir de l'image courante. La reconstruction itérative permet de réduire le bruit, d'améliorer le contraste et de maintenir une qualité d'image acceptable à faible dose, au prix d'un temps de calcul plus important.\vspace{5pt}\\
+Un avantage majeur de la TDM réside dans la rapidité de la reconstruction, souvent réalisable en temps réel ou quasi temps réel. De plus, les valeurs reconstruites sont directement liées aux coefficients d'atténuation des tissus, ce qui confère à la tomodensitométrie une forte valeur quantitative.
+
+\subsection{Imagerie par résonance magnétique (IRM)}
+
+L'imagerie par résonance magnétique utilise un champ magnétique intense et des ondes radiofréquence pour produire des images des structures internes du corps. Elle repose sur les principes de la résonance magnétique nucléaire et permet d'obtenir des contrastes tissulaires riches sans exposition aux rayonnements ionisants.\vspace{5pt}\\
+Les données IRM sont acquises dans le domaine fréquentiel, appelé espace \(k\). La reconstruction d'image consiste principalement à appliquer une transformée de Fourier inverse afin de convertir ces données fréquentielles en une image spatiale. Cette approche confère à l'IRM une base mathématique élégante et bien établie.\vspace{5pt}\\
+Afin d'accélérer les temps d'acquisition, des techniques telles que le Fourier partiel et l'imagerie parallèle ont été développées. Des méthodes comme SENSE ou GRAPPA reposent sur le sous-échantillonnage de l'espace \(k\) et sur l'utilisation de multiples bobines de réception, combinées à des algorithmes de reconstruction capables de compenser les données manquantes.\vspace{5pt}\\
+La reconstruction en IRM reste toutefois complexe en raison de plusieurs facteurs, notamment les inhomogénéités du champ magnétique, les artefacts liés aux mouvements du patient et la nécessité de combiner correctement les signaux issus de systèmes multi-bobines. Ces défis requièrent des modèles de reconstruction sophistiqués et une calibration précise du système.
+
+\subsection{Tomographie par émission de positons (TEP)}
+
+La tomographie par émission de positons est une modalité d'imagerie fonctionnelle qui repose sur l'injection d'un traceur radioactif dans l'organisme. Le traceur émet des positons qui, après annihilation avec des électrons, produisent deux photons gamma émis en coïncidence et détectés par le système TEP.\vspace{5pt}\\
+Comme en tomodensitométrie, la rétroprojection filtrée a été historiquement utilisée pour la reconstruction des images TEP, en particulier dans les premiers systèmes. Toutefois, en raison du caractère bruité et statistique des données TEP, les méthodes itératives se sont rapidement imposées.\vspace{5pt}\\
+La majorité des systèmes TEP modernes utilisent des algorithmes itératifs, tels que la maximisation d'espérance par sous-ensembles ordonnés (\emph{Ordered Subsets Expectation Maximization}, OSEM). Ces méthodes modélisent finement la physique de l'acquisition et permettent d'intégrer diverses corrections, notamment celles liées à l'atténuation, à la diffusion et aux coïncidences aléatoires.\vspace{5pt}\\
+La reconstruction TEP présente des défis spécifiques, liés à la nécessité de corriger plusieurs phénomènes physiques. L'utilisation de scanners hybrides TEP-TDM ou TEP-IRM permet d'exploiter des informations anatomiques complémentaires afin d'améliorer la qualité et la quantification des images fonctionnelles.
+
+\subsection{Comparaison des modalités}
+
+Bien que la rétroprojection filtrée ait historiquement été utilisée en tomodensitométrie et en TEP, les méthodes de reconstruction itérative sont aujourd'hui privilégiées dans ces deux modalités en raison de leur capacité à améliorer la qualité d'image et à réduire les artefacts. À l'inverse, l'IRM repose principalement sur des reconstructions basées sur la transformée de Fourier, enrichies par des techniques d'accélération et de compensation des données manquantes.\vspace{5pt}\\
+Les processus d'acquisition diffèrent également de manière significative. En TDM et en TEP, les données sont directement liées à des propriétés physiques mesurables, telles que l'atténuation des rayons X ou la distribution d'un traceur radioactif. En IRM, l'acquisition repose sur une manipulation complexe des champs magnétiques et des impulsions radiofréquence afin de coder l'information spatiale.\vspace{5pt}\\
+Enfin, chaque modalité est sujette à des artefacts spécifiques nécessitant des stratégies de correction adaptées lors de la reconstruction. La TDM doit corriger des effets tels que le durcissement du faisceau, l'IRM est sensible aux inhomogénéités de champ et aux mouvements, tandis que la TEP requiert des corrections pour l'atténuation, la diffusion et les événements aléatoires.\vspace{5pt}\\
+En résumé, bien que la reconstruction d'images soit une étape essentielle commune à ces trois modalités, la nature des données, les modèles physiques sous-jacents et les défis algorithmiques diffèrent considérablement. La compréhension de ces spécificités est indispensable pour optimiser la qualité des images et garantir une information diagnostique fiable et pertinente.
+
+\section{La transformation de Radon et son rôle en reconstruction d'image}
 \subsubsection{Origines et développement historique}
 Les fondements théoriques de la reconstruction tomographique remontent au début du XXe siècle. En 1917, le mathématicien J. Radon a formulé une théorie mathématique permettant de reconstruire une fonction à partir de ses projections.
-Cependant, ce n'est qu'avec les progrès des calculateurs numériques dans les années 1960-1970 que cette théorie a pu être appliquée concrètement. Godfrey Hounsfield, ingénieur britannique, a mis au point le premier scanner TDM (tomodensitométrie ou CT) en 1971, grâce à un financement indirect provenant de la société EMI, associée au succès des Beatles. Ce développement a marqué la naissance de l'imagerie médicale tomographique, suivie par l'IRM et la tomoscintigraphie.
+Cependant, ce n'est qu'avec les progrès des calculateurs numériques dans les années 1960-1970 que cette théorie a pu être appliquée concrètement. Godfrey Hounsfield, ingénieur britannique, a mis au point le premier scanner TDM (tomodensitométrie ou CT) en 1971, grâce à un financement indirect provenant de la société EMI, associée au succès des Beatles. Ce développement a marqué la naissance de l'imagerie médicale tomographique, suivie par l'IRM et la tomoscintigraphie.\vspace{5pt}\\
+La transformation de Radon constitue un outil mathématique fondamental pour la reconstruction d'images à partir de projections. Elle est au cœur de nombreuses techniques d'imagerie médicale, en particulier la tomodensitométrie (TDM). Cette transformation permet de relier les mesures obtenues par les détecteurs à la distribution de densité des tissus à l'intérieur du corps.\vspace{5pt}\\
+Elle consiste à intégrer l'information provenant de différentes lignes de projection afin de créer un ensemble de mesures représentant l'objet examiné sous plusieurs angles. Dans le cadre de la TDM, ces projections correspondent à l'atténuation des rayons X lorsqu'ils traversent le corps. Chaque angle de mesure fournit une “ombre” partielle de la structure interne, et la transformation de Radon permet de regrouper l'ensemble de ces informations.\vspace{5pt}\\
+La transformée inverse de Radon joue un rôle central dans la reconstruction d'image. À partir des projections acquises, elle permet de reconstituer la distribution originale des tissus. L'une des méthodes les plus utilisées pour cette étape est la rétroprojection filtrée, qui combine les différentes projections après un traitement visant à corriger le flou inhérent aux mesures. Cette approche a longtemps constitué la base des reconstructions classiques en tomodensitométrie et demeure largement utilisée.\vspace{5pt}\\
+L'application de la transformation de Radon et de sa transformée inverse a révolutionné le diagnostic médical. Elle permet aujourd'hui de visualiser de manière non invasive et détaillée les structures internes du corps, offrant des images transversales précises qui améliorent la qualité et la fiabilité des examens cliniques.\vspace{5pt}\\
+En résumé, la transformation de Radon représente un composant essentiel de l'imagerie médicale moderne. Elle constitue le fondement de nombreuses techniques de reconstruction, transformant des données de projection en images exploitables, et reste un outil incontournable pour le diagnostic et le suivi des patients.
+\section{Limites et artefacts de la rétroprojection filtrée (FBP)}
 
-\subsubsection{Évolution avec l'intelligence artificielle}
-Depuis 2012, l'apprentissage profond a révolutionné le traitement d'images.
-Contrairement aux méthodes traditionnelles basées sur des étapes séquentielles (extraction de caractéristiques → reconnaissance), les réseaux de neurones profonds apprennent directement à partir d'images brutes, en utilisant des vérités terrain (annotations manuelles).
-Des architectures comme les réseaux antagonistes génératifs (GAN), les transformeurs ou les auto-encodeurs sont désormais utilisées pour la reconstruction d'images, la segmentation, le recalage ou la réduction de bruit
+La rétroprojection filtrée, ou \emph{Filtered Backprojection} (FBP), est un algorithme de reconstruction largement utilisé dans les modalités d'imagerie médicale telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP). Bien que cette méthode soit rapide et relativement efficace, elle présente plusieurs limitations et artefacts pouvant affecter la qualité des images reconstruites.
 
-% Un sujet très précis et intéressant ! La reconstruction d'images à partir de projections est un aspect crucial de l'imagerie médicale, en particulier dans des modalités telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP).
+\subsection{Limites de la rétroprojection filtrée}
 
+L'une des principales limites de la FBP réside dans le modèle d'atténuation qu'elle suppose. Celui-ci est souvent simplifié et peut ne pas représenter fidèlement les interactions complexes entre le rayonnement et les tissus du patient. Par ailleurs, l'algorithme a tendance à amplifier le bruit présent dans les données de projection, en particulier lorsque le filtrage appliqué n'est pas optimal. \vspace{5pt}\\
+La FBP peut également introduire des artefacts de stries, surtout lorsque les projections sont incomplètes ou bruitées. La résolution des composantes haute fréquence est limitée, entraînant une perte de détails fins dans l'image reconstruite. De plus, l'algorithme suppose un échantillonnage uniforme des projections, condition rarement parfaitement respectée dans la pratique clinique.
 
+\subsection{Artefacts associés à la FBP}
 
-% ==============================================================================================================================================================
-% \section{Cadres de reconstruction d'images}
-% \subsection{Méthodes directes et régularisation algébrique}
-% Pour les problèmes linéaires ($\mathcal{A}$ représenté par une matrice $\mathbf{A}$), la méthode des moindres carrés conduit naturellement à considérer le \textbf{pseudo-inverse} de Moore-Penrose :
+Plusieurs types d'artefacts peuvent apparaître dans les images reconstruites à l'aide de la FBP. Parmi les plus courants, on trouve les stries sombres ou lumineuses dues à des données incomplètes ou bruitées, ainsi que les artefacts en anneau, souvent liés à un mauvais calibrage des détecteurs. Le durcissement du faisceau peut également générer des bandes sombres ou des stries, conséquence de l'absorption préférentielle des photons de faible énergie.  \vspace{5pt}\\
+Des zones sombres peuvent apparaître lorsque le nombre de photons détectés est insuffisant, notamment en présence d'implants métalliques ou de tissus très absorbants. Enfin, la FBP reste sensible aux mouvements du patient pendant l'examen, ce qui peut provoquer du flou ou des stries supplémentaires dans l'image finale.
 
-% \begin{equation}
-%     \mathbf{x}_{\text{LS}} = \mathbf{A}^\dagger \mathbf{y} = (\mathbf{A}^T\mathbf{A})^{-1}\mathbf{A}^T\mathbf{y}
-%     \label{eq:pseudo_inverse}
-% \end{equation}
+\subsection{Stratégies pour atténuer les artefacts et limitations}
 
-% où $\mathbf{A}^\dagger$ désigne le pseudo-inverse. Cependant, cette approche naïve est généralement inapplicable en pratique à cause de la mal-positude :
-% \begin{itemize}
-%     \item[-] Si $\mathbf{A}^T\mathbf{A}$ est singulière ou mal conditionnée, son inversion amplifie démesurément le bruit.
-%     \item[-] Dans le cas sous-déterminé ($m < n$), la solution des moindres carrés n'est pas unique.
-% \end{itemize}
+Plusieurs approches permettent de réduire l'impact des limitations et des artefacts associés à la FBP. L'optimisation des protocoles d'acquisition, par exemple l'augmentation du nombre de projections ou l'utilisation de détecteurs plus performants, contribue à améliorer la qualité des données de base.  \vspace{5pt}\\
+Le pré-traitement des données, comme le filtrage du sinogramme ou la correction du durcissement du faisceau, peut également aider à atténuer les artefacts. L'emploi d'algorithmes de reconstruction plus avancés, tels que la reconstruction itérative ou basée sur un modèle, permet de surmonter certaines des limites inhérentes à la FBP. Enfin, des techniques de post-traitement d'image, incluant le filtrage et l'amélioration de contraste, complètent le processus pour améliorer la qualité visuelle et diagnostique des images reconstruites.\vspace{5pt}\\
+En résumé, bien que la rétroprojection filtrée reste un algorithme de reconstruction largement utilisé et efficace, elle comporte des limites et génère certains artefacts susceptibles d'affecter la qualité des images. La compréhension de ces contraintes est essentielle pour développer des stratégies adaptées, tant au niveau de l'acquisition que du traitement et de la reconstruction, afin d'optimiser les résultats en imagerie médicale.
 
-% La \textbf{régularisation} vise à stabiliser le problème en incorporant un terme de pénalité reflétant des connaissances a priori. La régularisation de Tikhonov, par exemple, résout :
+\section{Introduction au Compressed Sensing}
 
-% \begin{equation}
-%     \min_{\mathbf{x}} \left\{ \|\mathbf{A}\mathbf{x} - \mathbf{y}\|_2^2 + \lambda \|\mathbf{\Gamma}\mathbf{x}\|_2^2 \right\}
-%     \label{eq:tikhonov}
-% \end{equation}
+L’un des principes fondamentaux du traitement du signal repose sur la théorie
+d’échantillonnage de Nyquist--Shannon, selon laquelle le nombre d’échantillons
+nécessaires pour reconstruire un signal sans erreur est déterminé par sa bande
+passante, c’est-à-dire la longueur du plus petit intervalle contenant le support du
+spectre du signal considéré. Toutefois, au cours des dernières années, une théorie
+alternative appelée \emph{Compressed Sensing} (ou échantillonnage compressif) a
+émergé. Celle-ci démontre qu’il est possible de reconstruire des signaux et des images,
+y compris à haute résolution, à partir d’un nombre de mesures bien inférieur à celui
+classiquement requis.
 
-% où $\lambda > 0$ est un paramètre de régularisation et $\mathbf{\Gamma}$ un opérateur (souvent la dérivée première, imposant une régularité spatiale). La solution régularisée s'écrit alors :
+L’objectif du Compressed Sensing est de tirer parti de la structure intrinsèque des
+signaux afin de réduire significativement la quantité de données nécessaires lors du
+processus d’acquisition. Un aspect particulièrement remarquable de cette théorie
+réside dans ses nombreuses interactions avec divers domaines des sciences appliquées
+et de l’ingénierie, tels que les statistiques, la théorie de l’information, la théorie du
+codage ou encore l’informatique théorique, ce qui souligne son caractère fondamental
+et transversal.
 
-% \begin{equation}
-%     \mathbf{x}_{\lambda} = (\mathbf{A}^T\mathbf{A} + \lambda \mathbf{\Gamma}^T\mathbf{\Gamma})^{-1} \mathbf{A}^T\mathbf{y}
-%     \label{eq:tikhonov_solution}
-% \end{equation}
+De manière générale, la parcimonie, et plus largement la compressibilité, joue depuis
+longtemps un rôle central dans de nombreux domaines scientifiques. La parcimonie
+permet d’obtenir des estimations efficaces, notamment à travers des méthodes de
+seuillage ou de régularisation, dont les performances dépendent fortement du nombre
+réduit de composantes significatives du signal. Elle constitue également le fondement
+des techniques modernes de compression, où la qualité du codage dépend de la
+capacité du signal à admettre une représentation parcimonieuse dans une base
+appropriée. En outre, la parcimonie favorise la réduction de dimension ainsi que la
+construction de modèles compacts et efficaces.
 
-% Cette formulation peut être interprétée comme une version \textit{corrigée} du pseudo-inverse, où l'adjonction du terme $\lambda \mathbf{\Gamma}^T\mathbf{\Gamma}$ améliore le conditionnement numérique au prix d'un biais contrôlé.
+La contribution essentielle du Compressed Sensing réside dans le fait que la
+parcimonie n’intervient plus uniquement au stade du traitement ou de la compression,
+mais influence directement le processus d’acquisition des données. Cette approche
+ouvre la voie à des protocoles d’acquisition plus efficaces, permettant de convertir des
+signaux analogiques en une représentation numérique déjà compressée, tout en
+optimisant l’utilisation des ressources disponibles.
 
-% \subsection{Méthodes variationnelles et parcimonieuses}
+En pratique, il est bien établi que les signaux naturels possèdent une structure
+intrinsèque qui autorise une compression efficace avec une perte perceptuelle limitée.
+Les méthodes de codage par transformée exploitent le fait que de nombreux signaux
+admettent une représentation parcimonieuse dans une base fixe. Le schéma classique
+consiste à acquérir l’ensemble des données, à calculer tous les coefficients de la
+transformée, puis à ne conserver que les plus significatifs en éliminant les autres. Ce
+processus, bien que largement utilisé, demeure peu efficace, puisqu’il implique une
+acquisition massive de données dont une grande partie est finalement rejetée.
 
-% Les méthodes variationnelles généralisent l'approche de Tikhonov en considérant des fonctionnelles de régularisation plus sophistiquées :
+Cette observation soulève une question fondamentale : si la majorité des signaux sont
+compressibles, pourquoi acquérir l’intégralité des données alors qu’une grande partie
+sera inévitablement inutilisée~? Le Compressed Sensing apporte une réponse claire à
+cette problématique en montrant qu’il est possible d’acquérir directement les données
+sous une forme compressée, sans passer par une étape intermédiaire de
+sur-acquisition suivie de compression.
 
-% \begin{equation}
-%     \min_{\mathbf{x}} \left\{ \mathcal{D}(\mathbf{A}\mathbf{x}, \mathbf{y}) + \lambda \mathcal{R}(\mathbf{x}) \right\}
-%     \label{eq:variational}
-% \end{equation}
+\section{Reconstruction d'images par Compressive Sensing (CS)}
 
-% où $\mathcal{D}$ est un terme d'attache aux données (pas nécessairement quadratique) et $\mathcal{R}$ une pénalité reflétant des propriétés a priori (parcimonie, variation totale, etc.). Ces méthodes exploitent notamment la \textbf{parcimonie} des signaux d'intérêt dans des bases ou redondances appropriées.
+La \emph{Compressive Sensing} (CS) est une approche moderne de reconstruction d'images qui a émergé au milieu des années 2000 comme alternative aux méthodes classiques telles que la rétroprojection filtrée. Elle repose sur l’idée que de nombreuses images médicales peuvent être représentées de manière parcimonieuse dans un certain domaine de transformation, ce qui permet de reconstruire des images de qualité à partir d’un nombre réduit de mesures. Cette capacité à exploiter l’information essentielle rend la CS particulièrement pertinente dans des modalités où l’acquisition est longue, coûteuse ou comporte des risques pour le patient.
 
-% \subsection{Théorie du Compressive Sensing}
+\subsection{Principes et avantages}
 
-% Le \emph{Compressive Sensing} (CS) révolutionne l'acquisition en démontrant qu'un signal parcimonieux peut être exactement reconstruit à partir d'un nombre très réduit de mesures non adaptatives, pourvu que l'opérateur d'acquisition vérifie certaines propriétés (RIP, incohérence). Le problème de reconstruction en CS s'écrit typiquement :
+La CS réduit considérablement le nombre de projections ou d’échantillons nécessaires pour obtenir une image diagnostique exploitable. Elle est donc idéale pour des modalités telles que la tomodensitométrie, la TEP, ou l’IRM dynamique, où chaque mesure peut être longue ou exposer le patient à un rayonnement ou à un contraste. En exploitant la parcimonie naturelle des images médicales, la CS permet non seulement de diminuer la dose de rayonnement, mais aussi de réduire le temps global d’acquisition tout en maintenant une qualité diagnostique élevée.
 
-% \begin{equation}
-%     \min_{\mathbf{x}} \|\mathbf{\Psi}\mathbf{x}\|_1 \quad \text{sous la contrainte} \quad \|\mathbf{A}\mathbf{x} - \mathbf{y}\|_2 \leq \epsilon
-%     \label{eq:cs}
-% \end{equation}
+Un avantage supplémentaire réside dans sa capacité à limiter le bruit. Contrairement à la rétroprojection filtrée (FBP), qui peut amplifier les fluctuations aléatoires des mesures, la CS intègre des contraintes de régularisation qui favorisent des reconstructions plus stables, visuellement plus propres et moins sensibles aux artefacts issus des mesures bruitées.
 
-% où $\mathbf{\Psi}$ est une transformée (ondelettes, DCT, etc.) dans laquelle le signal est parcimonieux. Cette approche fournit un cadre théorique solide pour les problèmes fortement sous-déterminés.
+\vspace{0.2cm}
+\noindent
+\textbf{Contexte additionnel :}
+\begin{itemize}
+    \item \textbf{Transitions cliniques réussies :} Certains scanners commerciaux ont commencé à intégrer la CS, par exemple en tomodensitométrie cardiaque ou en imagerie mammaire, permettant une réduction de dose pouvant atteindre 50\% sans compromettre la qualité diagnostique.
+    \item \textbf{Fondement théorique :} La CS repose sur deux concepts clés : la parcimonie du signal et l’incohérence entre la matrice d’acquisition et la base dans laquelle le signal est parcimonieux, comme les ondelettes ou la variation totale.
+\end{itemize}
 
-% \subsection{Méthodes d'apprentissage profond}
+\subsection{Limites et défis}
 
-% Les méthodes d'apprentissage profond, et particulièrement les réseaux de neurones, offrent une alternative puissante aux approches variationnelles. Elles apprennent directement, à partir de grandes quantités de données, un opérateur de reconstruction :
-% \begin{equation}
-%     \hat{\mathbf{x}} = f_\theta(\mathbf{y})
-%     \label{eq:deep_learning}
-% \end{equation}
-% où $f_\theta$ est un réseau de neurones paramétré par $\theta$. Ces méthodes peuvent être conçues pour imiter des algorithmes d'optimisation (\emph{unrolling}), apprendre des régularisations implicites, ou générer des reconstructions par inversion directe apprise.
-% ==============================================================================================================================================================
+Malgré ses avantages, la CS présente des limites importantes. Elle repose sur l’hypothèse que les images sont parcimonieuses, ce qui n’est pas toujours vrai pour certaines structures anatomiques complexes. Les algorithmes CS sont itératifs et demandent plus de ressources computationnelles que la FBP, ce qui peut freiner leur utilisation dans des contextes nécessitant une reconstruction quasi temps réel.
+
+La qualité de reconstruction dépend fortement du choix de la régularisation et de l’algorithme d’optimisation. Des réglages inadéquats peuvent entraîner des artefacts, une perte de détails fins ou un lissage excessif des structures importantes, rendant l’interprétation diagnostique plus difficile.
+
+\vspace{0.2cm}
+\noindent
+\textbf{Contexte additionnel :}
+\begin{itemize}
+    \item \textbf{Validation clinique :} Les images reconstruites par CS peuvent paraître différentes de celles obtenues par FBP, même lorsque les métriques quantitatives, telles que le rapport signal-sur-bruit, sont meilleures. Les radiologues doivent donc s’adapter à ce nouvel “aspect” des images.
+    \item \textbf{Choix de la base parcimonieuse :} Le type de base choisi influence fortement la reconstruction : la variation totale favorise des contours nets, tandis que les ondelettes sont plus adaptées à la préservation des textures fines.
+\end{itemize}
+
+\subsection{Artefacts et comportements observés}
+
+Les artefacts observés en CS sont différents de ceux classiques de la FBP. On retrouve notamment des effets de bloc ou des textures irrégulières, généralement dus à un sous-échantillonnage excessif ou à une régularisation trop forte. Les détails fins peuvent être atténués et des motifs répétitifs peuvent apparaître dans certaines zones.  
+
+Les mouvements du patient ont un impact moindre que sur la FBP, mais ils peuvent encore dégrader les reconstructions, en particulier lorsque le nombre de mesures est limité ou que les projections sont bruitées.
+
+\vspace{0.2cm}
+\noindent
+\textbf{Contexte additionnel :}
+\begin{itemize}
+    \item \textbf{Artefacts de type « piqûre » (staircasing) :} Typiques de la régularisation par variation totale, ces artefacts donnent un aspect en escalier aux zones de gradient doux et peuvent masquer des lésions subtiles.
+    \item \textbf{Sensibilité aux hyperparamètres :} Contrairement à la FBP, qui ne nécessite presque aucun paramètre, la CS dépend fortement du poids de régularisation et des paramètres d’optimisation, souvent ajustés par validation croisée.
+\end{itemize}
+
+\subsection{Stratégies pour améliorer la reconstruction}
+
+Plusieurs stratégies permettent d’atténuer les limitations et les artefacts de la CS. L’optimisation des acquisitions, notamment via un sous-échantillonnage structuré plutôt qu’aléatoire, améliore la fidélité des reconstructions. Les algorithmes itératifs peuvent être combinés avec des techniques de régularisation adaptées, comme la parcimonie dans un domaine transformé ou la minimisation de normes spécifiques, afin d’obtenir des reconstructions plus robustes.
+
+Le post-traitement d’image, par filtrage ou amélioration adaptative du contraste, contribue également à améliorer la lisibilité et la qualité visuelle. Dans certaines modalités, comme l’IRM, des acquisitions adaptatives permettent de mieux préserver les informations structurelles tout en maintenant un niveau élevé de sous-échantillonnage.
+
+\vspace{0.2cm}
+\noindent
+\textbf{Contexte additionnel :}
+\begin{itemize}
+    \item \textbf{Avancées algorithmiques :} Les méthodes d’optimisation moderne, comme les algorithmes ADMM (Alternating Direction Method of Multipliers), ont amélioré la vitesse de convergence et la robustesse des reconstructions CS.
+    \item \textbf{Acquisitions structurées :} En IRM, des schémas d’échantillonnage variables dans l’espace de Fourier (k-space) permettent de mieux préserver les basses fréquences et d’optimiser la reconstruction des hautes fréquences sous-échantillonnées.
+    \item \textbf{Intégration multi-modale :} La CS peut être combinée avec d’autres approches, comme les modèles physiques ou les méthodes statistiques, pour renforcer la qualité des reconstructions et réduire les artefacts dans les cas difficiles.
+\end{itemize}

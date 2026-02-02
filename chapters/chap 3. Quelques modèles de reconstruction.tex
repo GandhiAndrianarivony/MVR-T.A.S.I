@@ -1,14 +1,14 @@
-\chapter{Quelques modèles de reconstruction}
-\section{Les traitements préalables à la reconstruction}
+\chapter{NOTRE MODÈLE}
+% \section{Les traitements préalables à la reconstruction}
 
-\subsection{\Large Méthodes dans le domaine spatial}
-% =================== TODO ==================
-\subsubsection{\large Filtrage linéaire}
-% =========================================
+% \subsection{ Méthodes dans le domaine spatial}
+% % =================== TODO ==================
+% \subsection{ Filtrage linéaire}
+% % =========================================
 
 
-% \subsection{\Large Méthodes dans le domaine transformé}
-\section{\large Transformée de Fourier}
+% \subsection{ Méthodes dans le domaine transformé}
+\section{ Transformée de Fourier}
 \begin{definition}[Transformée de Fourier]
     Soit \( f \) une fonction absolument intégrable sur \( \mathbb{R} \).
     La transformée de Fourier de \( f \), notée \( \mathcal{F}f \), est définie
@@ -75,7 +75,7 @@ g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
 \end{definition}
 
 % ================== TODO ==================
-\subsubsection{\large Filtre de Wiener}
+% \subsection{ Filtre de Wiener}
 % 1. Filtre de Wiener
 % ✅ Oui, tout à fait applicable
 % Le filtre de Wiener est un filtre linéaire adaptatif.
@@ -94,7 +94,7 @@ g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
 
 % 📌 Très utilisé comme prétraitement des sinogrammes en CT à faible dose.
 
-\subsubsection{\large Curvelets}
+% \subsection{ Curvelets}
 % 4. Curvelets
 % ✅ Oui, très pertinent
 % Les curvelets sont théoriquement bien adaptées :
@@ -207,6 +207,9 @@ ou encore \vspace{10pt}
     \label{eq:radon_transformation}
 \end{equation}
 
+$ln(\frac{I_0}{I_1})$ désigne les données de projection, communément appelées le sinogramme, qui résultent de l'acquisition des projections tomographiques.
+\medskip
+\noindent
 Nous sommes maintenant prêts à introduire des outils mathématiques — en particulier la transformée de Radon — qui joueront un rôle central dans la détermination du coefficient d'atténuation dans l'équation \eqref{eq:loi_beer_lambert}.
 
 L'écriture sous forme normale d'une équation de droite joue un rôle clé dans la transformée de Radon, car elle permet une paramétrisation naturelle et complète de toutes les droites du plan, ce qui est essentiel pour la définition mathématique et le calcul pratique de cette transformation.\\ 
@@ -218,7 +221,7 @@ Cette équation sous forme normale fournit :
     \item[(iv)] Un formalisme adapté au théorème de coupe, reliant transformée de Radon et transformée de Fourier 2D. 
     \item[(v)] Une mesure naturelle sur l'espace des droites, utilisée dans les formules d'inversion.
 \end{itemize}\vspace{10pt}
-\subsubsection{\small Construction de l'orientation et de la distance}
+\subsection{\small Construction de l'orientation et de la distance}
 Nous connaissons tous l'idée qu'une droite \( l \) dans \( \mathbb{R}^2 \) peut être représentée par l'équation 
 \[
 ax + by = c
@@ -555,7 +558,7 @@ de Fourier, ce qui nous ramène à la fonction de départ. Cela nous conduit à 
 de rétroprojection filtrée beaucoup plus simple :
 \begin{equation}
     f(x,y) = \frac{1}{2}\,\mathcal{B}(\varphi \star \mathcal{R}f)(x,y).
-    % \tag{8.2}
+    % 
     \label{eq:FBP_varphi_simple}
 \end{equation}
 
@@ -593,7 +596,7 @@ que nous devons porter notre attention sur les \emph{fonctions à bande limitée
         =
         0
         \quad \text{pour tout } \omega \notin [-L, L].
-        % \tag{8.3}
+        % 
         \label{eq:FBP_varphi_banded}
     \end{equation}
 \end{definition}
@@ -658,4 +661,862 @@ comme fonction $F(\omega)$,
 % ====== TODO ======
 % Python implementation
 % ==================
+
+\section{Discrétisation des méthodes analytiques}
+Ainsi nous avons traité presque exclusivement des intégrales continues pour la transformée de Radon, la transformée de Fourier et les formules de rétroprojection. En pratique, cependant, nous n'avons qu'un ensemble fini de données avec lesquelles travailler. Par conséquent, nous devrons former des versions discrètes de toutes les formules que nous avons utilisées dans notre rétroprojection filtrée.
+
+Une fonction discrète est une fonction définie uniquement sur un ensemble dénombrable. Pour nos besoins, nous considérerons des fonctions discrètes définies sur des ensembles finis (l'ensemble étant composé des lignes sur lesquelles nous avons pris nos mesures d'intensité). Soit \(g_n\) la fonction discrète \(g\) à la valeur \(n\). Comme nous connaissons cette fonction discrète sur un ensemble fini, soit \(N\), nous pouvons dire que \(g = g_n : 0 \le n \le N - 1\). Si nous voulons étendre cette définition à tous les entiers, nous pouvons simplement « répéter » notre fonction encore et encore ; c’est-à-dire, nous pouvons la rendre périodique avec une période \(N\). Cette extension sera utile pour certaines des formules discrètes que nous rencontrerons.
+
+Supposons que nous prenions des mesures à \(P\) angles différents \(\theta\) et que pour chaque angle nous ayons \(2M + 1\) faisceaux espacés d'une distance \(d\). Alors nous pouvons définir des valeurs particulières \(\theta_k\) et \(t_j\) comme
+
+\[
+\theta_k = \left\{ \frac{k \pi}{P} : 0 \le k \le P - 1 \right\},
+\]
+
+\[
+t_j = \{ jd : -M \le j \le M \}.
+\]
+
+Ce qui nous permet de définir une ligne particulière comme \(l_{t_j, \theta_k}\). Nous définissons donc la transformée de Radon discrète comme suit :
+
+\begin{definition}
+Pour une fonction absolument intégrable \(f\) et \(0 \le k \le P\) et \(-M \le j \le M\), \((P, M > 0)\), nous définissons la transformée de Radon discrète de \(f\), notée \(\mathcal{R}_D f\), comme
+
+\[
+\mathcal{R}_D f_{j,k} = \mathcal{R} f(t_j, \theta_k).
+\]
+
+\end{definition}
+Pour mettre en œuvre la formule de rétroprojection filtrée \eqref{eq:FBP_varphi_approx}, nous devons également définir la convolution de deux fonctions discrètes.
+
+\begin{definition}
+Pour deux fonctions discrètes \(N\)-périodiques \(f\) et \(g\), nous définissons la \textbf{convolution discrète} de \(f\) et \(g\), notée \(f \star g\), comme
+
+\[
+(f \star g)_m = \sum_{j=0}^{N-1} f_j \cdot g_{(m-j)}, \quad \text{pour } m \in \mathbb{Z}.
+\]
+Évidemment, nous aurons également besoin de la transformée de Fourier discrète.
+\end{definition}
+
+\begin{definition}[Transformée de Fourier discrète]
+Étant donnée une fonction discrète $N$-périodique $f$, nous définissons la \textbf{transformée de Fourier discrète} de $f$, notée $\mathcal{F}_D f$, par
+\begin{equation}
+(\mathcal{F}_D f)_j = \sum_{k=0}^{N-1} f_k e^{i 2 \pi k j / N}, \quad \text{pour } j = 0, 1, \dots, (N-1).
+\end{equation}
+Il convient de noter que la $N$-périodicité de $f$ nous permet de remplacer les bornes de la sommation par tout ensemble d'entiers de longueur $(N-1)$. Avec cette définition, il n'est pas surprenant que nous définissions la transformée de Fourier discrète inverse de la manière suivante.
+\end{definition}
+
+\begin{definition}[Transformée de Fourier discrète inverse]
+Étant donnée une fonction discrète $N$-périodique $g$, la \textbf{transformée de Fourier discrète inverse} de $g$, notée $\mathcal{F}_D^{-1} g$, est définie par
+\begin{equation}
+(\mathcal{F}_D^{-1} g)_n = \frac{1}{N} \sum_{k=0}^{N-1} g_k e^{i 2 \pi k n / N}, \quad \text{pour } n = 0, 1, \dots, (N-1).
+\end{equation}
+\end{definition}
+
+Nous remarquons que plusieurs des mêmes propriétés de la transformée de Fourier que nous avons définies dans le cadre continu s'appliquent également au cas discret avec de légères modifications :
+
+\begin{proposition}[Propriétés des fonctions discrètes $N$-périodiques]
+Pour des fonctions discrètes $N$-périodiques $f$ et $g$ :
+\begin{enumerate}
+    \item $\mathcal{F}_D(f \star g) = (\mathcal{F}_D f) \cdot (\mathcal{F}_D g)$
+    \item $\mathcal{F}_D(f \cdot g) = \frac{1}{N} (\mathcal{F}_D f) \star (\mathcal{F}_D g)$
+    \item $\mathcal{F}_D^{-1}(\mathcal{F}_D f)_n = f_n \quad \text{pour tout } n \in \mathbb{Z}$
+\end{enumerate}
+\end{proposition}
+
+Nous sommes maintenant prêts à aborder la discrétisation de la formule de rétroprojection elle-même. Rappelons que la formule de rétroprojection était définie comme une intégrale de $0$ à $\pi$ par rapport à $d\theta$. Dans le cas discret, nous avons remplacé ce $d\theta$ continu par $k\pi / P$ pour $0 \le k \le (P-1)$. Cela conduit à la définition suivante de la \textbf{rétroprojection discrète} :
+
+\begin{definition}[Rétroprojection discrète]
+Étant donnée une fonction discrète $h$, nous définissons la \textbf{rétroprojection discrète} de $h$, notée $\mathcal{B}_D h$, par
+\begin{equation}
+\mathcal{B}_D h(x,y) = \frac{1}{N} \sum_{k=0}^{N-1} h \big(x \cos \frac{k \pi}{N} + y \sin \frac{k \pi}{N}, k \pi / N \big).
+\label{eq:discrete_backprojection}
+\end{equation}
+\end{definition}
+
+Rappelons notre forme finale pour la formule filtrée de rétroprojection en équation \eqref{eq:FBP_varphi_approx} :
+$$
+f(x,y) \approx \frac{1}{2} \mathcal{B} (\mathcal{F}^{-1} S' \star \mathcal{R} f)(x,y).
+$$
+
+Pour former la version discrète de cette équation, nous voyons que nous devons appliquer la formule suivante:
+\begin{equation}
+f(x,y) \approx \frac{1}{2} \mathcal{B}_D \left( \mathcal{F}_D^{-1} \mathcal{S}' \ast \mathcal{R}_D f \right)(x,y).
+\end{equation}
+
+Nous rencontrons maintenant un léger problème. $\mathcal{R}_D f$ représente les données mesurées basées sur les intensités finales d'un seul faisceau de rayons X. Nous avons défini les emplacements des différents faisceaux (et donc des différentes coupes) en utilisant un système de coordonnées perpendiculaire aux coordonnées polaires basé sur des angles discrets $\theta$ et des distances $t$.  
+
+En examinant l'équation \eqref{eq:discrete_backprojection}, nous voyons que nous devons sommer sur $h$ en différents points $(x,y)$ dans le système de coordonnées cartésien pour créer une grille de niveaux de gris rectangulaire qui représente notre objet original. Les systèmes de coordonnées polaires et cartésiens ne correspondent pas nécessairement parfaitement, et nous devons donc \emph{interpoler} les points de données manquants. L'interpolation consiste à créer une fonction continue (ou au minimum par morceaux continues) à partir d'un ensemble discret de valeurs. Il existe de nombreuses méthodes pour interpoler une fonction (spline cubique, Lagrange, etc.), chacune ayant ses avantages et inconvénients.  
+
+Pour nos besoins, nous allons définir un type général d'interpolation basé sur une fonction de pondération $W$ qui détermine comment nous allons choisir nos points interpolés. Nous ne définissons pas de fonction de pondération particulière $W$, car les détails de l'interpolation ne sont pas aussi importants que le fait que nous pouvons remplir les "trous" dans nos données.
+
+\begin{definition}
+Pour une fonction de pondération donnée $W$ et une fonction discrète $N$-périodique $g$, l'\emph{interpolation $W$} de $g$ est définie par :
+\begin{equation}
+\mathcal{I}_W(g)(x) = \sum_n g(n) \cdot W\left(\frac{x}{d}-n\right), \quad \text{pour } -\infty < x < \infty.
+\end{equation}
+\end{definition}
+
+Maintenant que nous avons couvert toutes les parties de l'équation \eqref{eq:FBP_varphi_simple} dans un cadre discret et traité le problème de l'interpolation, nous pouvons proposer un algorithme de reconstruction discret pour résoudre le coefficient d'atténuation à partir d'un ensemble de données discret.  
+
+Nous interpolons ici la fonction $\left(\mathcal{F}_D^{-1}\mathcal{S}'\right) \ast \mathcal{R}_D f(jd,k\pi/N)$ (c'est-à-dire que nous remplissons les trous après le filtrage de la transformée de Radon). Définissons cette fonction interpolée comme $\mathcal{I}$. Cela conduit à la formule de reconstruction suivante :
+
+\begin{equation}
+\begin{aligned}
+f(x_m,y_n) &\approx \frac{1}{2} \mathcal{B}_D \left( \left( \mathcal{F}_D^{-1}\mathcal{S}' \right) \ast \mathcal{R}_D f \right) (jd, k\pi/N) \\
+&\approx \frac{1}{2} \mathcal{B}_D \mathcal{I}(x_m,y_n) \\
+&= \frac{1}{2N} \sum_{k=0}^{N-1} \mathcal{I} \left( x_m \cos \frac{k\pi}{N} + y_n \sin \frac{k\pi}{N}, \frac{k\pi}{N} \right).
+\end{aligned}
+\end{equation}
+
+L'équation précédente tient compte de la nature discrète de nos données réelles et traite les problèmes (comme le manque de données) qui surviennent lorsque l'on dispose d'un nombre fini de mesures.
+
+
+\section{Formulation linéaire -- Synthèse}
+% Alternative: Formulation linéaire de la reconstruction tomographique
+D'accord, nous allons expliquer pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \(g = Af\)} utilisée en pratique en tomographie.
+
+\subsection{Rétroprojection filtrée continue}
+On a la formule continue pour la reconstruction filtrée :
+\[
+f(x,y) = \frac{1}{2} \int_0^\pi \Big( (\mathcal{F}^{-1} S') \star \mathcal{R} f \Big)(x\cos\theta + y\sin\theta, \theta) \, d\theta
+\]
+
+Ici :
+\begin{itemize}
+    \item $f(x,y)$ : coefficient d'atténuation à reconstruire,
+    \item $\mathcal{R} f(t,\theta)$ : transformée de Radon (projection à l'angle $\theta$),
+    \item $\mathcal{F}^{-1} S'$ : filtre appliqué sur chaque projection,
+    \item $\star$ : convolution dans $t$.
+\end{itemize}
+
+C'est une \textbf{formule intégrale continue}, dépendante de coordonnées polaires.
+
+\subsection{Discrétisation des coordonnées et des angles}
+
+Pour passer au discret :
+\begin{enumerate}
+    \item On ne mesure que $P$ angles : $\theta_k = k\pi/P$, $k = 0,\dots,P-1$,
+    \item On ne mesure que $2M+1$ faisceaux par angle, espacés de $d$ : $t_j = j d, j=-M,\dots,M$,
+    \item On obtient donc la \textbf{transformée de Radon discrète} :
+    \[
+    \mathcal{R}_D f_{j,k} = \mathcal{R} f(t_j, \theta_k).
+    \]
+\end{enumerate}
+
+\subsection{Convolution et filtrage discrets}
+
+On applique ensuite le filtre sur chaque projection :
+\[
+h_{j,k} = (\mathcal{F}_D^{-1} \mathcal{S}' \ast \mathcal{R}_D f)_{j,k}
+\]
+
+Ici, $\ast$ est la \textbf{convolution discrète} dans $t$ :
+\[
+(f \ast g)_m = \sum_{n=0}^{N-1} f_n \, g_{(m-n)}.
+\]
+
+\subsection{Discrétisation de la rétroprojection}
+
+La rétroprojection discrète est :
+\[
+f(x_m,y_n) \approx \frac{1}{2N} \sum_{k=0}^{N-1} h\Big( x_m \cos \frac{k\pi}{N} + y_n \sin \frac{k\pi}{N}, \frac{k\pi}{N} \Big).
+\]
+
+Comme les coordonnées cartésiennes $(x_m, y_n)$ ne tombent pas exactement sur les positions $t_j$, on \textbf{interpole} :
+\[
+h\big(x_m\cos\theta_k + y_n \sin\theta_k, \theta_k\big) \approx \sum_j h_{j,k} \, W\left(\frac{x_m \cos\theta_k + y_n \sin\theta_k - t_j}{d}\right),
+\]
+où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).  
+Cela transforme chaque $f(x_m, y_n)$ en \textbf{combinaison linéaire des mesures $h_{j,k}$}.
+
+\subsection{Passage à la forme matricielle linéaire}
+
+Si on note :
+\begin{itemize}
+    \item $f$ le vecteur de tous les $f(x_m, y_n)$ sur la grille,
+    \item $g$ le vecteur de toutes les mesures projetées filtrées $h_{j,k}$,
+    \item $A$ la matrice représentant la \textbf{rétroprojection + interpolation},
+\end{itemize}
+
+alors :
+\[
+f_i = \sum_j A_{ij} \, g_j
+\]
+
+Chaque coefficient $A_{ij}$ représente le poids avec lequel la projection $g_j$ contribue au pixel $f_i$.  
+
+On obtient donc :
+\[
+\boxed{g = Af} \quad \text{ou souvent } f = A g \text{ selon la notation.}
+\]
+
+En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un simple \textbf{produit matriciel}.
+
+\subsection{Synthèse}
+
+Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes principales :
+\begin{enumerate}
+    \item \textbf{Échantillonnage discret} des angles et des faisceaux → $\mathcal{R}_D f$,
+    \item \textbf{Filtrage discret} via convolution et transformée de Fourier discrète,
+    \item \textbf{Rétroprojection discrète} et interpolation sur la grille cartésienne,
+    \item \textbf{Écriture linéaire} : chaque pixel reconstruit est une combinaison linéaire des mesures → matrice $A$.
+\end{enumerate}
+
+Ainsi, \textbf{toute la formule intégrale est transformée en somme discrète}, et la linéarité de la convolution et de la rétroprojection permet de la représenter par $A$.
+
+% ---- TODO -----
+% \section{Limites de la méthode analytique}
+% ============================================================
+\section{Théorie du Compressed Sensing}
+% ============================================================
+
+En tomodensitométrie (CT), la réduction du nombre de projections et de la dose de rayonnement
+constitue un enjeu majeur de sécurité clinique et de performance opérationnelle. La diminution
+de l'exposition aux rayons $\mathbf{X}$ vise à limiter les risques biologiques associés aux
+rayonnements ionisants, en particulier dans les contextes d'examens répétés ou pour les
+populations sensibles. Toutefois, cette réduction conduit inévitablement à une acquisition
+de données incomplètes et bruitées, rendant la reconstruction d'image plus difficile.\vspace{5pt}\\
+D'un point de vue mathématique, cette situation se traduit par un problème inverse
+sous-déterminé, pour lequel les méthodes analytiques classiques, telles que la
+rétroprojection filtrée, deviennent instables ou génèrent des artefacts importants.
+Le \emph{Compressed Sensing} (CS) fournit un cadre théorique et algorithmique permettant
+d'aborder cette problématique en exploitant des propriétés structurelles des images CT.
+
+\begin{definition}
+    Le \emph{compressed sensing} (CS) est un cadre mathématique et algorithmique permettant la
+    reconstruction de signaux de grande dimension à partir d'un nombre de mesures
+    significativement inférieur à celui requis par les méthodes d'échantillonnage classiques,
+    sous réserve que le signal présente une structure de parcimonie adaptée.
+\end{definition}
+
+\begin{definition}
+    Soit $x \in \mathbb{R}^{n}$ un signal inconnu. On dit que $x$ est
+    \(k\)-parcimonieux dans une base (ou un dictionnaire) \(\Psi\)
+    (par exemple ondelettes, DCT) si
+    \[
+        x = \Psi \alpha, \qquad \text{où } \alpha \text{ possède au plus } k \ll n
+        \text{ coefficients non nuls}.
+    \]
+\end{definition}
+
+Dans le cas des images CT, bien que la distribution d'atténuation ne soit pas parcimonieuse
+dans le domaine spatial, elle est souvent compressible dans des bases multi-échelles ou via
+le gradient de l'image. Cette propriété constitue le fondement de l'application du
+compressed sensing à la reconstruction tomographique.
+
+Les mesures acquises lors d'un examen CT peuvent être modélisées par un ensemble de relations
+linéaires :
+\[
+    \mathbf{y} = \mathbf{A}\mathbf{x},
+\]
+où $\mathbf{A} \in \mathbb{R}^{m \times n}$ représente l'opérateur de projection discrétisé
+(assimilable à la transformée de Radon discrète) et $m \ll n$ lorsque le nombre de projections
+est réduit.
+
+Contrairement au cadre classique de l'échantillonnage, qui impose un nombre de mesures au
+moins égal à la dimension du signal, le compressed sensing montre que
+\[
+    m \gtrsim k \log(n/k)
+\]
+peut être suffisant pour une reconstruction stable, sous des conditions appropriées sur
+l'opérateur $\mathbf{A}$, telles que l'incohérence ou la propriété d'isométrie restreinte
+(\emph{Restricted Isometry Property}, RIP).
+
+\subsection{Le problème inverse en tomodensitométrie}
+
+La reconstruction CT s'inscrit dans le cadre général des problèmes inverses, où l'objectif
+est d'estimer une image à partir de mesures indirectes, bruitées et incomplètes. Ce problème
+peut être formulé sous la forme :
+\begin{equation}
+    \mathbf{y} = \mathcal{A}\mathbf{x} + \mathbf{n},
+    \label{eq:inverse_problem}
+\end{equation}
+où :
+\begin{itemize}
+    \item[-] $\mathbf{x} \in \mathbb{R}^n$ représente la distribution d'atténuation à reconstruire,
+    \item[-] $\mathbf{y} \in \mathbb{R}^m$ correspond aux données de projection (sinogramme),
+    \item[-] $\mathcal{A}$ modélise le processus de projection CT,
+    \item[-] $\mathbf{n}$ représente le bruit de mesure, principalement de nature quantique.
+\end{itemize}
+
+Lorsque le nombre de projections est réduit, l'opérateur $\mathcal{A}$ devient non inversible
+et le problème est sous-déterminé. Cette situation est inhérente aux stratégies de réduction
+de dose et ne peut être évitée sans compromettre la sécurité du patient.
+
+\subsection{Mal-positude et conséquences pratiques}
+
+\begin{definition}
+    Un problème est dit \textbf{bien posé} au sens de Hadamard s'il vérifie l'existence,
+    l'unicité et la stabilité de la solution. Si l'une de ces conditions n'est pas satisfaite,
+    le problème est dit \emph{mal posé}.
+\end{definition}
+
+Dans le contexte de la reconstruction CT à faible dose, la condition d'unicité est violée
+du fait de la sous-détermination, et la condition de stabilité est fortement compromise par
+la présence de bruit. De faibles fluctuations du sinogramme peuvent ainsi engendrer des
+artefacts marqués dans l'image reconstruite.
+
+\subsection{Régularisation par parcimonie et Compressed Sensing}
+
+Pour rendre le problème inverse traitable, il est nécessaire d'introduire des informations
+a priori sur la solution recherchée. Le compressed sensing propose d'utiliser la parcimonie
+ou la compressibilité de l'image CT dans une représentation appropriée comme mécanisme de
+régularisation.\vspace{5pt}\\
+Cette hypothèse restreint l'ensemble des solutions admissibles et permet de transformer un
+problème inverse mal posé en un problème d'optimisation bien conditionné, pour lequel une
+solution stable et physiquement plausible peut être obtenue malgré la réduction du nombre
+de projections.\vspace{5pt}\\
+Jusqu'à présent, le compressed sensing a été présenté comme un cadre
+théorique exploitant la parcimonie pour résoudre des problèmes inverses
+sous-déterminés. En pratique, cette hypothèse de parcimonie est intégrée
+au processus de reconstruction via des formulations variationnelles.
+Ces formulations constituent un cadre général permettant d'unifier les
+approches classiques de régularisation et les méthodes issues du
+compressed sensing.
+
+\subsection{Formulation variationnelle des problèmes inverses}
+% ============================================================================================
+
+Dans de nombreux problèmes d'imagerie, et en particulier en tomodensitométrie
+à faible dose, l'objectif est de reconstruire une image inconnue
+$\mathbf{x} \in \mathbb{R}^n$ à partir d'un ensemble de mesures
+$\mathbf{y} \in \mathbb{R}^m$ obtenues par un système d'acquisition indirect.
+Ce processus est généralement modélisé par une relation linéaire de la forme
+\[
+\mathbf{y} = \mathcal{A}\mathbf{x} + \boldsymbol{\varepsilon},
+\]
+où $\mathcal{A}$ représente l'opérateur direct du système CT et
+$\boldsymbol{\varepsilon}$ un terme de bruit.
+
+Lorsque les données sont bruitées et/ou acquises de manière incomplète
+($m \ll n$), l'opérateur $\mathcal{A}$ devient non inversible ou mal conditionné.
+Dans ce cas, une inversion directe est soit impossible, soit extrêmement
+instable, et de petites perturbations des données peuvent engendrer de fortes
+dégradations de la solution reconstruite. Ce phénomène est caractéristique des
+problèmes inverses mal posés.
+
+\begin{definition}
+Un \emph{problème inverse} consiste à estimer une quantité inconnue
+$\mathbf{x}$ à partir d'observations indirectes $\mathbf{y}$, reliées par un
+opérateur $\mathcal{A}$, lorsque l'inversion directe de cet opérateur est
+impossible ou instable.
+\end{definition}
+
+\paragraph{Principe de la régularisation.}
+Afin de rendre le problème inverse traitable, il est nécessaire d'introduire
+des informations a priori sur la solution recherchée. Cette démarche est
+connue sous le nom de \emph{régularisation}.
+
+\begin{definition}
+Une régularisation est une application
+$\mathfrak{R}_{\alpha} : \mathbb{R}^m \rightarrow \mathbb{R}^n$ qui associe à
+des données observées $\mathbf{y}$ une solution stable $\hat{\mathbf{x}}$,
+en incorporant des hypothèses supplémentaires sur la structure de la solution.
+\end{definition}
+
+Intuitivement, une méthode de régularisation vise à étendre la notion d'inverse
+au cadre bruité et mal posé, de sorte que
+\[
+\mathfrak{R}_{\alpha}(\mathcal{A}\mathbf{x} + \boldsymbol{\varepsilon})
+\approx \mathbf{x},
+\]
+même lorsque $\boldsymbol{\varepsilon} \neq \mathbf{0}$ ou que
+$\mathcal{A}$ n'est pas inversible.
+
+\paragraph{Formulation variationnelle.}
+Une approche largement utilisée pour implémenter la régularisation consiste à
+formuler le problème inverse comme un problème d'optimisation variationnelle,
+dans lequel on recherche une solution équilibrant fidélité aux données et
+conformité aux a priori. Cette formulation s'écrit généralement sous la forme
+
+\begin{equation}
+    \hat{\mathbf{x}} =
+    \underset{\mathbf{x} \in \mathbb{R}^n}{\arg\min}
+    \left\{
+    \underbrace{\left\| \mathcal{A}\mathbf{x} - \mathbf{y} \right\|_{2}^{2}}_{\text{fidélité aux données}}
+    + \alpha
+    \underbrace{\mathcal{R}(\mathbf{x})}_{\text{terme de régularisation}}
+    \right\}.
+\end{equation}
+
+Les différents termes de cette formulation jouent des rôles complémentaires :
+
+\begin{itemize}
+    \item \textbf{Fidélité aux données :}
+    Ce terme impose la cohérence entre l'image reconstruite $\mathbf{x}$ et les
+    mesures observées $\mathbf{y}$. Dans un contexte bruité, il n'est pas souhaitable
+    de l'annuler strictement, car cela conduirait à une reconstruction amplifiant
+    le bruit.
+
+    \item \textbf{Terme de régularisation :}
+    Le régularisant $\mathcal{R}(\mathbf{x})$ encode les informations a priori
+    disponibles sur la solution recherchée, telles que la régularité, la
+    parcimonie ou des contraintes physiques. Il permet de restreindre l'ensemble
+    des solutions admissibles et d'améliorer la stabilité du problème.
+
+    \item \textbf{Paramètre de régularisation $\alpha$ :}
+    Le paramètre $\alpha > 0$ contrôle le compromis entre fidélité aux données
+    et influence de l'a priori. Un choix inadéquat peut conduire soit à une
+    reconstruction bruitée (faible $\alpha$), soit à une image excessivement
+    lissée (grand $\alpha$).
+\end{itemize}
+
+\paragraph{Cas particulier : régularisation de Tikhonov.}
+Une régularisation classique consiste à choisir un régularisant quadratique,
+conduisant à la régularisation dite de Tikhonov. Par exemple, en supposant que
+la solution recherchée soit proche d'un modèle de référence $\boldsymbol{\mu}$,
+on peut définir
+\[
+\mathcal{R}(\mathbf{x})
+= \| \mathbf{x} - \boldsymbol{\mu} \|_{L^{2},\mathcal{Q}}^{2}
+:= \langle \mathbf{x} - \boldsymbol{\mu},
+\mathcal{Q}(\mathbf{x} - \boldsymbol{\mu}) \rangle,
+\]
+où $\mathcal{Q}$ est un opérateur positif définissant une pondération
+directionnelle.
+
+Bien que cette approche soit mathématiquement simple et numériquement stable,
+elle favorise des solutions lisses et ne permet pas de promouvoir des structures
+parcimonieuses. Dans le contexte de la reconstruction CT à faible dose, elle est
+souvent insuffisante pour préserver les contours et les détails fins.
+
+\medskip
+\noindent
+Le compressed sensing s'inscrit naturellement dans ce cadre variationnel en
+choisissant des régularisants non quadratiques conçus pour promouvoir la
+parcimonie ou la compressibilité de l'image, tels que les normes $\ell_1$ ou la
+variation totale. Ces choix conduisent à des problèmes d'optimisation
+non différentiables, nécessitant des algorithmes itératifs spécifiques, qui
+seront abordés dans les sections suivantes.
+
+% ============================================================================================
+\subsection{Formulation du problème}
+
+Dans le cadre de la tomographie par rayons X (CT), la reconstruction d’image à partir d’un nombre limité de projections conduit à un problème inverse sous-déterminé. Le cadre du \emph{Compressed Sensing} (CS) permet de résoudre ce problème en exploitant la parcimonie intrinsèque des images CT dans un domaine approprié, typiquement le domaine du gradient.
+
+\begin{definition}[Image et représentation parcimonieuse]
+Considérons une image $f$, vue comme un vecteur colonne de dimension $n \times 1$ dans $\mathbb{R}^n$, dont les éléments individuels $f_j$, pour $j = 1, 2, \ldots, n$, représentent les $n$ valeurs de pixels de l'image. On développe le vecteur $f$ dans une base orthonormée $\Psi$ comme suit :
+\[
+f = \Psi \mathbf{x},
+\]
+où $\Psi$ est la matrice $n \times n$ $[\boldsymbol{\psi}_1, \ldots, \boldsymbol{\psi}_n]$, dont les vecteurs $\{\boldsymbol{\psi}_i\}_{i=1}^{n}$ constituent les colonnes, et où $\mathbf{x}$ est un vecteur colonne de dimension $n \times 1$.  
+
+Si la majorité des composantes du vecteur $\mathbf{x}$ sont nulles ou quasi nulles, on dira que $f$ est \textbf{parcimonieuse} dans le domaine $\Psi$, et que $\mathbf{x}$ constitue sa \textbf{représentation parcimonieuse}.
+\end{definition}
+
+Dans le cas des images CT, la parcimonie ne s’exprime généralement pas directement dans le domaine spatial, mais plutôt dans le domaine du gradient. Les images CT sont en effet caractérisées par des régions quasi homogènes séparées par des discontinuités nettes, ce qui rend leur gradient parcimonieux.
+
+Considérons l'exemple du fantôme de Shepp--Logan représenté à la \Cref{fig:shepp-logan} et de son équivalent en gradient à la \Cref{fig:shepp-logan-gradient}. On note l'intensité d'un pixel d'une image bidimensionnelle par $f_{h,w}$, où $h = 1,2,\ldots,H$ et $w = 1,2,\ldots,W$ ; $H$ et $W$ désignent respectivement la hauteur et la largeur de l'image 2D, et $W \times H = n$.
+
+\begin{definition}[Module du gradient]
+Si les valeurs des pixels sont notées $f_{h,w}$, le module du gradient discret est défini comme suit :
+\begin{equation}
+\left| \nabla f_{h,w} \right|
+=
+\sqrt{
+\left( f_{h+1,w} - f_{h,w} \right)^2
++
+\left( f_{h,w+1} - f_{h,w} \right)^2
+}.
+\label{eq:gradient-modulus}
+\end{equation}
+\end{definition}
+
+La \emph{variation totale} (Total Variation, TV) de l’image est alors définie comme la somme du module du gradient sur l’ensemble des pixels :
+\[
+\mathrm{TV}(f) = \sum_{h,w} \left| \nabla f_{h,w} \right|.
+\]
+La minimisation de la variation totale correspond à la minimisation de la norme $\ell_1$ du gradient et constitue une pénalisation standard dans le cadre du Compressed Sensing appliqué au CT.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom.png}
+    \caption{Fantôme de Shepp--Logan}
+    \label{fig:shepp-logan}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom gradient.png}
+    \caption{Gradient du fantôme de Shepp--Logan}
+    \label{fig:shepp-logan-gradient}
+\end{figure}
+
+\begin{proposition}[Modèle d'acquisition en tomographie CT]
+En imagerie CT réaliste, les données de projection à faisceau parallèle, également appelées \emph{sinogramme}, sont modélisées par un système linéaire discret :
+\begin{equation}
+\mathbf{g} = \Phi \mathbf{f},
+\end{equation}
+où $\mathbf{g} \in \mathbb{R}^m$ est le vecteur des mesures de projection, et $\Phi \in \mathbb{R}^{m \times n}$ est la matrice système décrivant la géométrie d’acquisition CT.
+\end{proposition}
+
+En introduisant la représentation parcimonieuse de l’image, le modèle devient :
+\begin{equation}
+\mathbf{g} = \Phi \mathbf{f} = \Phi \Psi \mathbf{x} = \Phi' \mathbf{x},
+\label{eq:4}
+\end{equation}
+où $\Phi' = \Phi \Psi$.
+
+Lorsque le nombre de projections est limité, on a $m \ll n$, ce qui rend le système sous-déterminé.
+
+\begin{proposition}[Reconstruction CT par Compressed Sensing]
+La reconstruction de l’image consiste alors à résoudre le problème d’optimisation suivant :
+\begin{equation}
+\mathbf{x}
+=
+\arg\min_{\tilde{\mathbf{x}}}
+\left\| \tilde{\mathbf{x}} \right\|_{1}
+\quad
+\text{sous la contrainte}
+\quad
+\left\| \Phi^{'}\tilde{\mathbf{x}} - \mathbf{g} \right\|_{2} \leq \varepsilon,
+\end{equation}
+où $\varepsilon$ modélise le bruit présent dans les mesures.
+\end{proposition}
+
+Dans le cas particulier du CT, cette formulation est équivalente à une minimisation de la variation totale de l’image sous contrainte de fidélité aux données.
+
+\subsection{Algorithmes de reconstruction itérative en Compressed Sensing}
+\subsubsection{Descente de gradient}
+
+\begin{definition}[Descente de gradient pour la minimisation de la variation totale]
+Afin de minimiser la norme $\ell_1$ du gradient (variation totale), une méthode de descente de gradient est employée. La mise à jour de l'image $f$ s'effectue selon :
+\begin{equation}
+f^{\text{suivant}} = f^{\text{courant}} - \alpha \,\vec{\Delta}^{\,\text{courant}},
+\end{equation}
+où $\alpha$ est un pas de descente. Le terme $\vec{\Delta}$ correspond au gradient régularisé de la variation totale.
+\end{definition}
+
+
+% =======================================================================================================
+% \subsection{Formulation du problème}
+% \begin{definition}[Image et représentation parcimonieuse]
+% Considérons une image $f$, vue comme un vecteur colonne de dimension $n \times 1$ dans $\mathbb{R}^n$, dont les éléments individuels $f_j$, pour $j = 1, 2, \ldots, n$, représentent les $n$ valeurs de pixels de l'image. On développe le vecteur $f$ dans une base orthonormée $\Psi$ comme suit :
+% \[
+% f = \Psi \mathbf{x},
+% \]
+% où $\Psi$ est la matrice $n \times n$ $[\boldsymbol{\psi}_1, \ldots, \boldsymbol{\psi}_n]$, dont les vecteurs $\{\boldsymbol{\psi}_i\}_{i=1}^{n}$ de dimension $n \times 1$ constituent les colonnes, et où $\mathbf{x}$ est également un vecteur colonne de dimension $n \times 1$. Si toutes les composantes du vecteur $\mathbf{x}$, à l'exception de quelques-unes, sont nulles ou quasi nulles, on dira que $f$ est \textbf{parcimonieuse} dans le domaine $\Psi$ et que $\mathbf{x}$ est sa \textbf{représentation parcimonieuse}.
+% \end{definition}
+
+% Considérons l'exemple du fantôme de Shepp-Logan représenté à la \Cref{fig:shepp-logan} et de son équivalent en gradient à la \Cref{fig:shepp-logan-gradient}. On note l'intensité d'un pixel d'une image bidimensionnelle par $f_{h,w}$, où $h = 1,2,\ldots,H$ et $w = 1,2,\ldots,W$ ; $H$ et $W$ désignent respectivement la hauteur et la largeur de l'image 2D, et $W \times H = n$.
+
+% \begin{definition}[Module du gradient]
+% Si les valeurs des pixels sont notées $f_{h,w}$, le module du gradient est défini comme suit :
+% \begin{equation}
+% \left| \nabla f_{h,w} \right|
+% =
+% \sqrt{
+% \left( f_{h+1,w} - f_{h,w} \right)^2
+% +
+% \left( f_{h,w+1} - f_{h,w} \right)^2
+% }
+% \label{eq:gradient-modulus}
+% \end{equation}
+% \end{definition}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom.png}
+%     \caption{Shepp-Logan phantom}
+%     \label{fig:shepp-logan}
+% \end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom gradient.png}
+%     \caption{Shepp-Logan phantom gradient}
+%     \label{fig:shepp-logan-gradient}
+% \end{figure}
+
+% \begin{proposition}[Modèle d'acquisition en tomographie]
+% En imagerie CT réaliste, on suppose que les données de projection à faisceau parallèle échantillonnées de l'image $f$ sont modélisées par un système linéaire discret
+% \begin{equation}
+% \mathbf{g} = \Phi \mathbf{f},
+% \end{equation}
+% où le vecteur $\mathbf{g}$ est de longueur $m$, ses mesures individuelles étant notées $g_i$, pour $i = 1,2,\ldots,m$, et où $\Phi$ est la matrice système $m \times n$ produisant l'ensemble discret des mesures de projection pour un balayage à faisceau parallèle de l'objet.
+% En substituant $\Psi \mathbf{x}$ à $\mathbf{f}$, ce modèle s'écrit :
+% \begin{equation}
+% \mathbf{g} = \Phi \mathbf{f} = \Phi \Psi \mathbf{x} = \Phi' \mathbf{x},
+% \label{eq:4}
+% \end{equation}
+% où $\Phi' = \Phi \Psi$ est une matrice de dimension $m \times n$.
+% \end{proposition}
+
+% \begin{proposition}[Problème de reconstruction par minimisation $\ell_1$]
+% Pour une image parcimonieuse, puisque $m << n$ dans \eqref{eq:4}, il existe une infinité de vecteurs $\tilde{\mathbf{x}}$ satisfaisant $\mathbf{g} = \Phi' \tilde{\mathbf{x}}$. Par conséquent, la reconstruction d'image vise à déterminer le vecteur $\mathbf{x}$ dans le domaine transformé en résolvant le programme d'optimisation suivant :
+% \begin{equation}
+% \mathbf{x}
+% =
+% \arg\min_{\tilde{\mathbf{x}}}
+% \left\| \tilde{\mathbf{x}} \right\|_{1}
+% \quad
+% \text{sous la contrainte}
+% \quad
+% \left| \Phi^{'}\tilde{\mathbf{x}} - \mathbf{g} \right| < \varepsilon,
+% \end{equation}
+% où $\varepsilon$ est un petit facteur d'erreur tenant compte du bruit dans les mesures, et où la norme $\ell_1$ est définie par $\left\| \mathbf{x} \right\|_{1} = \sum_{i=1}^{N} |x_i|$.
+% \end{proposition}
+
+\begin{definition}[Mise à jour par descente de gradient pour la norme $\ell_1$ du gradient]
+    Pour minimiser la norme $\ell_{1}$ de l'image de gradient, une méthode de descente de gradient est employée. La mise à jour de l'image $f$ s'effectue itérativement selon :
+    \begin{equation}
+    f^{\text{suivant}} = f^{\text{courant}} - \alpha \,\vec{\Delta}^{\,\text{courant}},
+    \end{equation}
+    où $\alpha$ est une constante contrôlant la vitesse de descente. Le terme $\vec{\Delta}$ est une image dont la valeur de chaque pixel $(h,w)$ est donnée par la dérivée partielle de la norme $\ell_1$ du gradient :
+    \begin{equation}
+        \begin{array}{l l l}
+            \nu_{h,w} & = &
+            \dfrac{\partial \lVert \nabla f_{h,w} \rVert_{1}}{\partial f_{h,w}} \\[1.2ex]
+            & = &
+            \dfrac{2f_{h,w} - f_{h+1,w} - f_{h,w+1}}
+            {\sqrt{\varepsilon + (f_{h+1,w} - f_{h,w})^{2} + (f_{h,w+1} - f_{h,w})^{2}}} \\[2ex]
+            & + &
+            \dfrac{f_{h,w} - f_{h-1,w}}
+            {\sqrt{\varepsilon + (f_{h,w} - f_{h-1,w})^{2} + (f_{h-1,w+1} - f_{h-1,w})^{2}}} \\[2ex]
+            & + &
+            \dfrac{f_{h,w} - f_{h,w-1}}
+            {\sqrt{\varepsilon + (f_{h+1,w-1} - f_{h,w-1})^{2} + (f_{h,w} - f_{h,w-1})^{2}}}
+        \end{array}
+    \end{equation}
+\end{definition}
+
+\begin{definition}[Matrice système $\Phi$ et poids $\varphi_{i,j}$]
+Dans le cadre discret, le vecteur de données de projection à faisceau parallèle $\vec{g}$ est modélisé par une somme pondérée sur les pixels traversés par le rayon X :
+\begin{equation}
+g_i = \sum_{j=1}^{N} \varphi_{i,j} \cdot f_j, \quad \text{où } i = 1, 2, \cdots, M.
+\end{equation}
+Le coefficient de pondération $\varphi_{i,j}$ de la matrice système $\Phi$ est égal à la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.
+\end{definition}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle.png}
+    \caption{Calcul du coefficient de poids $\varphi_{i,j}$ de la matrice système $\Phi$ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}
+    \label{fig:phi}
+\end{figure}
+
+Le calcul direct de chaque $\varphi_{i,j}$ est coûteux. Pour accélérer la reconstruction, on peut pré-calculer et stocker ces poids, et exploiter les propriétés de symétrie des projections à faisceau parallèle pour réduire le nombre de calculs nécessaires.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle-2.png}
+    \caption{Mesures des rayons-\textbf{X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha$, $90-\alpha$, $90+\alpha$ et $180-\alpha$. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}
+    \label{fig:mesure-rayons-X}
+\end{figure}
+
+
+\subsubsection{Pseudo-code}
+\begin{algorithm}[H]
+\caption{Méthode de reconstruction hybride (SART + Descente de gradient)}
+\label{alg:hybrid-reconstruction}
+\begin{algorithmic}[1]
+\Require $\varphi$ - matrice de projection, $g$ - données d'acquisition,
+$M$ - nombre d'itérations SART, $\lambda$ - paramètre de relaxation,
+$\alpha$ - pas d'apprentissage
+\Ensure $\hat{f}$ - image reconstruite
+
+\Statex \textbf{(1) Initialisation de l'image}
+\State $f^{(0)} \gets 0$
+
+\Statex
+\Statex \textbf{(2) Processus itératif de type SART}
+\For{$k = 1$ \textbf{à} $M$} \Comment{Une période complète d'itération}
+    \For{$j = 1$ \textbf{à} $N$}
+        \State $f_j^{(k)} \gets f_j^{(k-1)}
+        + \lambda
+        \cdot
+        \frac{
+            g_i - \sum_{n=1}^{N} \varphi_{i,n} f_n^{(k-1)}
+        }{
+            \sum_{n=1}^{N} \varphi_{i,n}^2
+        }
+        \cdot \varphi_{i,j}$
+    \EndFor
+\EndFor
+
+\Statex
+\Statex \textbf{(3) Initialisation pour la descente de gradient}
+\State $\hat{f}^{(0)} \gets f^{(M)}$
+
+\Statex
+\Statex \textbf{(4) Descente de gradient (contrainte de parcimonie)}
+\For{$l = 1$ \textbf{à} $5$}
+    \State $\vec{\Delta}_l \gets
+    \left| \hat{f}^{(0)} - f^{(0)} \right|
+    \cdot
+    \frac{\nu_{x,y}}{\left| \nu_{x,y} \right|}$
+    \State $\hat{f}^{(l)} \gets \hat{f}^{(l-1)} - \alpha \cdot \vec{\Delta}_l$
+\EndFor
+
+\Statex
+\Statex \textbf{(5) Initialisation de l'étape itérative suivante}
+\State $f^{(0)} \gets \hat{f}^{(5)}$
+\State \Return $\hat{f}^{(5)}$
+
+\end{algorithmic}
+\end{algorithm}
+
+% \textbf{(1) Initialisation de l'image \(f\) :}
+% \[
+% f^{(0)} = 0 ;
+% \]
+
+% \medskip
+% \noindent
+% \textbf{(2) Processus itératif (type SART) :}
+% Pour \(k\) variant de \(1\) à \(M\) (une période complète d'itération) :
+% \[
+% f_j^{(k)} = f_j^{(k-1)} +
+% \lambda \,
+% \frac{
+% g_i - \sum_{n=1}^{N} \varphi_{i,n}\, f_n^{(k-1)}
+% }{
+% \sum_{i=1}^{N} \varphi_{i,n}^{2}
+% }
+% \, \varphi_{i,j} ;
+% \]
+% où le paramètre de relaxation \(\lambda\) est un nombre réel positif.
+
+% \medskip
+% \noindent
+% \textbf{(3) Initialisation de l'image pour la descente de gradient :}
+% \[
+% \hat{f}^{(0)} = f^{(M)} ;
+% \]
+
+% \medskip
+% \noindent
+% \textbf{(4) Itération de descente de gradient (contrainte de parcimonie) :}
+% Pour \(l = 1\) jusqu'à \(5\) :
+% \[
+%     \hat{f}^{(l)} = \hat{f}^{(l-1)} - \alpha \cdot \vec{\Delta}_l ,
+% \]
+% avec
+% \[
+%     \vec{\Delta}_l =
+%     \left| \hat{f}^{(0)} - f^{(0)} \right|
+%     \cdot
+%     \frac{\nu_{x,y}}{\left| \nu_{x,y} \right|}.
+% \]
+
+% \medskip
+% \noindent
+% \textbf{(5) Initialisation de l'étape itérative suivante :}
+% \[
+% f^{(0)} = \hat{f}^{(\text{end})} ;
+% \]
+
+Les étapes (2) à (5) sont répétées jusqu'à ce que la différence entre deux images successives $f^{(M)}$ soit inférieure à un seuil (e.g., $0.001$) ou que le nombre d'itérations dépasse une limite (e.g., $1000$). Les paramètres typiques sont $\lambda = 1.0$, $\varepsilon = 0.0001$, $\alpha = 0.5$.
+% =======================================================================================================
+
+
+
+\subsection{Métriques de performance}
+\begin{definition}[Métriques de similarité d'image]
+Soient $f_r$ et $f_o$ les vecteurs représentant respectivement l'image reconstruite et l'image originale, composées de $N$ pixels. On définit les métriques suivantes :
+\begin{itemize}
+    \item \textbf{Erreur quadratique moyenne (RMSE)} :
+    $\displaystyle \mathrm{RMSE} = \sqrt{\frac{\sum_{i=1}^{N} \left( f_{r_i} - f_{o_i} \right)^2}{N}}$
+    \item \textbf{Indice universel de qualité (UQI)} :
+    $\displaystyle \mathrm{UQI} =
+    \frac{2\,\mathrm{Cov}\{f_r,f_o\}}{D(f_r)+D(f_o)}
+    \cdot
+    \frac{2\,\bar{f}_r\,\bar{f}_o}{\bar{f}_r^{\,2}+\bar{f}_o^{\,2}}$
+    \item \textbf{Coefficient de corrélation (CC)} :
+    $\displaystyle \mathrm{CC} =
+    \frac{2\,\mathrm{Cov}\{f_r,f_o\}}
+    {\sqrt{D(f_r)\cdot D(f_o)}}$
+\end{itemize}
+avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\sum_{i=1}^{N} f_{r_i}$, $D(f) = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{i}-\bar{f}\right)^2$,\\ et \\$\mathrm{Cov}\{f_r,f_o\} = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{r_i}-\bar{f}_r\right) \left(f_{o_i}-\bar{f}_o\right)$.
+\end{definition}
+
+% ============================================== DRAFT ==============================================
+% Ce cadre permet de résoudre plusieurs limitations pratiques :
+% \paragraph{Réduction du nombre de mesures.}\text{}\\ 
+% De nombreux systèmes d'acquisition sont limités par le coût, le temps ou l'énergie. Le compressed sensing permet :
+% \begin{itemize}
+%     \item[-] une acquisition plus rapide des données,
+%     \item[-] une réduction de la complexité matérielle,
+%     \item[-] une diminution de la dose de radiation (par exemple en tomodensitométrie),
+%     \item[-] une réduction des coûts de stockage et de transmission.
+% \end{itemize}
+
+% \paragraph{Problèmes inverses mal posés (ill-posed inverse problems).}\text{}\\
+% Lorsque le nombre de mesures est insuffisant pour garantir une solution unique, le CS introduit une régularisation fondée sur la parcimonie, permettant une reconstruction stable. Les principales applications incluent :
+% \begin{itemize}
+%     \item[-] la tomographie (CT, IRM, PET),
+%     \item[-] l'imagerie à super-résolution,
+%     \item[-] la déconvolution,
+%     \item[-] les inversions géophysiques et les essais non destructifs.
+% \end{itemize}
+
+% \paragraph{Robustesse au bruit et aux données incomplètes.} \text{}\\
+% Le CS garantit une reconstruction stable même en présence de bruit, de corruptions ou d'observations manquantes.
+
+% \subsection{Reconstruction de signaux par Compressed Sensing}
+
+% \subsection{Reconstruction par optimisation}
+% La formulation canonique de la reconstruction est
+% \[
+% \min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad y = A \Psi \alpha,
+% \]
+% ou, en présence de bruit,
+% \[
+% \min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad \|A \Psi \alpha - y\|_{2} \le \epsilon.
+% \]
+% Cela correspond aux formulations de type \emph{Basis Pursuit} ou \emph{LASSO}. La minimisation de la norme \(\ell_1\) favorise la parcimonie tout en conservant un problème d'optimisation convexe et calculable efficacement.
+
+% \subsection{Algorithmes gloutons}
+
+% Des alternatives plus rapides incluent :
+% \begin{itemize}
+%     \item l'\emph{Orthogonal Matching Pursuit} (OMP),
+%     \item le \emph{Compressive Sampling Matching Pursuit} (CoSaMP),
+%     \item l'\emph{Iterative Hard Thresholding} (IHT).
+% \end{itemize}
+% Ces méthodes échangent une partie de la précision contre un coût computationnel réduit.
+
+% \subsection{Applications du Compressed Sensing}
+
+% \paragraph{Imagerie médicale.}
+% \begin{itemize}
+%     \item acquisition IRM accélérée,
+%     \item CT à dose réduite,
+%     \item échographie à haute cadence d'images.
+% \end{itemize}
+
+% \paragraph{Imagerie computationnelle.}
+% \begin{itemize}
+%     \item caméras à pixel unique,
+%     \item imagerie à ouverture codée,
+%     \item reconstruction hyperspectrale.
+% \end{itemize}
+
+% \paragraph{Télédétection et géophysique.}
+% \begin{itemize}
+%     \item inversion sismique parcimonieuse,
+%     \item imagerie radar et radar à synthèse d'ouverture (SAR).
+% \end{itemize}
+
+% \paragraph{Communications sans fil.}
+% \begin{itemize}
+%     \item estimation parcimonieuse de canaux,
+%     \item réduction des pilotes dans les systèmes MIMO massifs.
+% \end{itemize}
+
+% \paragraph{Apprentissage automatique et traitement du signal.}
+% \begin{itemize}
+%     \item régression parcimonieuse (LASSO),
+%     \item apprentissage de dictionnaires,
+%     \item ACP robuste et modèles de rang faible apparentés.
+% \end{itemize}
+
+
+% % Le compressed sensing (CS) est un cadre mathématique et algorithmique qui permet de reconstruire des signaux de grande dimension à partir d'un nombre de mesures bien inférieur à celui requis par les approches traditionnelles. Il exploite la parcimonie (sparsity) comme principal a priori structurel.
+% % \subsection{Hypothèse de parcimonie}
+% % Si un signal est parcimonieux ou compressible dans une certaine base, alors il peut être reconstruit exactement (ou avec une erreur contrôlée) à partir d'un nombre de mesures linéaires bien inférieur à sa dimension ambiante.
+% % \subsection{Incohérence et propriété de RIP}
+% % \subsection{Basis Pursuit et LASSO}
+% % \subsection{OMP et algorithmes gloutons}
 

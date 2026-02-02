@@ -1,1 +1,520 @@
-\chapter*{Aspects pratiques et techniques de reconstruction}
+\chapter{SIMULATION, DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES}
+\section{Algorithme de rétroprojection filtrée pour la reconstruction d'images en tomodensitométrie}
+
+La tomodensitométrie (CT) est une modalité d'imagerie médicale permettant de visualiser les structures internes du corps à partir de mesures d'atténuation des rayons X. La qualité des images reconstruites dépend directement de l'algorithme utilisé pour transformer les projections en image. L'algorithme de rétroprojection filtrée, ou \emph{Filtered Backprojection} (FBP), est l'une des méthodes les plus utilisées dans ce contexte.
+
+Le principe de FBP repose sur deux étapes principales : le filtrage et la rétroprojection. L'étape de filtrage vise à corriger le flou inhérent aux projections en amplifiant les composantes haute fréquence. Elle consiste à appliquer un filtre de rampe aux données de sinogramme obtenues à partir des mesures CT. Ensuite, l'étape de rétroprojection additionne les projections filtrées le long des trajectoires des rayons X pour former l'image reconstruite.
+
+L'implémentation pratique de cet algorithme peut être illustrée par le code Python suivant. Il montre comment générer un sinogramme à partir d'une image, appliquer un filtre en rampe et réaliser la rétroprojection pour obtenir l'image finale.
+
+\begin{minted}{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+def generate_sinogram(image, theta):
+    """
+    Générer des données de sinogramme à partir d'une image et d'un tableau d'angles.
+    
+    Paramètres :
+        image (ndarray) : image d'entrée
+        theta (ndarray) : tableau d'angles en radians
+        
+    Renvoie :
+        sinogram (ndarray) : données de sinogramme
+    """
+    sinogram = np.zeros((len(theta), image.shape[0]))
+    for i, angle in enumerate(theta):
+        rotated_image = np.rot90(image, -int(np.degrees(angle) / 90) % 4)
+        sinogram[i] = np.sum(rotated_image, axis=0)
+    return sinogram
+
+def ramp_filter(sinogram):
+    """
+    Appliquer un filtre de rampe aux données de sinogramme.
+    
+    Paramètres :
+        sinogram (ndarray) : données du sinogramme
+        
+    Renvoie :
+        filtered_sinogram (ndarray) : sinogramme filtré
+    """
+    freq = np.fft.fftfreq(sinogram.shape[1])
+    ramp = np.abs(freq)
+    filtered_sinogram = np.real(np.fft.ifft(np.fft.fft(sinogram) * ramp))
+    return filtered_sinogram
+
+def backproject(filtered_sinogram, theta, image_shape):
+    """
+    Rétroprojeter les données filtrées pour reconstruire l'image.
+    
+    Paramètres :
+        filtered_sinogram (ndarray) : données filtrées
+        theta (ndarray) : tableau d'angles
+        image_shape (tuple) : dimensions de l'image reconstruite
+        
+    Renvoie :
+        reconstructed_image (ndarray) : image reconstruite
+    """
+    reconstructed_image = np.zeros(image_shape)
+    for i, angle in enumerate(theta):
+        reconstructed_image += np.rot90(
+            np.tile(filtered_sinogram[i][:, np.newaxis], (1, image_shape[0])),
+            int(np.degrees(angle) / 90) % 4
+        )
+    return reconstructed_image / len(theta)
+
+def main():
+    # Générer un exemple d'image
+    image = np.zeros((256, 256))
+    image[100:150, 100:150] = 1
+
+    # Générer des données de sinogramme
+    theta = np.linspace(0, np.pi, 180, endpoint=False)
+    sinogram = generate_sinogram(image, theta)
+
+    # Appliquer l'algorithme FBP
+    filtered_sinogram = ramp_filter(sinogram)
+    reconstructed_image = backproject(filtered_sinogram, theta, image.shape)
+
+    # Afficher les résultats
+    plt.figure(figsize=(12, 6))
+    plt.subplot(1, 3, 1)
+    plt.imshow(image, cmap='gray')
+    plt.title("Image originale")
+
+    plt.subplot(1, 3, 2)
+    plt.imshow(sinogram, cmap='gray', aspect='auto')
+    plt.title("Sinogramme")
+
+    plt.subplot(1, 3, 3)
+    plt.imshow(reconstructed_image, cmap='gray')
+    plt.title("Image reconstruite")
+    
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+\end{minted}
+
+Ce code illustre de manière pratique le fonctionnement de l’algorithme FBP. Il génère un exemple simple avec un objet carré, simule les mesures CT en produisant un sinogramme, applique le filtrage et la rétroprojection, puis affiche l'image originale, le sinogramme et l'image reconstruite. L'algorithme constitue ainsi une méthode efficace et largement utilisée pour la reconstruction d'images tomodensitométriques, combinant rapidité et fidélité visuelle.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/fbp_simulation.png}
+    \caption{Simulation de l'algorithme FBP}
+    \label{fig:l_t_theta}
+\end{figure}
+
+
+% =============================================================
+\section{Compressive sensing using forward-backward}
+Le compressed sensing est une technique révolutionnaire en traitement du signal qui permet d'acquérir et de reconstruire un signal en utilisant beaucoup moins de mesures que ce qu'exige le théorème d'échantillonnage de Nyquist-Shannon. Ceci est possible lorsque le signal est \textbf{creux} (sparse) dans une certaine base. Le compressed sensing s’inscrit dans un cadre théorique plus large visant à exploiter les structures intrinsèques des signaux naturels. En pratique, de nombreux signaux d’intérêt (images, signaux biomédicaux, signaux radar ou sismiques) ne sont pas arbitraires, mais présentent une forte redondance lorsqu’ils sont représentés dans une base appropriée (ondelettes, cosinus, dictionnaires appris, etc.). Cette observation remet en question l’approche classique de l’échantillonnage uniforme et ouvre la voie à des stratégies d’acquisition plus efficaces. \vspace{5pt}\\
+L’idée fondamentale du compressed sensing repose sur deux piliers théoriques : la \emph{parcimonie} du signal et l’\emph{incohérence} entre la base de représentation du signal et le système de mesure. Lorsque ces conditions sont satisfaites, il devient possible de reconstruire exactement le signal original à partir d’un nombre de mesures très inférieur à sa dimension ambiante.\vspace{10pt}\\
+Le problème d'optimisation s'écrit :
+\begin{equation}
+\min\limits_x \|Ax-y\|_2^2 + \tau \|x\|_1
+\label{eq:main_problem}
+\end{equation}
+où :
+\begin{itemize}
+    \item $y \in \mathbb{R}^m$ : mesures acquises
+    \item $A \in \mathbb{R}^{m \times n}$ : matrice de mesure ($m < n$)
+    \item $x \in \mathbb{R}^n$ : signal à reconstruire
+    \item $\tau > 0$ : paramètre de régularisation
+\end{itemize}
+Le problème d’optimisation présenté à l’équation~\eqref{eq:main_problem} correspond à une formulation dite \emph{régularisée}, largement utilisée en pratique. Le premier terme impose une cohérence entre les mesures acquises et le signal reconstruit, tandis que le second terme agit comme une contrainte indirecte sur la structure du signal recherché.
+
+Cette formulation peut également être interprétée comme une relaxation convexe du problème initial, qui consisterait à minimiser directement le nombre de composantes non nulles du signal. En remplaçant la pseudo-norme $\ell_0$ par la norme $\ell_1$, on obtient un problème convexe, garantissant l’existence d’une solution globale et permettant l’utilisation d’algorithmes d’optimisation efficaces.
+
+
+
+\subsubsection{Interprétation des termes}
+L’équilibre entre ces deux termes est crucial pour la qualité de la reconstruction. Un poids trop faible accordé à la régularisation peut conduire à une solution bruitée et peu parcimonieuse, tandis qu’un poids excessif peut supprimer des composantes pertinentes du signal. Le choix du paramètre $\tau$ constitue donc un aspect fondamental du problème, souvent traité par validation croisée ou analyse de sensibilité.
+\begin{itemize}
+    \item $\|Ax-y\|_2^2$ : terme de fidélité aux données (L2-norm)
+    \item $\|x\|_1$ : terme de régularisation favorisant la parcimonie (L1-norm)
+    \item $\tau$ : contrôle le compromis entre fidélité et parcimonie
+\end{itemize}
+
+Afin d’illustrer concrètement les principes du compressed sensing, nous considérons dans la suite une simulation numérique. Cette approche permet de valider expérimentalement les résultats théoriques et d’évaluer les performances de reconstruction dans un cadre contrôlé, où le signal original est parfaitement connu.
+\subsection{Configuration du problème}
+\subsubsection{Paramètres de la simulation}
+Nous allons reconstruire un signal de dimension $n=5000$ avec seulement $S=100$ composantes non nulles.
+
+\begin{minted}{python}
+import numpy as np
+
+# Paramètres du problème
+n = 5000          # Dimension du signal
+S = 100           # Nombre de composantes non nulles (sparsity level)
+
+# Nombre de mesures nécessaire (théorème de Candès et al.)
+m = int(np.ceil(S * np.log(n)))
+print(f'Dimension du signal : {n}')
+print(f'Nombre de mesures : {m}')
+print(f'Taux de compression : {n/m:.2f}')
+print(f'Niveau de parcimonie : {S} ({S/n*100:.1f}\% de non-zéros)')
+\end{minted}
+
+\subsubsection{Génération de la matrice de mesure}
+La matrice $A$ doit satisfaire la propriété d'isométrie restreinte (RIP). En pratique, une matrice gaussienne aléatoire convient.
+
+\begin{minted}{python}
+# Pour la reproductibilité des résultats
+np.random.seed(1)
+
+# Génération de la matrice de mesure (gaussienne i.i.d.)
+A = np.random.normal(size=(m, n))
+print(f'Forme de A : {A.shape}')
+
+# Calcul de la norme opérateur pour le pas de gradient
+norm_A = np.linalg.norm(A, ord=2)
+print(f'Norme opérateur de A : {norm_A:.4f}')
+\end{minted}
+Le choix d’une matrice de mesure aléatoire de type gaussien est motivé par ses excellentes propriétés théoriques. En effet, ce type de matrice satisfait la propriété d’isométrie restreinte avec une forte probabilité, à condition que le nombre de mesures soit suffisant. Cette propriété garantit que les distances entre signaux parcimonieux sont approximativement préservées après projection.
+
+\subsubsection{Création du signal parcimonieux}
+Nous générons un signal avec exactement $S$ composantes non nulles.
+
+\begin{minted}{python}
+# Création d'un signal S-parcimonieux
+x_true = np.zeros(n)
+
+# Sélection aléatoire des positions des composantes non nulles
+indices_non_nuls = np.random.permutation(n)[:S]
+valeurs_non_nulles = np.random.normal(size=S)
+
+x_true[indices_non_nuls] = valeurs_non_nulles
+x_true = x_true / np.linalg.norm(x_true)  # Normalisation
+
+print(f'Nombre de composantes non nulles : {np.sum(x_true != 0)}')
+print(f'Norme L1 du signal : {np.linalg.norm(x_true, 1):.4f}')
+print(f'Norme L2 du signal : {np.linalg.norm(x_true, 2):.4f}')
+\end{minted}
+La normalisation du signal permet de travailler dans un cadre numérique stable et facilite l’interprétation des métriques de reconstruction. Elle permet également de comparer les performances pour différentes configurations sans être influencé par l’échelle du signal.
+
+\subsubsection{Simulation des mesures acquises}
+\begin{minted}{python}
+# Génération des mesures (acquisition compressée)
+y = np.dot(A, x_true)
+print(f'Forme du vecteur de mesures y : {y.shape}')
+
+# Vérification de la cohérence énergétique
+energie_signal = np.linalg.norm(x_true)**2
+energie_mesures = np.linalg.norm(y)**2 / norm_A**2
+print(f'Énergie du signal : {energie_signal:.4f}')
+print(f'Énergie estimée à partir des mesures : {energie_mesures:.4f}')
+\end{minted}
+
+\subsection{Définition des fonctions objectif}
+La séparation du problème en plusieurs fonctions objectif est particulièrement adaptée aux méthodes d’optimisation proximales. Elle permet de traiter séparément les termes différentiables et non différentiables, tout en conservant une structure algorithmique simple et efficace.
+
+\subsubsection{Fonction de régularisation L1}
+La norme L1 favorise la parcimonie de la solution.
+
+\begin{minted}{python}
+from pyunlocbox import functions
+
+# Paramètre de régularisation
+tau = 1.0
+
+# Définition de la fonction L1
+f1 = functions.norm_l1(lambda_=tau)
+
+print("Fonction L1 définie avec tau =", tau)
+print("Évaluation sur un vecteur test :", 
+      f1._eval(np.array([1, -2, 0, 3])))
+\end{minted}
+
+\subsubsection{Fonction de fidélité L2}
+Plusieurs méthodes pour définir le terme de fidélité aux données.
+
+\subsubsection{Méthode 1 : Matrice explicite}
+
+\begin{minted}{python}
+# Méthode directe avec matrice A
+f2 = functions.norm_l2(y=y, A=A)
+\end{minted}
+
+\subsubsection{Méthode 2 : Opérateurs fonctionnels}
+
+\begin{minted}{python}
+# Méthode avec opérateurs fonctionnels (utile pour les grandes matrices)
+f3 = functions.norm_l2(y=y)
+f3.A = lambda x: np.dot(A, x)      # Opérateur forward
+f3.At = lambda x: np.dot(A.T, x)   # Opérateur adjoint
+\end{minted}
+
+\subsubsection{Méthode 3 : Définition manuelle}
+
+\begin{minted}{python}
+# Définition complètement manuelle
+f4 = functions.func()
+f4._eval = lambda x: np.linalg.norm(np.dot(A, x) - y)**2
+f4._grad = lambda x: 2.0 * np.dot(A.T, np.dot(A, x) - y)
+
+# Test d'équivalence
+x_test = np.random.normal(size=n)
+print(f"f2(x_test) = {f2._eval(x_test):.6f}")
+print(f"f3(x_test) = {f3._eval(x_test):.6f}")
+print(f"f4(x_test) = {f4._eval(x_test):.6f}")
+\end{minted}
+
+\subsection{Algorithme Forward-Backward}
+L’algorithme forward-backward appartient à la famille des méthodes de descente proximale. Il est particulièrement bien adapté aux problèmes de grande dimension rencontrés en compressed sensing, car il ne nécessite que des opérations matricielles simples et l’évaluation d’opérateurs proximaux explicites.
+L’utilisation de l’accélération de Nesterov (FISTA) permet d’améliorer significativement la vitesse de convergence, en particulier pour des problèmes mal conditionnés ou de grande taille.
+
+\subsection{Principe mathématique}
+L'algorithme forward-backward résout des problèmes de la forme :
+\[
+\min_x f(x) + g(x)
+\]
+où $f$ est différentiable et $g$ admet un opérateur proximal simple.
+
+L'itération s'écrit :
+\[
+x_{k+1} = \text{prox}_{\gamma g}(x_k - \gamma \nabla f(x_k))
+\]
+avec $\gamma \in ]0, 2/\beta[$ où $\beta$ est la constante de Lipschitz de $\nabla f$.
+
+\subsection{Calcul du pas optimal}
+
+\begin{minted}{python}
+# Calcul de la constante de Lipschitz
+beta = 2.0 * norm_A**2  # Pour f(x) = ||Ax - y||^2
+print(f"Constante de Lipschitz beta = {beta:.4f}")
+
+# Pas optimal pour la convergence
+step = 0.5 / norm_A**2  # gamma = 1/beta
+print(f"Pas d'itération optimal : {step:.6f}")
+\end{minted}
+
+\subsection{Configuration du solveur}
+
+\begin{minted}{python}
+from pyunlocbox import solvers
+
+# Instanciation de l'algorithme forward-backward
+solver = solvers.forward_backward(
+    step=step,           # Pas d'itération
+    method='FISTA',      # Accélération de Nesterov (optionnel)
+    tol=1e-10,           # Tolérance sur la condition d'arrêt
+)
+
+print("Solveur forward-backward configuré")
+print(f"Méthode : {solver.method}")
+print(f"Pas : {solver.step}")
+\end{minted}
+
+\section{Résolution du problème}
+
+\subsection{Lancement de l'optimisation}
+
+\begin{minted}{python}
+# Point initial (vecteur nul)
+x0 = np.zeros(n)
+
+# Résolution du problème d'optimisation
+ret = solvers.solve(
+    [f1, f2],           # Liste des fonctions objectif
+    x0,                 # Point initial
+    solver,             # Algorithme d'optimisation
+    rtol=1e-4,          # Tolérance relative
+    maxit=300,          # Nombre maximum d'itérations
+    verbosity='LOW'     # Niveau de verbosité
+)
+
+# Affichage des résultats
+print("\n" + "="*50)
+print("RÉSULTATS DE L'OPTIMISATION")
+print("="*50)
+print(f"Solution trouvée en {ret['iter']} itérations")
+print(f"Critère d'arrêt : {ret['crit']}")
+print(f"Valeur objective finale : {ret['objective'][-1].sum():.6f}")
+print(f"Temps de calcul : {ret['time']:.2f} secondes")
+\end{minted}
+
+\subsubsection{Analyse de la solution}
+
+\begin{minted}{python}
+# Récupération de la solution
+x_recon = ret['sol']
+
+# Calcul des métriques de reconstruction
+mse = np.linalg.norm(x_recon - x_true)**2 / n
+psnr = 10 * np.log10(1.0 / mse) if mse > 0 else float('inf')
+support_error = np.sum((x_recon != 0) != (x_true != 0))
+
+print(f"\nANALYSE DE LA RECONSTRUCTION")
+print(f"Erreur quadratique moyenne (MSE) : {mse:.2e}")
+print(f"PSNR : {psnr:.2f} dB")
+print(f"Erreur de support : {support_error} composantes")
+print(f"Rapport de compression effectif : {n/m:.2f}")
+\end{minted}
+Les métriques utilisées permettent d’évaluer différents aspects de la reconstruction. L’erreur quadratique moyenne mesure la fidélité globale du signal reconstruit, tandis que l’erreur de support évalue la capacité de l’algorithme à identifier correctement les positions des composantes non nulles. Ces deux critères sont complémentaires et essentiels pour juger la qualité d’une méthode de compressed sensing.
+
+\subsection{Visualisation des résultats}
+
+\subsubsection{Comparaison signal original/reconstruit}
+
+\begin{minted}{python}
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+# Signal original vs reconstruit (vue globale)
+ax = axes[0, 0]
+ax.plot(x_true, 'b-', alpha=0.6, linewidth=0.5, label='Original')
+ax.plot(x_recon, 'r--', alpha=0.8, linewidth=0.5, label='Reconstruit')
+ax.set_xlabel('Index')
+ax.set_ylabel('Amplitude')
+ax.set_title('Signal original vs reconstruit')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# Zoom sur les composantes non nulles
+ax = axes[0, 1]
+non_zero_indices = np.where(x_true != 0)[0]
+zoom_indices = non_zero_indices[:min(50, len(non_zero_indices))]
+ax.stem(zoom_indices, x_true[zoom_indices], 
+        linefmt='b-', markerfmt='bo', basefmt=' ', label='Original')
+ax.stem(zoom_indices, x_recon[zoom_indices], 
+        linefmt='r--', markerfmt='rx', basefmt=' ', label='Reconstruit')
+ax.set_xlabel('Index')
+ax.set_ylabel('Amplitude')
+ax.set_title('Zoom sur les composantes non nulles')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# Erreur de reconstruction
+ax = axes[1, 0]
+erreur = x_recon - x_true
+ax.plot(erreur, 'g-', linewidth=0.5)
+ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+ax.set_xlabel('Index')
+ax.set_ylabel('Erreur')
+ax.set_title('Erreur de reconstruction')
+ax.grid(True, alpha=0.3)
+
+# Histogramme des amplitudes
+ax = axes[1, 1]
+ax.hist(x_true, bins=50, alpha=0.5, label='Original', density=True)
+ax.hist(x_recon, bins=50, alpha=0.5, label='Reconstruit', density=True)
+ax.set_xlabel('Amplitude')
+ax.set_ylabel('Densité')
+ax.set_title('Distribution des amplitudes')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('reconstruction_results.png', dpi=150, bbox_inches='tight')
+plt.show()
+\end{minted}
+
+\subsubsection{Convergence de l'algorithme}
+
+\begin{minted}{python}
+# Analyse de convergence
+objective = np.array(ret['objective'])
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+# Convergence des objectifs individuels
+ax = axes[0]
+ax.semilogy(objective[:, 0], 'b-', label='Terme L1 (parcimonie)')
+ax.semilogy(objective[:, 1], 'r-', label='Terme L2 (fidélité)')
+ax.semilogy(np.sum(objective, axis=1), 'k-', 
+            linewidth=2, label='Objectif total')
+ax.set_xlabel('Itération')
+ax.set_ylabel('Valeur objective')
+ax.set_title('Convergence des fonctions objectif')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# Taux de décroissance
+ax = axes[1]
+obj_total = np.sum(objective, axis=1)
+rate = np.diff(np.log(obj_total)) / np.diff(range(len(obj_total)))
+ax.plot(rate, 'g-')
+ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+ax.set_xlabel('Itération')
+ax.set_ylabel('Taux de décroissance logarithmique')
+ax.set_title('Taux de convergence')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('convergence_analysis.png', dpi=150, bbox_inches='tight')
+plt.show()
+\end{minted}
+
+\subsection{Analyse de sensibilité}
+
+\subsubsection{Influence du paramètre $\tau$}
+
+\begin{minted}{python}
+def reconstruire_avec_tau(tau_value):
+    """Fonction helper pour tester différents tau"""
+    f1_tau = functions.norm_l1(lambda_=tau_value)
+    solver_tau = solvers.forward_backward(step=step)
+    
+    ret_tau = solvers.solve(
+        [f1_tau, f2],
+        x0,
+        solver_tau,
+        rtol=1e-4,
+        maxit=200,
+        verbosity='NONE'
+    )
+    
+    x_tau = ret_tau['sol']
+    mse_tau = np.linalg.norm(x_tau - x_true)**2 / n
+    sparsity_tau = np.sum(np.abs(x_tau) > 1e-4) / n
+    
+    return mse_tau, sparsity_tau, ret_tau['iter']
+
+# Test de différentes valeurs de tau
+tau_values = np.logspace(-3, 2, 20)
+results = []
+
+print("Analyse de sensibilité au paramètre tau:")
+print("-" * 50)
+print(f"{'tau':>10} {'MSE':>12} {'Sparsity':>12} {'Iterations':>12}")
+print("-" * 50)
+
+for tau in tau_values:
+    mse_val, sparsity_val, iterations = reconstruire_avec_tau(tau)
+    results.append((tau, mse_val, sparsity_val, iterations))
+    print(f"{tau:10.2e} {mse_val:12.2e} {sparsity_val:12.4f} {iterations:12d}")
+
+results = np.array(results)
+
+# Visualisation
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+ax = axes[0]
+ax.loglog(results[:, 0], results[:, 1], 'bo-')
+ax.set_xlabel('$\\tau$')
+ax.set_ylabel('MSE')
+ax.set_title('Erreur vs $\\tau$')
+ax.grid(True, alpha=0.3)
+
+ax = axes[1]
+ax.semilogx(results[:, 0], results[:, 2], 'ro-')
+ax.set_xlabel('$\\tau$')
+ax.set_ylabel('Taux de parcimonie')
+ax.set_title('Parcimonie vs $\\tau$')
+ax.grid(True, alpha=0.3)
+
+ax = axes[2]
+ax.semilogx(results[:, 0], results[:, 3], 'go-')
+ax.set_xlabel('$\\tau$')
+ax.set_ylabel('Itérations')
+ax.set_title('Convergence vs $\\tau$')
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('sensitivity_analysis.png', dpi=150, bbox_inches='tight')
+plt.show()
+\end{minted}
+Les résultats obtenus confirment l’efficacité du compressed sensing pour la reconstruction de signaux parcimonieux à partir d’un nombre réduit de mesures. L’algorithme forward-backward, combiné à une régularisation $\ell_1$, offre un compromis pertinent entre précision de reconstruction, parcimonie et complexité algorithmique.
+Cette étude peut être étendue à des signaux bruités, à d’autres types de matrices de mesure ou encore à des régularisations plus sophistiquées, ouvrant ainsi la voie à de nombreuses applications pratiques.

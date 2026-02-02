@@ -24,7 +24,10 @@
 \usepackage{minted}
 \usepackage{fancyhdr}
 \usepackage{longtable}
-
+\usepackage{algorithm}
+\usepackage{algpseudocode} 
+\usepackage{tocloft}
+\usepackage{pdfpages}  % Pour insérer des PDF
 
 
 % Show Prop, Lemma and other label near them
@@ -44,25 +47,60 @@
 % ================================================================
 
 % =================================================================
-\title{\Huge Reconstruction d'images issues d'IRM/CI}
-\author{
-    Réalisé par \\\Large Frederic Andrianarivony\vspace{2cm}\\
-    Option: \\ M2VR T.A.S.I
-}
-\date{\today} % You can also specify a date manually or leave it blank
+% \title{\Huge Reconstruction d'images issues de CT}
+% \author{
+%     Réalisé par \\\Large Frederic Andrianarivony\vspace{2cm}\\
+%     Option: \\ M2VR T.A.S.I
+% }
+% \date{\today} % You can also specify a date manually or leave it blank
 % =================================================================
+% CHAPTER STYLE
+% numbering
+\renewcommand{\thechapter}{\Roman{chapter}}
 
+\renewcommand{\cftchappresnum}{CHAPITRE }
+\renewcommand{\cftchapaftersnum}{: }
+\setlength{\cftchapnumwidth}{8.5em}
 % =================================================================
+% FIGURES
+
+% Numérotation des figures en chiffres arabes
+\renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
+
+% ===== LISTE DES FIGURES : STYLE PERSONNALISÉ =====
+% Titre
+% ===== LISTE DES FIGURES (babel french fix) =====
+\addto\captionsfrench{%
+  \renewcommand{\listfigurename}{\large LISTE DES FIGURES}
+}
+
+% Préfixe "Figure"
+\renewcommand{\cftfigpresnum}{Figure }
+\renewcommand{\cftfigaftersnum}{ : }
+
+% Largeur pour "Figure 1.10 :"
+\setlength{\cftfignumwidth}{6em}
+% =================================================================
+% SECTION STYLE
+% font_size
+\titleformat{\section}
+  {\normalfont\fontsize{12}{14}\selectfont\bfseries}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\fontsize{12}{14}\selectfont\bfseries}
+  {\thesubsection}{1em}{}
+% =================================================================
+% DEFINITON STYLE
+% text (it, gras, ...)
 \begingroup
     \makeatletter
     \g@addto@macro\th@definition{\normalfont}
     \makeatother
 \endgroup
 % =================================================================
-
 \let\cleardoublepage\clearpage
 \setminted{frame=lines, framesep=2mm, fontsize=\scriptsize, linenos}
-
 % ================================================================
 % PAGE NUMBERING STYLE
 \pagestyle{fancy}
@@ -76,11 +114,29 @@
 
 
 \begin{document}
-    \maketitle
+    \includepdf[pages=-, fitpaper=true]{Couverture MVR TASI.pdf}
+
+    % blan page
+    \newpage
+    \thispagestyle{empty}
+    ~
+    \newpage
+    % Remerciements
+    \input{chapters/remerciements.tex}
+    \newpage
+
+    % -- TODO --
+    % Resumé
 
     \pagenumbering{roman}
     \setcounter{page}{1}
+    % Table des matières
     \tableofcontents
+    % -- TODO --
+    % Liste des Abréviations
+
+    % Liste des figures
+    \listoffigures
 
     \newpage
     \pagenumbering{arabic}
@@ -91,8 +147,9 @@
     \input{chapters/chap 1. Introduction générale.tex}
     \input{chapters/chap 2. Outils mathématiques pour la reconstruction d'image.tex}
     \input{chapters/chap 3. Quelques modèles de reconstruction.tex}
-    \input{chapters/3. Reconstruction d'images : problèmes inverses et compressive sensing.tex}
-    \input{chapters/4. Inverse Problem-based Image Reconstruction using Neural Regularizers.tex}
+    \input{chapters/chap 4. Aspects pratiques et techniques de reconstruction.tex}
+    % \input{chapters/3. Reconstruction d'images : problèmes inverses et compressive sensing.tex}
+    % \input{chapters/4. Inverse Problem-based Image Reconstruction using Neural Regularizers.tex}
     % ================================================================
 
     % ================================================================
