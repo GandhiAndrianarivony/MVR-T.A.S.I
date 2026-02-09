@@ -1,14 +1,14 @@
 \babel@toc {french}{}\relax 
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Principe de fonctionnement d’un appareil de tomodensitométrie}}{12}{figure.caption.2}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Principe de fonctionnement d'un appareil de tomodensitométrie}}{12}{figure.caption.3}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces paramètrisation d'une droite \( l_{t,\theta } \) par \( t \) et \( \theta \)}}{21}{figure.caption.4}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Transformée de Radon pour $\theta _1$ et $\theta _2$.}}{22}{figure.caption.5}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Retroprojection d'un carré dans 5, 25, 100 et 1000 directions}}{25}{figure.caption.6}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces paramètrisation d'une droite \( l_{t,\theta } \) par \( t \) et \( \theta \)}}{21}{figure.caption.3}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Transformée de Radon pour $\theta _1$ et $\theta _2$.}}{22}{figure.caption.4}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Retroprojection d'un carré dans 5, 25, 100 et 1000 directions}}{25}{figure.caption.5}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Fantôme de Shepp--Logan}}{38}{figure.caption.6}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Gradient du fantôme de Shepp--Logan}}{39}{figure.caption.7}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Calcul du coefficient de poids $\varphi _{i,j}$ de la matrice système $\Phi $ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}}{41}{figure.caption.8}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Mesures des rayons-\textbf {X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha $, $90-\alpha $, $90+\alpha $ et $180-\alpha $. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}}{41}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Fantôme de Shepp--Logan}}{41}{figure.caption.7}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Gradient du fantôme de Shepp--Logan}}{42}{figure.caption.8}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Calcul du coefficient de poids $\varphi _{i,j}$ de la matrice système $\Phi $ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}}{44}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Mesures des rayons-\textbf {X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha $, $90-\alpha $, $90+\alpha $ et $180-\alpha $. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}}{44}{figure.caption.10}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Simulation de l'algorithme FBP}}{46}{figure.caption.10}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Simulation de l'algorithme FBP}}{49}{figure.caption.11}%

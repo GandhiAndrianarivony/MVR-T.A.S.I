@@ -15,7 +15,10 @@
 \usepackage{cleveref}
 
 \usepackage{graphicx}
-\usepackage{caption}
+% \usepackage{caption}
+\usepackage[textfont=bf]{caption}
+\usepackage[labelfont=bf]{caption}
+
 \usepackage{subcaption}
 \usepackage{tabularx}
 \usepackage{titlesec}
@@ -28,6 +31,9 @@
 \usepackage{algpseudocode} 
 \usepackage{tocloft}
 \usepackage{pdfpages}  % Pour insérer des PDF
+
+\usepackage{nomencl}
+\makenomenclature
 
 
 % Show Prop, Lemma and other label near them
@@ -44,32 +50,33 @@
 \newtheorem{lemme}{Lemme}[section]
 \newtheorem{corollaire}[proposition]{Corollaire}
 \newtheorem{property}[proposition]{Propriété}
+
+
+% Afficher les numéros en arabic
+\renewcommand{\thedefinition}{\arabic{chapter}.\arabic{definition}}
+\renewcommand{\theproposition}{\arabic{chapter}.\arabic{proposition}}
+\renewcommand{\thelemme}{\arabic{chapter}.\arabic{lemme}}
+\renewcommand{\thecorollaire}{\arabic{chapter}.\arabic{corollaire}}
+\renewcommand{\theproperty}{\arabic{chapter}.\arabic{property}}
 % ================================================================
 
-% =================================================================
-% \title{\Huge Reconstruction d'images issues de CT}
-% \author{
-%     Réalisé par \\\Large Frederic Andrianarivony\vspace{2cm}\\
-%     Option: \\ M2VR T.A.S.I
-% }
-% \date{\today} % You can also specify a date manually or leave it blank
 % =================================================================
 % CHAPTER STYLE
 % numbering
 \renewcommand{\thechapter}{\Roman{chapter}}
-
 \renewcommand{\cftchappresnum}{CHAPITRE }
 \renewcommand{\cftchapaftersnum}{: }
 \setlength{\cftchapnumwidth}{8.5em}
-% =================================================================
-% FIGURES
 
+% font_size
+\titleformat{\chapter}[display]
+  {\rmfamily\bfseries} % <-- change ici la police : \rmfamily, \sffamily, \ttfamily
+  {CHAPITRE \ \thechapter}{20pt}{\large}
+% =================================================================
+% FIGURES STYLE
 % Numérotation des figures en chiffres arabes
 \renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
-
 % ===== LISTE DES FIGURES : STYLE PERSONNALISÉ =====
-% Titre
-% ===== LISTE DES FIGURES (babel french fix) =====
 \addto\captionsfrench{%
   \renewcommand{\listfigurename}{\large LISTE DES FIGURES}
 }
@@ -81,6 +88,12 @@
 % Largeur pour "Figure 1.10 :"
 \setlength{\cftfignumwidth}{6em}
 % =================================================================
+% EQUATION STYLE
+\renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
+% =================================================================
+% NOMENCLATURE STYLE
+\renewcommand{\nomname}{\large Liste des abréviations}
+% =================================================================
 % SECTION STYLE
 % font_size
 \titleformat{\section}
@@ -90,6 +103,11 @@
 \titleformat{\subsection}
   {\normalfont\fontsize{12}{14}\selectfont\bfseries}
   {\thesubsection}{1em}{}
+
+% subsubsection to a. b. c.
+\setcounter{secnumdepth}{3}
+\renewcommand{\thesubsubsection}{\alph{subsubsection}.}
+
 % =================================================================
 % DEFINITON STYLE
 % text (it, gras, ...)
@@ -132,11 +150,19 @@
     \setcounter{page}{1}
     % Table des matières
     \tableofcontents
-    % -- TODO --
+
     % Liste des Abréviations
+    % commande />
+    % makeindex image_reconstruction.nlo -s nomencl.ist -o image_reconstruction.nls
+    \newpage
+    \input{chapters/abreviations.tex} % modularité : toutes les abréviations dans un fichier
+    \printnomenclature[3cm]  
 
     % Liste des figures
+    \newpage
     \listoffigures
+
+    % TODO --- Introduction
 
     \newpage
     \pagenumbering{arabic}
@@ -144,10 +170,10 @@
 
     % ================================================================
     % ADD CHAPTERS HERE
-    \input{chapters/chap 1. Introduction générale.tex}
-    \input{chapters/chap 2. Outils mathématiques pour la reconstruction d'image.tex}
-    \input{chapters/chap 3. Quelques modèles de reconstruction.tex}
-    \input{chapters/chap 4. Aspects pratiques et techniques de reconstruction.tex}
+    \input{chapters/chap 1. RECONSTRUCTION D'IMAGE.tex}
+    \input{chapters/chap 2. OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES PAR LE COMPRESSED SENSING.tex}
+    \input{chapters/chap 3. NOTRE MODÈLE.tex}
+    \input{chapters/chap 4. SIMULATION, DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES.tex}
     % \input{chapters/3. Reconstruction d'images : problèmes inverses et compressive sensing.tex}
     % \input{chapters/4. Inverse Problem-based Image Reconstruction using Neural Regularizers.tex}
     % ================================================================
@@ -156,15 +182,21 @@
     % ADD BIBILIOGRAPHY HERE
     \bibliographystyle{unsrt}
     \begin{thebibliography}{100} % 100 is a random guess of the total number of references
-        \bibitem{1} Wei Zou, Jiajun Wang, David Dagan Feng, \emph{Image reconstruction of fluorescent molecular
-            tomography based on the tree structured Schur complement decomposition}
-        \bibitem{2}RANDRIANARISON N.Tsirilala, RANDRIAMITANTSOA P. Auguste, RAMAFIARISON H. Malalatiana, \emph{Performance of K-SVD algorithm in digital Optical Coherence Tomography}
-        \bibitem{3} Linwei Fan, Fan Zhang, Hui Fan, and Caiming Zhang, \emph{Brief review of image denoising techniques}
-        \bibitem{4} Michael S. Hansen, and Peter Kellman, \emph{Image reconstruction: an overview from clinicians}
-        \bibitem{5} Joshua Trzasko*, Member, IEEE, and Armando Manduca, Member, IEEE, \emph{Highly Undersampled Magnetic Resonance Image Reconstruction via Homotopic `0-Minimization}
+        % \bibitem{1} Wei Zou, Jiajun Wang, David Dagan Feng, \emph{Image reconstruction of fluorescent molecular
+        %     tomography based on the tree structured Schur complement decomposition}
+        % \bibitem{2}RANDRIANARISON N.Tsirilala, RANDRIAMITANTSOA P. Auguste, RAMAFIARISON H. Malalatiana, \emph{Performance of K-SVD algorithm in digital Optical Coherence Tomography}
+        % \bibitem{3} Linwei Fan, Fan Zhang, Hui Fan, and Caiming Zhang, \emph{Brief review of image denoising techniques}
+        % \bibitem{4} Michael S. Hansen, and Peter Kellman, \emph{Image reconstruction: an overview from clinicians}
+        % \bibitem{5} Joshua Trzasko*, Member, IEEE, and Armando Manduca, Member, IEEE, \emph{Highly Undersampled Magnetic Resonance Image Reconstruction via Homotopic `0-Minimization}
         \bibitem{6} Helmholtz Imaging, Deutsches Elektronen-Synchrotron DESY, Notkestr. 85, 22607 Hamburg, Germany, \emph{ntroduction to Regularization and Learning Methods for Inverse Problems}
         \bibitem{7} Bunyamin Yildiz *, Murat Subasi, Ali Sever, \emph{On a regularization problem}
         \bibitem{8} J. P. Bregman, \emph{Bregman Iteration for Correspondence Problems}
+        \bibitem{9} Jen Beatty Colby College, \emph{The Radon Transform and the Mathematics of Medical Imaging}
+        \bibitem{10} R. Snieder and J. Trampert. \emph{Linear and nonlinear inverse problems}. Department of Geophysics, Utrecht University, P.O. Box 80.021, 3508 TA Utrecht, The Netherlands. Email: snieder@geo.uu.nl.
+        \bibitem{11} I. Bloch. \emph{Reconstruction d’images de tomographie}. LTCI, Télécom Paris, Isabelle.Bloch@telecom-paris.fr.
+        \bibitem{12} S. Qin. \emph{Simple algorithm for L1-norm regularisation-based compressed sensing and image restoration}. Third Institute of Physics, Georg-August-Universität Göttingen, Friedrich-Hund-Platz 1, Göttingen, Germany. Email: shun.qin@outlook.com.
+        \bibitem{13} M. Piening, F. Altekrüger, J. Hertrich, P. Hagemann, A. Walther and G. Steidl. \emph{Learning from small data sets: Patch-based regularizers in inverse problems for image reconstruction}. (Information manquante pour l’affiliation complète). Note: Les affiliations sont indiquées par les chiffres 1 et 2, mais ne sont pas détaillées dans le texte fourni.
+        \bibitem{14}  Engl, Heinz W., and R. Ramlau, \emph{Regularization of inverse problems}. Kluwer Academic Publishers, 2000.
     \end{thebibliography}
     % ================================================================
 

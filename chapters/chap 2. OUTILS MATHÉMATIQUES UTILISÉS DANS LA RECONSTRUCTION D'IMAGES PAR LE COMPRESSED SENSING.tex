@@ -1,4 +1,247 @@
-\chapter{NOTRE MODÈLE}
+\chapter{OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES CT PAR LE COMPRESSED SENSING}
+
+Un sujet très précis et intéressant ! La reconstruction d'images à partir de projections est un aspect crucial de l'imagerie médicale, en particulier dans des modalités telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP).
+Le scanner de tomodensitométrie (CT) diagnostique, voir la \Cref{fig :tomography_device}, est un véritable
+chef-d'œuvre de la technologie moderne et constitue un exemple positif de l'influence des forces
+du marché libre dans la stimulation de l'innovation. Tous les principaux fabricants de scanners
+CT disposent d'équipes solides de recherche et développement, qui suivent et contribuent aux
+travaux de recherche en science de l'imagerie en plus de leurs activités internes.
+
+Les dispositifs CT peuvent être considérés comme la réalisation d'une caméra gigapixel en usage
+clinique courant. Alors qu'un scanner CT diagnostique moderne typique fournit des volumes
+composés de centaines d'images de coupes de taille $512 \times 512$ avec une résolution
+submillimétrique, les scanners micro-CT peuvent produire des volumes atteignant
+$2000$ voxels.
+
+Dans le cas de l'imagerie cardiaque par CT, une application qui a largement stimulé les avancées
+technologiques, les images volumiques peuvent être acquises avec une résolution temporelle
+pouvant descendre jusqu'à 100 millisecondes. La vitesse et la résolution de l'imagerie CT en font
+un outil indispensable pour l'imagerie cardiaque et l'évaluation des accidents vasculaires
+cérébraux.
+
+Elle est utilisée de manière routinière pour le diagnostic de diverses pathologies médicales
+affectant l'ensemble des organes internes, et son utilisation est même envisagée comme outil de
+dépistage du cancer du poumon. Les recherches actuelles visent globalement à améliorer
+l'utilité clinique sans augmenter la dose d'irradiation de l'examen, ou à maintenir cette utilité
+tout en réduisant l'exposition du patient aux rayonnements ionisants.
+
+Les méthodes analytiques directes sont l'approche historique et mathématiquement élégante des problèmes inverses linéaires \cite[14], particulièrement en tomographie. Leur positionnement répond à un impératif de rapidité de calcul dans des applications où le temps de reconstruction est critique (imagerie médicale clinique, contrôle non destructif industriel).
+
+\section{Classification des approches de reconstruction}
+Le paysage algorithmique de la tomographie se divise principalement en trois familles, distinguées par leur traitement de l'opérateur de projection.
+
+\subsection{Méthodes analytiques}
+Les méthodes analytiques de reconstruction reposent sur une formulation mathématique explicite
+de l'inversion de l'opérateur direct reliant l'objet à ses projections. En tomodensitométrie (TDM),
+cet opérateur est étroitement lié à la transformée de Radon. En exploitant ses propriétés, ces
+méthodes permettent une reconstruction directe et rapide de l'image à partir des données de
+projection.
+
+L'exemple le plus emblématique est la Rétroprojection Filtrée (\emph{Filtered Backprojection},
+FBP). Cette méthode analytique largement utilisée consiste à filtrer les projections avant de
+les rétroprojeter sur la grille de l'image. La FBP est rapide et efficace, mais elle demeure
+sensible au bruit et aux artefacts, en particulier lorsque le nombre de projections est limité
+ou que la dose d'irradiation est réduite.
+
+
+\subsubsection{Fondements de la tomographie assistée par ordinateur (CT)}
+Imaginons qu'on ait un objet opaque constitué de différents matériaux, et que l'on souhaite savoir comment ces matériaux sont répartis à l'intérieur sans l'endommager (par exemple, l'objet peut être un malade à l'intérieur du corps duquel on aimerait voir). L'une des méthodes est le scanner  : on lance de fins faisceaux de rayons X à travers l'objet dans toutes les directions et on mesure quelle proportion de chaque faisceau a été absorbée.
+
+La tomographie est un procédé permettant de créer l'image d'un objet en deux ou trois dimensions à partir de multiples "coupes" unidimensionnelles (Voir \Cref{fig :tomography_device}). Dans un scanner CT, ces coupes sont définies par des faisceaux de rayons $\mathbf{X}$ parallèles projetés à travers l'objet. En changeant l'orientation de la source et du détecteur (l'angle \(\theta\)), on obtient des informations sur la densité interne sous différents angles.\\
+Le fonctionnement repose sur la mesure de l'intensité des rayons $\mathbf{X}$ :
+\begin{itemize}
+    \item[-] \textbf{Perte d'énergie}  : Lorsqu'un rayon $\mathbf{X}$ traverse un objet, il perd une partie de son énergie, ce qui réduit son intensité
+    \item[-] \textbf{Coefficient d'atténuation}  : Cette perte dépend de la densité du milieu. Les objets denses (comme l'os) provoquent une variation d'intensité plus importante que les tissus moins denses. Cette caractéristique est appelée le coefficient d'atténuation. L'atténuation mesurée pour chaque faisceau, c'est-à-dire la différence entre l'intensité incidente et l'intensité détectée, correspond à une intégrale de ligne de la structure interne de l'objet. Cette relation entre l'objet et l'ensemble de ses intégrales de ligne est formalisée par la transformée de Radon. La reconstruction de l'image originale repose alors sur l'inversion de cette transformée, qui constitue le fondement théorique de la tomographie assistée par ordinateur
+    \item[-] \textbf{Mesures}  : Le scanner enregistre l'intensité initiale émise ($I_{0}$) et l'intensité finale reçue ($I_{1}$) pour chaque faisceau afin de déduire la densité globale rencontrée sur le trajet
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/ct_device.png}
+    \caption{Principe de fonctionnement d'un appareil de tomodensitométrie}
+    \label{fig :tomography_device}
+\end{figure}
+\medskip
+\noindent
+D'un point de vue mathématique, l'ensemble des mesures acquises par le scanner correspond à
+l'application de la transformée de Radon à la fonction d'atténuation de l'objet. Le problème
+fondamental de la tomographie consiste alors à reconstruire cette fonction d'atténuation à
+partir de ses intégrales de ligne, c'est-à-dire à inverser la transformée de Radon.
+Pour une fonction d'atténuation bidimensionnelle $A(x,y)$, la transformée de Radon est définie
+par :
+\begin{equation}
+\mathcal{R}\{A\}(\theta, s) =
+\int_{\mathbb{R}^2} A(x,y)\,
+\delta(x\cos\theta + y\sin\theta - s)\,\mathrm{d}x\,\mathrm{d}y,
+\end{equation}
+où $\theta$ représente l'angle de projection, $s$ la position du détecteur, et $\delta(\cdot)$
+la distribution de Dirac. Cette expression formalise le fait que chaque projection correspond
+à une intégrale de la fonction d'atténuation le long d'une droite.
+
+\subsubsection{Loi de Beer--Lambert et modélisation de l'atténuation des rayons X dans l'objet}
+L'objet initial, considéré comme plan, est donné par une fonction d'atténuation qui, à chaque point du plan de coordonnées $(x, y)$, va associer un nombre $A(x, y)$ correspondant à la proportion des rayons qui sont absorbés par le matériau en ce point  : en un point d'un os, $A$ sera grand, et en un point de l'air, il sera faible.\vspace{10pt}\\
+% \subsubsection{Loi de Beer--Lambert et modélisation de l'atténuation}
+En supposant dans un premier temps que la fonction d'atténuation de notre objet est constante égale à $a$, pour tout rayon lumineux traversant notre objet, pour tout couple de points d'abscisses $x$ et $x+l$ sur ce rayon, les abscisses étant croissantes dans le sens du rayon, le rapport d'intensités lumineuses $\cfrac{I(x+l)}{I(x)}$ ne dépend que de $a$ et de la longueur $l$ traversée et pas du point $x$ (position).
+
+En omettant provisoirement la dépendance par rapport à $a$ et en notant alors $p(l)$ ce rapport $\cfrac{I(x+l)}{I(x)}$ qui correspond à la proportion de photons non
+absorbés sur une longueur $l$ à partir d'un point $x$, on voit que $p$ vérifie la propriété 
+\[
+    p(l_1+l_2) = p(l_1)p(l_2)
+\] \vspace{10pt}\\
+En Effet, la proportion de photons non absorbés sur une longueur $l_2$ à partir d'un point $x+l_1$ est $\cfrac{I(x+l_1+l_2)}{I(x+l_1)}=p(l_2)$. Donc $p(l_1)p(l_2)=\cfrac{I(x+l_1)}{I(x)} \times \cfrac{I(x+l_1+l_2)}{I(x+l_1)}=p(l_1+l_2)$. Ceci traduit juste le fait simple suivant  : les proportions de photons non
+absorbés se multiplient lors de traversées successives de milieux absorbants. La bonne définition de l'atténuation est précisément : 
+\begin{equation}
+    p(l)=e^{-a\, l}
+    \label{eq:init_loi_beer_lambert_attenuation}
+\end{equation}\vspace{10pt}\\
+Autrement dit, pour tout $x$ et $x+l$ sur un axe  : 
+\begin{equation}
+    I(x+l)=I(x)e^{-a\, l}
+    \label{eq:init_loi_beer_lambert}
+\end{equation}\vspace{10pt}\\
+Notons que si le phénomène physique d'atténuation est spécifique de la tomographie à rayons X, les méthodes de reconstruction sont en revanche plus générales et sont appliquées également dans d'autres systèmes d'imagerie, dans lesquelles des équations analogues expriment une fonction à reconstruire en fonction de projections. C'est le cas par exemple de la TEP utilisée en médecine nucléaire.
+
+\subsubsection{Reconstruction d'images en tomodensitométrie : inversion de Fourier, rétroprojection et FBP}
+À partir de la modélisation physique de l'atténuation et de la formulation mathématique de la
+transformée de Radon, plusieurs méthodes analytiques ont été proposées pour résoudre le
+problème inverse de la reconstruction tomographique.
+La reconstruction d'images en tomodensitométrie à partir des projections aux rayons X repose
+classiquement sur trois grandes approches analytiques.\vspace{5pt} \\
+La première est l'inversion directe de Fourier, fondée sur le théorème de la coupe de Fourier, selon lequel chaque projection acquise à
+un angle donné correspond à une droite dans l'espace fréquentiel bidimensionnel de l'objet.
+En théorie, l'acquisition d'un nombre suffisant de projections permet de remplir cet espace
+fréquentiel et d'obtenir l'image par transformation de Fourier inverse. Toutefois, la nécessité
+de rééchantillonner des données organisées sur une grille polaire vers une grille cartésienne
+rend cette méthode complexe et peu utilisée en pratique. \vspace{5pt} \\
+La seconde approche consiste à appliquer une rétroprojection directe des projections, ce qui conduit à une image floue,
+équivalente à la convolution de l'image originale avec un noyau de type
+$1/\sqrt{x^2+y^2}$. La restauration de l'image nécessite alors une déconvolution bidimensionnelle,
+opération coûteuse en temps de calcul. \vspace{5pt} \\ 
+La troisième méthode, la FBP, constitue l'approche la plus répandue en pratique. Elle repose sur le
+filtrage préalable de chaque projection unidimensionnelle par un filtre rampe dans le domaine
+fréquentiel, avant la rétroprojection. Ce traitement permet de compenser le flou inhérent à la
+rétroprojection (\cite{9}) tout en conservant une complexité de calcul réduite, puisque le filtrage est
+effectué en une dimension. Ces méthodes analytiques supposent néanmoins la disponibilité d'un
+grand nombre de projections uniformément réparties, hypothèse qui n'est plus toujours valide
+dans des contextes modernes tels que l'imagerie à faible dose ou à angles limités, où des
+approches itératives basées sur le \emph{Compressed Sensing} sont alors privilégiées.
+
+\subsection{Méthodes itératives et Compressed Sensing}
+
+La réduction des données de projection et de la dose de rayonnement en tomodensitométrie n'est
+pas simplement une préférence de calcul ; elle est dictée par la sécurité clinique, l'efficacité
+opérationnelle et les contraintes physiques des systèmes d'imagerie par rayons \(\mathbf{X}\). 
+Cette approche se justifie rigoureusement des points de vue médical, physique et systémique.
+
+En premier lieu, la sécurité des patients est primordiale : les rayons \(\mathbf{X}\) ionisants
+utilisés en CT peuvent endommager l'ADN et augmenter le risque de cancer radio-induit,
+en particulier chez les populations pédiatriques ou lors d'expositions répétées. Le modèle
+linéaire sans seuil (LNT), pierre angulaire de la radioprotection, postule que toute
+réduction de dose diminue proportionnellement le risque à long terme. En pratique clinique
+moderne, où les examens CT se multiplient (dépistage, suivi longitudinal, planification
+radiothérapeutique), la réduction de la dose par acquisition est essentielle pour limiter
+l'exposition cumulative.
+
+D'un point de vue physique, la dose est approximativement proportionnelle au nombre de
+projections et au produit courant-temps du tube. Réduire l'un ou l'autre diminue donc
+directement l'exposition, mais augmente le bruit quantique des données, rendant la
+reconstruction plus difficile. Opérationnellement, un plus petit nombre de projections
+raccourcit la durée d'acquisition, réduisant les artefacts de mouvement et améliorant le
+débit patient. Pour les populations sensibles (enfants) ou dans des contextes d'imagerie
+répétée (radiothérapie guidée par l'image), cette réduction devient une obligation clinique
+et éthique, conforme au principe ALARA (As Low As Reasonably Achievable). Le défi technique
+réside dans la résolution du problème de reconstruction sous-déterminé qui en résulte,
+nécessitant des méthodes avancées comme la reconstruction itérative ou le Compressed Sensing \cite{12}
+pour préserver la qualité diagnostique malgré la réduction des données.
+
+\subsubsection{Formulation générale du problème inverse}
+Dans ce contexte, la reconstruction tomographique peut être formulée comme un
+\textit{problème inverse régularisé}. De manière générale, un problème inverse \cite{10} consiste
+à reconstruire un modèle à partir de mesures indirectes issues d'un processus physique
+connu. Le \textit{problème direct} décrit la formation des données de projection à partir
+de l'image inconnue, tandis que le \textit{problème inverse} vise à retrouver cette image à
+partir des mesures acquises.\vspace{5pt}\\
+En tomodensitométrie discrète, la relation entre l'image à reconstruire et les données
+de projection peut s'écrire sous la forme d'un système linéaire :
+\begin{equation}
+    \mathbf{g} = \mathbf{H}\mathbf{f} + \boldsymbol{\varepsilon},
+\end{equation}
+où $\mathbf{f}$ représente l'image vectorisée, $\mathbf{g}$ les données de projection
+(sinogramme), $\mathbf{H}$ la matrice du système modélisant la transformée de Radon discrète \cite{11},
+et $\boldsymbol{\varepsilon}$ un terme représentant le bruit de mesure.
+
+Dans un cadre idéal, l'opérateur $\mathbf{H}$ serait parfaitement inversible et les données
+seraient complètes et exemptes de bruit. En pratique, ces conditions ne sont jamais réunies.
+Le problème inverse est alors généralement \textit{mal posé au sens de Hadamard}, en raison
+d'un manque d'unicité et surtout d'un fort manque de stabilité : de faibles perturbations du
+bruit peuvent engendrer de grandes erreurs dans l'image reconstruite. Les méthodes itératives
+abordent ce problème en recherchant une solution régularisée, obtenue par la minimisation
+d'une fonction de coût combinant un terme d'adéquation aux données et un terme de
+régularisation incorporant des connaissances \emph{a priori} sur l'image.
+
+\subsubsection{Principe du Compressed Sensing}
+Le Compressed Sensing fournit un cadre mathématique rigoureux pour la reconstruction de
+signaux parcimonieux ou compressibles à partir de mesures linéaires sous-échantillonnées,
+sous certaines conditions sur l'opérateur de mesure. Il permet de résoudre des problèmes
+inverses sous-déterminés au moyen de méthodes d'optimisation favorisant la parcimonie ou
+d'algorithmes gloutons, avec des garanties théoriques de stabilité et de robustesse au bruit.
+
+Dans le cadre de l'imagerie tomographique, le Compressed Sensing exploite l'idée que de
+nombreuses images médicales admettent une représentation parcimonieuse dans une base ou un
+dictionnaire approprié, tel que les ondelettes ou le gradient de l'image. La reconstruction
+est alors formulée comme un problème d'optimisation sous contrainte :
+\begin{equation}
+    \min_{\mathbf{f}} \; \|\mathbf{\Psi}\mathbf{f}\|_1
+    \quad \text{sous la contrainte} \quad
+    \|\mathbf{H}\mathbf{f} - \mathbf{g}\|_2 \leq \delta,
+\end{equation}
+où $\mathbf{\Psi}$ désigne un opérateur favorisant la parcimonie et $\delta$ un paramètre
+lié au niveau de bruit des données.
+
+Cette formulation permet de reconstruire des images de qualité acceptable à partir d'un
+nombre de projections bien inférieur à celui requis par les méthodes analytiques classiques,
+tout en assurant une certaine stabilité du problème inverse.
+
+\subsubsection{Régularisation et variation totale}
+Une régularisation particulièrement adaptée à l'imagerie tomographique est la variation
+totale (TV) \cite{13}, qui favorise les images composées de régions quasi uniformes séparées par des
+discontinuités nettes. La reconstruction TV est généralement formulée comme :
+\begin{equation}
+    \min_{\mathbf{f}} \;
+    \frac{1}{2}\|\mathbf{H}\mathbf{f} - \mathbf{g}\|_2^2
+    + \lambda \|\nabla \mathbf{f}\|_1,
+\end{equation}
+où $\nabla$ représente l'opérateur gradient discret et $\lambda$ un paramètre de
+régularisation contrôlant le compromis entre fidélité aux données et stabilisation du
+problème inverse.
+
+Cette approche permet de réduire efficacement le bruit tout en préservant les contours,
+qualité essentielle pour l'analyse diagnostique.
+
+\subsubsection{Algorithmes itératifs}
+La résolution des problèmes d'optimisation issus du Compressed Sensing et des méthodes
+variationnelles repose sur des algorithmes itératifs, tels que les méthodes de descente de
+gradient proximal, l'algorithme ISTA/FISTA, l'ADMM ou encore les méthodes de type primal-dual.
+Ces algorithmes procèdent par mises à jour successives de l'image estimée, alternant entre la
+réduction de l'erreur de projection et l'application de la régularisation.
+
+Bien que plus coûteuses en temps de calcul que les méthodes analytiques, les méthodes
+itératives offrent une qualité de reconstruction supérieure dans les scénarios de données
+limitées et constituent aujourd'hui un axe majeur de recherche et de développement en
+tomodensitométrie moderne.
+
+\subsubsection{Comparaison avec les méthodes analytiques}
+En résumé, les méthodes analytiques privilégient la rapidité et la simplicité au prix d'une
+sensibilité accrue au bruit et aux artefacts, tandis que les méthodes itératives et basées sur
+le Compressed Sensing s'inscrivent pleinement dans le cadre des problèmes inverses
+régularisés. Elles exploitent des informations \emph{a priori} et des contraintes de parcimonie
+pour améliorer la stabilité et la qualité de reconstruction dans des conditions d'acquisition
+dégradées, répondant ainsi aux exigences de sécurité clinique et d'efficacité opérationnelle.
+
+
+% ========================================================================================================
+% TODO -> Phrase accrochage; mise en page; etc
+% ========================================================================================================
 % \section{Les traitements préalables à la reconstruction}
 
 % \subsection{ Méthodes dans le domaine spatial}
@@ -9,6 +252,7 @@
 
 % \subsection{ Méthodes dans le domaine transformé}
 \section{ Transformée de Fourier}
+La transformée de Fourier joue un rôle fondamental dans la reconstruction d'images en tomodensitométrie (CT), en permettant une analyse fréquentielle de l'image et des projections. Cette décomposition facilite la distinction entre les structures globales, associées aux basses fréquences, et les détails fins, portés par les hautes fréquences, contribuant ainsi à une reconstruction plus fidèle. Son utilisation dans des algorithmes analytiques tels que la FBP permet de formuler le problème dans le domaine fréquentiel, où les opérations de filtrage sont plus simples et plus efficaces à mettre en œuvre numériquement. En particulier, l'application d'un filtre rampe aux projections unidimensionnelles permet de compenser le flou inhérent à la rétroprojection directe et de réduire des artefacts caractéristiques, tels que l'effet d'étoile. En pratique, les données d'atténuation, organisées sous forme de sinogramme, sont transformées dans le domaine fréquentiel afin de contrôler précisément leur contenu spectral avant la reconstruction, ce qui conduit à une amélioration globale de la qualité de l'image reconstruite.
 \begin{definition}[Transformée de Fourier]
     Soit \( f \) une fonction absolument intégrable sur \( \mathbb{R} \).
     La transformée de Fourier de \( f \), notée \( \mathcal{F}f \), est définie
@@ -109,6 +353,8 @@ g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
 % =================================================
 
 \section{Convolution}
+La convolution joue un rôle clé dans la reconstruction d'image par rétroprojection filtrée (FBP), car elle intervient directement dans l'étape de filtrage des projections. Avant la rétroprojection, chaque projection mesurée est convoluée avec un filtre adapté afin de compenser le flou intrinsèque introduit par la rétroprojection simple. Cette opération permet de renforcer les hautes fréquences et d'améliorer la résolution de l'image reconstruite.
+
 \textbf{Définition 8.1.}
 Pour deux fonctions intégrables $f$ et $g$ définies sur $\mathbb{R}$,
 nous définissons la convolution de $f$ et $g$, notée $f \star g$, par
@@ -168,7 +414,7 @@ fournies par la fonction originale.
 
 
 % =================================================
-\section{La transformée de Radon}
+\section{Transformée de Radon}
 % =================================================
 L'hypothèse fondamentale est que le détecteur mesure l'atténuation intégrée le long d'un rayon. 
 \begin{definition}
@@ -277,7 +523,7 @@ $\mathbf{A}(x)$). Pour ce faire, il sera utile de rappeler plusieurs propriété
 \end{proposition}
 Nous définissons en outre le domaine naturel de la transformée de Radon comme l'ensemble des fonctions $f$ sur $\mathbb{R}^2$ telles que \[\int_{-\infty}^{\infty} |f(x(s), y(s))|\mathrm{d}s < \infty\]
 
-\subsection{Le Théorème de la Coupe Centrale}
+\subsection{Théorème de la Coupe Centrale}
 Le théorème de la coupe centrale, également appelé théorème de projection-transforme de Fourier ou théorème de Fourier-Slice, est un résultat fondamental en traitement d'image et en tomographie. Il établit un lien profond entre la transformée de Radon (utilisée pour décrire les projections d'un objet) et la transformée de Fourier (utilisée pour analyser les fréquences spatiales). Ce théorème constitue la pierre angulaire mathématique de la plupart des méthodes de reconstruction tomographique moderne.
 
 \begin{proposition}
@@ -665,7 +911,7 @@ comme fonction $F(\omega)$,
 \section{Discrétisation des méthodes analytiques}
 Ainsi nous avons traité presque exclusivement des intégrales continues pour la transformée de Radon, la transformée de Fourier et les formules de rétroprojection. En pratique, cependant, nous n'avons qu'un ensemble fini de données avec lesquelles travailler. Par conséquent, nous devrons former des versions discrètes de toutes les formules que nous avons utilisées dans notre rétroprojection filtrée.
 
-Une fonction discrète est une fonction définie uniquement sur un ensemble dénombrable. Pour nos besoins, nous considérerons des fonctions discrètes définies sur des ensembles finis (l'ensemble étant composé des lignes sur lesquelles nous avons pris nos mesures d'intensité). Soit \(g_n\) la fonction discrète \(g\) à la valeur \(n\). Comme nous connaissons cette fonction discrète sur un ensemble fini, soit \(N\), nous pouvons dire que \(g = g_n : 0 \le n \le N - 1\). Si nous voulons étendre cette définition à tous les entiers, nous pouvons simplement « répéter » notre fonction encore et encore ; c’est-à-dire, nous pouvons la rendre périodique avec une période \(N\). Cette extension sera utile pour certaines des formules discrètes que nous rencontrerons.
+Une fonction discrète est une fonction définie uniquement sur un ensemble dénombrable. Pour nos besoins, nous considérerons des fonctions discrètes définies sur des ensembles finis (l'ensemble étant composé des lignes sur lesquelles nous avons pris nos mesures d'intensité). Soit \(g_n\) la fonction discrète \(g\) à la valeur \(n\). Comme nous connaissons cette fonction discrète sur un ensemble fini, soit \(N\), nous pouvons dire que \(g = g_n : 0 \le n \le N - 1\). Si nous voulons étendre cette définition à tous les entiers, nous pouvons simplement « répéter » notre fonction encore et encore ; c'est-à-dire, nous pouvons la rendre périodique avec une période \(N\). Cette extension sera utile pour certaines des formules discrètes que nous rencontrerons.
 
 Supposons que nous prenions des mesures à \(P\) angles différents \(\theta\) et que pour chaque angle nous ayons \(2M + 1\) faisceaux espacés d'une distance \(d\). Alors nous pouvons définir des valeurs particulières \(\theta_k\) et \(t_j\) comme
 
@@ -772,11 +1018,110 @@ f(x_m,y_n) &\approx \frac{1}{2} \mathcal{B}_D \left( \left( \mathcal{F}_D^{-1}\m
 L'équation précédente tient compte de la nature discrète de nos données réelles et traite les problèmes (comme le manque de données) qui surviennent lorsque l'on dispose d'un nombre fini de mesures.
 
 
+% \section{Formulation linéaire -- Synthèse}
+% D'accord, nous allons expliquer pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \(g = Af\)} utilisée en pratique en tomographie.
+% \subsection{Rétroprojection filtrée continue}
+% On a la formule continue pour la reconstruction filtrée :
+% \[
+% f(x,y) = \frac{1}{2} \int_0^\pi \Big( (\mathcal{F}^{-1} S') \star \mathcal{R} f \Big)(x\cos\theta + y\sin\theta, \theta) \, d\theta
+% \]
+
+% Ici :
+% \begin{itemize}
+%     \item $f(x,y)$ : coefficient d'atténuation à reconstruire,
+%     \item $\mathcal{R} f(t,\theta)$ : transformée de Radon (projection à l'angle $\theta$),
+%     \item $\mathcal{F}^{-1} S'$ : filtre appliqué sur chaque projection,
+%     \item $\star$ : convolution dans $t$.
+% \end{itemize}
+
+% C'est une \textbf{formule intégrale continue}, dépendante de coordonnées polaires.\vspace{5pt}\\
+% Cette expression met en évidence la structure mathématique exacte de la reconstruction tomographique idéale. Toutefois, elle repose sur des intégrales et des fonctions continues qui ne peuvent pas être manipulées directement en pratique. Pour une implémentation numérique, il est indispensable de passer à une représentation discrète. Cette transition constitue le cœur des méthodes de reconstruction utilisées en imagerie médicale.
+
+% \subsection{Discrétisation des coordonnées et des angles}
+
+% Pour passer au discret :
+% \begin{enumerate}
+%     \item On ne mesure que $P$ angles : $\theta_k = k\pi/P$, $k = 0,\dots,P-1$,
+%     \item On ne mesure que $2M+1$ faisceaux par angle, espacés de $d$ : $t_j = j d, j=-M,\dots,M$,
+%     \item On obtient donc la \textbf{transformée de Radon discrète} :
+%     \[
+%     \mathcal{R}_D f_{j,k} = \mathcal{R} f(t_j, \theta_k).
+%     \]
+% \end{enumerate}\vspace{5pt}
+% Cette étape traduit les contraintes physiques des systèmes d'acquisition réels, qui ne fournissent qu'un nombre fini de mesures. L'échantillonnage en angle et en position transforme ainsi le problème continu en un ensemble de données numériques exploitables. La qualité de la reconstruction dépend directement de la finesse de cette discrétisation. Elle conditionne notamment la résolution spatiale et les artefacts.
+
+% \subsection{Convolution et filtrage discrets}
+
+% On applique ensuite le filtre sur chaque projection :
+% \[
+% h_{j,k} = (\mathcal{F}_D^{-1} \mathcal{S}' \ast \mathcal{R}_D f)_{j,k}
+% \]
+
+% Ici, $\ast$ est la \textbf{convolution discrète} dans $t$ :
+% \[
+% (f \ast g)_m = \sum_{n=0}^{N-1} f_n \, g_{(m-n)}.
+% \]\vspace{5pt}
+% Le filtrage est une étape cruciale de la méthode FBP, car il corrige le flou introduit par la rétroprojection simple. La convolution discrète permet d'implémenter efficacement ce filtrage sur des données échantillonnées. Elle renforce les hautes fréquences nécessaires à une bonne résolution spatiale. Sans cette étape, la reconstruction serait fortement dégradée.
+
+% \subsection{Discrétisation de la rétroprojection}
+
+% La rétroprojection discrète est :
+% \[
+% f(x_m,y_n) \approx \frac{1}{2N} \sum_{k=0}^{N-1} h\Big( x_m \cos \frac{k\pi}{N} + y_n \sin \frac{k\pi}{N}, \frac{k\pi}{N} \Big).
+% \]
+
+% Comme les coordonnées cartésiennes $(x_m, y_n)$ ne tombent pas exactement sur les positions $t_j$, on \textbf{interpole} :
+% \[
+% h\big(x_m\cos\theta_k + y_n \sin\theta_k, \theta_k\big) \approx \sum_j h_{j,k} \, W\left(\frac{x_m \cos\theta_k + y_n \sin\theta_k - t_j}{d}\right),
+% \]
+% où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).  
+% Cela transforme chaque $f(x_m, y_n)$ en \textbf{combinaison linéaire des mesures $h_{j,k}$}.\vspace{5pt}\\
+% La rétroprojection redistribue l'information des projections filtrées sur la grille de l'image reconstruite. Cette étape assure la cohérence géométrique entre les données mesurées et l'espace image. L'interpolation est indispensable pour relier les coordonnées polaires aux pixels cartésiens. Elle introduit également une approximation contrôlée du modèle continu.
+
+
+% \subsection{Passage à la forme matricielle linéaire}
+
+% Si on note :
+% \begin{itemize}
+%     \item $f$ le vecteur de tous les $f(x_m, y_n)$ sur la grille,
+%     \item $g$ le vecteur de toutes les mesures projetées filtrées $h_{j,k}$,
+%     \item $A$ la matrice représentant la \textbf{rétroprojection + interpolation},
+% \end{itemize}
+
+% alors :
+% \[
+% f_i = \sum_j A_{ij} \, g_j
+% \]
+
+% Chaque coefficient $A_{ij}$ représente le poids avec lequel la projection $g_j$ contribue au pixel $f_i$.  
+
+% On obtient donc :
+% \[
+% \boxed{g = Af} \quad \text{ou souvent } f = A g \text{ selon la notation.}
+% \]
+
+% En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un simple \textbf{produit matriciel}.\vspace{5pt}\\
+% Cette écriture matricielle unifie l'ensemble du processus de reconstruction dans un cadre linéaire. Elle permet d'analyser la FBP avec les outils de l'algèbre linéaire et de l'optimisation. De nombreuses méthodes itératives modernes reposent sur cette formulation. Elle constitue ainsi un pont entre les approches analytiques et numériques.
+
+% \subsection{Synthèse}
+
+% Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes principales :
+% \begin{enumerate}
+%     \item \textbf{Échantillonnage discret} des angles et des faisceaux → $\mathcal{R}_D f$,
+%     \item \textbf{Filtrage discret} via convolution et transformée de Fourier discrète,
+%     \item \textbf{Rétroprojection discrète} et interpolation sur la grille cartésienne,
+%     \item \textbf{Écriture linéaire} : chaque pixel reconstruit est une combinaison linéaire des mesures → matrice $A$.
+% \end{enumerate}
+
+% Ainsi, \textbf{toute la formule intégrale est transformée en somme discrète}, et la linéarité de la convolution et de la rétroprojection permet de la représenter par $A$.\vspace{5pt}\\
+% Cette synthèse met en évidence la cohérence du passage du modèle physique continu vers une implémentation numérique concrète. La méthode FBP apparaît alors comme une succession d'opérations linéaires bien structurées. Cette vision est essentielle pour comprendre ses limites et ses extensions. Elle prépare naturellement l'introduction de méthodes de reconstruction plus avancées.
 \section{Formulation linéaire -- Synthèse}
-% Alternative: Formulation linéaire de la reconstruction tomographique
+
+Ce chapitre explique pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \( g = Af \)} utilisée en pratique en tomographie. Cette transition est essentielle pour relier la théorie mathématique aux algorithmes numériques implémentés dans les systèmes réels. Elle constitue également le point d’entrée vers les méthodes itératives modernes.\vspace{7pt}\\
 D'accord, nous allons expliquer pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \(g = Af\)} utilisée en pratique en tomographie.
 
 \subsection{Rétroprojection filtrée continue}
+Cette section présente l’expression analytique idéale de la reconstruction tomographique. Elle met en évidence le rôle central de la transformée de Radon, du filtrage et de l’intégration angulaire. Bien que mathématiquement élégante, cette formulation reste purement continue et ne peut pas être appliquée directement en pratique.\vspace{7pt}\\
 On a la formule continue pour la reconstruction filtrée :
 \[
 f(x,y) = \frac{1}{2} \int_0^\pi \Big( (\mathcal{F}^{-1} S') \star \mathcal{R} f \Big)(x\cos\theta + y\sin\theta, \theta) \, d\theta
@@ -791,9 +1136,8 @@ Ici :
 \end{itemize}
 
 C'est une \textbf{formule intégrale continue}, dépendante de coordonnées polaires.
-
 \subsection{Discrétisation des coordonnées et des angles}
-
+La discrétisation permet d’adapter le modèle continu aux contraintes physiques des systèmes d’acquisition. Elle transforme les intégrales et variables continues en un ensemble fini de mesures exploitables numériquement. Cette étape conditionne directement la qualité et la résolution de la reconstruction finale. \vspace{7pt}\\
 Pour passer au discret :
 \begin{enumerate}
     \item On ne mesure que $P$ angles : $\theta_k = k\pi/P$, $k = 0,\dots,P-1$,
@@ -805,7 +1149,7 @@ Pour passer au discret :
 \end{enumerate}
 
 \subsection{Convolution et filtrage discrets}
-
+Le filtrage est une étape cruciale de la méthode FBP, car il compense le flou introduit par la rétroprojection simple. Il repose sur l’opération de convolution, qui permet de renforcer les hautes fréquences nécessaires à une bonne résolution spatiale. Sans ce filtrage, la reconstruction serait fortement dégradée.\vspace{7pt}\\
 On applique ensuite le filtre sur chaque projection :
 \[
 h_{j,k} = (\mathcal{F}_D^{-1} \mathcal{S}' \ast \mathcal{R}_D f)_{j,k}
@@ -818,20 +1162,19 @@ Ici, $\ast$ est la \textbf{convolution discrète} dans $t$ :
 
 \subsection{Discrétisation de la rétroprojection}
 
+La rétroprojection assure la redistribution des projections filtrées sur la grille de l’image reconstruite. Elle garantit la cohérence géométrique entre l’espace des mesures et l’espace image. Cette étape nécessite une interpolation, introduisant une approximation contrôlée du modèle continu.\vspace{7pt}\\
 La rétroprojection discrète est :
 \[
 f(x_m,y_n) \approx \frac{1}{2N} \sum_{k=0}^{N-1} h\Big( x_m \cos \frac{k\pi}{N} + y_n \sin \frac{k\pi}{N}, \frac{k\pi}{N} \Big).
 \]
-
 Comme les coordonnées cartésiennes $(x_m, y_n)$ ne tombent pas exactement sur les positions $t_j$, on \textbf{interpole} :
 \[
 h\big(x_m\cos\theta_k + y_n \sin\theta_k, \theta_k\big) \approx \sum_j h_{j,k} \, W\left(\frac{x_m \cos\theta_k + y_n \sin\theta_k - t_j}{d}\right),
 \]
-où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).  
+où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).\vspace{7pt}\\
 Cela transforme chaque $f(x_m, y_n)$ en \textbf{combinaison linéaire des mesures $h_{j,k}$}.
-
 \subsection{Passage à la forme matricielle linéaire}
-
+La formulation matricielle permet de rassembler toutes les opérations précédentes dans un cadre linéaire unique. Elle constitue un lien direct entre la théorie continue et les algorithmes numériques. Cette écriture est essentielle pour l’analyse et l’extension vers des méthodes itératives.\vspace{7pt}\\
 Si on note :
 \begin{itemize}
     \item $f$ le vecteur de tous les $f(x_m, y_n)$ sur la grille,
@@ -844,679 +1187,29 @@ alors :
 f_i = \sum_j A_{ij} \, g_j
 \]
 
-Chaque coefficient $A_{ij}$ représente le poids avec lequel la projection $g_j$ contribue au pixel $f_i$.  
-
-On obtient donc :
+On obtient :
 \[
-\boxed{g = Af} \quad \text{ou souvent } f = A g \text{ selon la notation.}
+\boxed{g = Af} \quad \text{(ou } f = Ag \text{ selon la convention)}
 \]
 
-En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un simple \textbf{produit matriciel}.
-
+En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un produit matriciel.
 \subsection{Synthèse}
-
+Cette synthèse met en évidence la cohérence globale du passage du modèle continu vers une implémentation discrète. Elle permet de comprendre la FBP comme une succession structurée d’opérations linéaires. Cette vision prépare naturellement l’introduction de méthodes de reconstruction plus avancées.\vspace{7pt}\\
 Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes principales :
 \begin{enumerate}
-    \item \textbf{Échantillonnage discret} des angles et des faisceaux → $\mathcal{R}_D f$,
-    \item \textbf{Filtrage discret} via convolution et transformée de Fourier discrète,
-    \item \textbf{Rétroprojection discrète} et interpolation sur la grille cartésienne,
-    \item \textbf{Écriture linéaire} : chaque pixel reconstruit est une combinaison linéaire des mesures → matrice $A$.
+    \item \textbf{Échantillonnage discret} des angles et des faisceaux,
+    \item \textbf{Filtrage discret} par convolution,
+    \item \textbf{Rétroprojection discrète} avec interpolation,
+    \item \textbf{Formulation linéaire matricielle}.
 \end{enumerate}
 
-Ainsi, \textbf{toute la formule intégrale est transformée en somme discrète}, et la linéarité de la convolution et de la rétroprojection permet de la représenter par $A$.
-
-% ---- TODO -----
-% \section{Limites de la méthode analytique}
-% ============================================================
-\section{Théorie du Compressed Sensing}
-% ============================================================
-
-En tomodensitométrie (CT), la réduction du nombre de projections et de la dose de rayonnement
-constitue un enjeu majeur de sécurité clinique et de performance opérationnelle. La diminution
-de l'exposition aux rayons $\mathbf{X}$ vise à limiter les risques biologiques associés aux
-rayonnements ionisants, en particulier dans les contextes d'examens répétés ou pour les
-populations sensibles. Toutefois, cette réduction conduit inévitablement à une acquisition
-de données incomplètes et bruitées, rendant la reconstruction d'image plus difficile.\vspace{5pt}\\
-D'un point de vue mathématique, cette situation se traduit par un problème inverse
-sous-déterminé, pour lequel les méthodes analytiques classiques, telles que la
-rétroprojection filtrée, deviennent instables ou génèrent des artefacts importants.
-Le \emph{Compressed Sensing} (CS) fournit un cadre théorique et algorithmique permettant
-d'aborder cette problématique en exploitant des propriétés structurelles des images CT.
-
-\begin{definition}
-    Le \emph{compressed sensing} (CS) est un cadre mathématique et algorithmique permettant la
-    reconstruction de signaux de grande dimension à partir d'un nombre de mesures
-    significativement inférieur à celui requis par les méthodes d'échantillonnage classiques,
-    sous réserve que le signal présente une structure de parcimonie adaptée.
-\end{definition}
-
-\begin{definition}
-    Soit $x \in \mathbb{R}^{n}$ un signal inconnu. On dit que $x$ est
-    \(k\)-parcimonieux dans une base (ou un dictionnaire) \(\Psi\)
-    (par exemple ondelettes, DCT) si
-    \[
-        x = \Psi \alpha, \qquad \text{où } \alpha \text{ possède au plus } k \ll n
-        \text{ coefficients non nuls}.
-    \]
-\end{definition}
-
-Dans le cas des images CT, bien que la distribution d'atténuation ne soit pas parcimonieuse
-dans le domaine spatial, elle est souvent compressible dans des bases multi-échelles ou via
-le gradient de l'image. Cette propriété constitue le fondement de l'application du
-compressed sensing à la reconstruction tomographique.
-
-Les mesures acquises lors d'un examen CT peuvent être modélisées par un ensemble de relations
-linéaires :
+\subsubsection*{Conclusion}
+Ce chapitre a présenté les principaux outils mathématiques qui fondent la reconstruction d'images tomographiques, en mettant en évidence la transition fondamentale entre les méthodes analytiques classiques et les approches modernes basées sur le \textit{Compressed Sensing}.\vspace{7pt}\\
+Les méthodes analytiques, historiquement les premières, reposent sur une formulation mathématique élégante et directe du problème inverse. La transformée de Radon en constitue la pierre angulaire, en modélisant le lien entre l'objet et ses projections. Son inversion, fondée sur le théorème de la coupe centrale et mise en œuvre dans l'algorithme de rétroprojection filtrée (FBP), permet une reconstruction rapide. Ces méthodes, dont la FBP demeure un standard clinique, supposent toutefois des données abondantes, complètes et faiblement bruitées.\vspace{7pt}\\
+Cependant, les exigences actuelles de réduction de dose et de temps d'acquisition conduisent à des scénarios sous-échantillonnés, dans lesquels les méthodes analytiques atteignent leurs limites, se traduisant par des artefacts et une forte sensibilité au bruit. C'est dans ce contexte que les méthodes itératives et le cadre du \textit{Compressed Sensing} prennent tout leur sens. En formulant la reconstruction comme un problème inverse régularisé, elles exploitent des connaissances a priori sur l'image, telles que sa parcimonie dans un domaine approprié (ondelettes, gradient), afin de stabiliser l'inversion et d'obtenir des reconstructions de qualité à partir de données limitées. La variation totale (TV) constitue un exemple de régularisation particulièrement adapté, permettant de préserver les contours tout en réduisant le bruit.\vspace{7pt}\\
+La transformée de Fourier et l'opération de convolution jouent un rôle transversal essentiel, aussi bien dans l'implémentation du filtrage pour la FBP que dans l'analyse fréquentielle des données. Par ailleurs, la discrétisation des opérateurs mathématiques et la formulation matricielle linéaire du problème, sous la forme
 \[
-    \mathbf{y} = \mathbf{A}\mathbf{x},
+g = H f,
 \]
-où $\mathbf{A} \in \mathbb{R}^{m \times n}$ représente l'opérateur de projection discrétisé
-(assimilable à la transformée de Radon discrète) et $m \ll n$ lorsque le nombre de projections
-est réduit.
-
-Contrairement au cadre classique de l'échantillonnage, qui impose un nombre de mesures au
-moins égal à la dimension du signal, le compressed sensing montre que
-\[
-    m \gtrsim k \log(n/k)
-\]
-peut être suffisant pour une reconstruction stable, sous des conditions appropriées sur
-l'opérateur $\mathbf{A}$, telles que l'incohérence ou la propriété d'isométrie restreinte
-(\emph{Restricted Isometry Property}, RIP).
-
-\subsection{Le problème inverse en tomodensitométrie}
-
-La reconstruction CT s'inscrit dans le cadre général des problèmes inverses, où l'objectif
-est d'estimer une image à partir de mesures indirectes, bruitées et incomplètes. Ce problème
-peut être formulé sous la forme :
-\begin{equation}
-    \mathbf{y} = \mathcal{A}\mathbf{x} + \mathbf{n},
-    \label{eq:inverse_problem}
-\end{equation}
-où :
-\begin{itemize}
-    \item[-] $\mathbf{x} \in \mathbb{R}^n$ représente la distribution d'atténuation à reconstruire,
-    \item[-] $\mathbf{y} \in \mathbb{R}^m$ correspond aux données de projection (sinogramme),
-    \item[-] $\mathcal{A}$ modélise le processus de projection CT,
-    \item[-] $\mathbf{n}$ représente le bruit de mesure, principalement de nature quantique.
-\end{itemize}
-
-Lorsque le nombre de projections est réduit, l'opérateur $\mathcal{A}$ devient non inversible
-et le problème est sous-déterminé. Cette situation est inhérente aux stratégies de réduction
-de dose et ne peut être évitée sans compromettre la sécurité du patient.
-
-\subsection{Mal-positude et conséquences pratiques}
-
-\begin{definition}
-    Un problème est dit \textbf{bien posé} au sens de Hadamard s'il vérifie l'existence,
-    l'unicité et la stabilité de la solution. Si l'une de ces conditions n'est pas satisfaite,
-    le problème est dit \emph{mal posé}.
-\end{definition}
-
-Dans le contexte de la reconstruction CT à faible dose, la condition d'unicité est violée
-du fait de la sous-détermination, et la condition de stabilité est fortement compromise par
-la présence de bruit. De faibles fluctuations du sinogramme peuvent ainsi engendrer des
-artefacts marqués dans l'image reconstruite.
-
-\subsection{Régularisation par parcimonie et Compressed Sensing}
-
-Pour rendre le problème inverse traitable, il est nécessaire d'introduire des informations
-a priori sur la solution recherchée. Le compressed sensing propose d'utiliser la parcimonie
-ou la compressibilité de l'image CT dans une représentation appropriée comme mécanisme de
-régularisation.\vspace{5pt}\\
-Cette hypothèse restreint l'ensemble des solutions admissibles et permet de transformer un
-problème inverse mal posé en un problème d'optimisation bien conditionné, pour lequel une
-solution stable et physiquement plausible peut être obtenue malgré la réduction du nombre
-de projections.\vspace{5pt}\\
-Jusqu'à présent, le compressed sensing a été présenté comme un cadre
-théorique exploitant la parcimonie pour résoudre des problèmes inverses
-sous-déterminés. En pratique, cette hypothèse de parcimonie est intégrée
-au processus de reconstruction via des formulations variationnelles.
-Ces formulations constituent un cadre général permettant d'unifier les
-approches classiques de régularisation et les méthodes issues du
-compressed sensing.
-
-\subsection{Formulation variationnelle des problèmes inverses}
-% ============================================================================================
-
-Dans de nombreux problèmes d'imagerie, et en particulier en tomodensitométrie
-à faible dose, l'objectif est de reconstruire une image inconnue
-$\mathbf{x} \in \mathbb{R}^n$ à partir d'un ensemble de mesures
-$\mathbf{y} \in \mathbb{R}^m$ obtenues par un système d'acquisition indirect.
-Ce processus est généralement modélisé par une relation linéaire de la forme
-\[
-\mathbf{y} = \mathcal{A}\mathbf{x} + \boldsymbol{\varepsilon},
-\]
-où $\mathcal{A}$ représente l'opérateur direct du système CT et
-$\boldsymbol{\varepsilon}$ un terme de bruit.
-
-Lorsque les données sont bruitées et/ou acquises de manière incomplète
-($m \ll n$), l'opérateur $\mathcal{A}$ devient non inversible ou mal conditionné.
-Dans ce cas, une inversion directe est soit impossible, soit extrêmement
-instable, et de petites perturbations des données peuvent engendrer de fortes
-dégradations de la solution reconstruite. Ce phénomène est caractéristique des
-problèmes inverses mal posés.
-
-\begin{definition}
-Un \emph{problème inverse} consiste à estimer une quantité inconnue
-$\mathbf{x}$ à partir d'observations indirectes $\mathbf{y}$, reliées par un
-opérateur $\mathcal{A}$, lorsque l'inversion directe de cet opérateur est
-impossible ou instable.
-\end{definition}
-
-\paragraph{Principe de la régularisation.}
-Afin de rendre le problème inverse traitable, il est nécessaire d'introduire
-des informations a priori sur la solution recherchée. Cette démarche est
-connue sous le nom de \emph{régularisation}.
-
-\begin{definition}
-Une régularisation est une application
-$\mathfrak{R}_{\alpha} : \mathbb{R}^m \rightarrow \mathbb{R}^n$ qui associe à
-des données observées $\mathbf{y}$ une solution stable $\hat{\mathbf{x}}$,
-en incorporant des hypothèses supplémentaires sur la structure de la solution.
-\end{definition}
-
-Intuitivement, une méthode de régularisation vise à étendre la notion d'inverse
-au cadre bruité et mal posé, de sorte que
-\[
-\mathfrak{R}_{\alpha}(\mathcal{A}\mathbf{x} + \boldsymbol{\varepsilon})
-\approx \mathbf{x},
-\]
-même lorsque $\boldsymbol{\varepsilon} \neq \mathbf{0}$ ou que
-$\mathcal{A}$ n'est pas inversible.
-
-\paragraph{Formulation variationnelle.}
-Une approche largement utilisée pour implémenter la régularisation consiste à
-formuler le problème inverse comme un problème d'optimisation variationnelle,
-dans lequel on recherche une solution équilibrant fidélité aux données et
-conformité aux a priori. Cette formulation s'écrit généralement sous la forme
-
-\begin{equation}
-    \hat{\mathbf{x}} =
-    \underset{\mathbf{x} \in \mathbb{R}^n}{\arg\min}
-    \left\{
-    \underbrace{\left\| \mathcal{A}\mathbf{x} - \mathbf{y} \right\|_{2}^{2}}_{\text{fidélité aux données}}
-    + \alpha
-    \underbrace{\mathcal{R}(\mathbf{x})}_{\text{terme de régularisation}}
-    \right\}.
-\end{equation}
-
-Les différents termes de cette formulation jouent des rôles complémentaires :
-
-\begin{itemize}
-    \item \textbf{Fidélité aux données :}
-    Ce terme impose la cohérence entre l'image reconstruite $\mathbf{x}$ et les
-    mesures observées $\mathbf{y}$. Dans un contexte bruité, il n'est pas souhaitable
-    de l'annuler strictement, car cela conduirait à une reconstruction amplifiant
-    le bruit.
-
-    \item \textbf{Terme de régularisation :}
-    Le régularisant $\mathcal{R}(\mathbf{x})$ encode les informations a priori
-    disponibles sur la solution recherchée, telles que la régularité, la
-    parcimonie ou des contraintes physiques. Il permet de restreindre l'ensemble
-    des solutions admissibles et d'améliorer la stabilité du problème.
-
-    \item \textbf{Paramètre de régularisation $\alpha$ :}
-    Le paramètre $\alpha > 0$ contrôle le compromis entre fidélité aux données
-    et influence de l'a priori. Un choix inadéquat peut conduire soit à une
-    reconstruction bruitée (faible $\alpha$), soit à une image excessivement
-    lissée (grand $\alpha$).
-\end{itemize}
-
-\paragraph{Cas particulier : régularisation de Tikhonov.}
-Une régularisation classique consiste à choisir un régularisant quadratique,
-conduisant à la régularisation dite de Tikhonov. Par exemple, en supposant que
-la solution recherchée soit proche d'un modèle de référence $\boldsymbol{\mu}$,
-on peut définir
-\[
-\mathcal{R}(\mathbf{x})
-= \| \mathbf{x} - \boldsymbol{\mu} \|_{L^{2},\mathcal{Q}}^{2}
-:= \langle \mathbf{x} - \boldsymbol{\mu},
-\mathcal{Q}(\mathbf{x} - \boldsymbol{\mu}) \rangle,
-\]
-où $\mathcal{Q}$ est un opérateur positif définissant une pondération
-directionnelle.
-
-Bien que cette approche soit mathématiquement simple et numériquement stable,
-elle favorise des solutions lisses et ne permet pas de promouvoir des structures
-parcimonieuses. Dans le contexte de la reconstruction CT à faible dose, elle est
-souvent insuffisante pour préserver les contours et les détails fins.
-
-\medskip
-\noindent
-Le compressed sensing s'inscrit naturellement dans ce cadre variationnel en
-choisissant des régularisants non quadratiques conçus pour promouvoir la
-parcimonie ou la compressibilité de l'image, tels que les normes $\ell_1$ ou la
-variation totale. Ces choix conduisent à des problèmes d'optimisation
-non différentiables, nécessitant des algorithmes itératifs spécifiques, qui
-seront abordés dans les sections suivantes.
-
-% ============================================================================================
-\subsection{Formulation du problème}
-
-Dans le cadre de la tomographie par rayons X (CT), la reconstruction d’image à partir d’un nombre limité de projections conduit à un problème inverse sous-déterminé. Le cadre du \emph{Compressed Sensing} (CS) permet de résoudre ce problème en exploitant la parcimonie intrinsèque des images CT dans un domaine approprié, typiquement le domaine du gradient.
-
-\begin{definition}[Image et représentation parcimonieuse]
-Considérons une image $f$, vue comme un vecteur colonne de dimension $n \times 1$ dans $\mathbb{R}^n$, dont les éléments individuels $f_j$, pour $j = 1, 2, \ldots, n$, représentent les $n$ valeurs de pixels de l'image. On développe le vecteur $f$ dans une base orthonormée $\Psi$ comme suit :
-\[
-f = \Psi \mathbf{x},
-\]
-où $\Psi$ est la matrice $n \times n$ $[\boldsymbol{\psi}_1, \ldots, \boldsymbol{\psi}_n]$, dont les vecteurs $\{\boldsymbol{\psi}_i\}_{i=1}^{n}$ constituent les colonnes, et où $\mathbf{x}$ est un vecteur colonne de dimension $n \times 1$.  
-
-Si la majorité des composantes du vecteur $\mathbf{x}$ sont nulles ou quasi nulles, on dira que $f$ est \textbf{parcimonieuse} dans le domaine $\Psi$, et que $\mathbf{x}$ constitue sa \textbf{représentation parcimonieuse}.
-\end{definition}
-
-Dans le cas des images CT, la parcimonie ne s’exprime généralement pas directement dans le domaine spatial, mais plutôt dans le domaine du gradient. Les images CT sont en effet caractérisées par des régions quasi homogènes séparées par des discontinuités nettes, ce qui rend leur gradient parcimonieux.
-
-Considérons l'exemple du fantôme de Shepp--Logan représenté à la \Cref{fig:shepp-logan} et de son équivalent en gradient à la \Cref{fig:shepp-logan-gradient}. On note l'intensité d'un pixel d'une image bidimensionnelle par $f_{h,w}$, où $h = 1,2,\ldots,H$ et $w = 1,2,\ldots,W$ ; $H$ et $W$ désignent respectivement la hauteur et la largeur de l'image 2D, et $W \times H = n$.
-
-\begin{definition}[Module du gradient]
-Si les valeurs des pixels sont notées $f_{h,w}$, le module du gradient discret est défini comme suit :
-\begin{equation}
-\left| \nabla f_{h,w} \right|
-=
-\sqrt{
-\left( f_{h+1,w} - f_{h,w} \right)^2
-+
-\left( f_{h,w+1} - f_{h,w} \right)^2
-}.
-\label{eq:gradient-modulus}
-\end{equation}
-\end{definition}
-
-La \emph{variation totale} (Total Variation, TV) de l’image est alors définie comme la somme du module du gradient sur l’ensemble des pixels :
-\[
-\mathrm{TV}(f) = \sum_{h,w} \left| \nabla f_{h,w} \right|.
-\]
-La minimisation de la variation totale correspond à la minimisation de la norme $\ell_1$ du gradient et constitue une pénalisation standard dans le cadre du Compressed Sensing appliqué au CT.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom.png}
-    \caption{Fantôme de Shepp--Logan}
-    \label{fig:shepp-logan}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom gradient.png}
-    \caption{Gradient du fantôme de Shepp--Logan}
-    \label{fig:shepp-logan-gradient}
-\end{figure}
-
-\begin{proposition}[Modèle d'acquisition en tomographie CT]
-En imagerie CT réaliste, les données de projection à faisceau parallèle, également appelées \emph{sinogramme}, sont modélisées par un système linéaire discret :
-\begin{equation}
-\mathbf{g} = \Phi \mathbf{f},
-\end{equation}
-où $\mathbf{g} \in \mathbb{R}^m$ est le vecteur des mesures de projection, et $\Phi \in \mathbb{R}^{m \times n}$ est la matrice système décrivant la géométrie d’acquisition CT.
-\end{proposition}
-
-En introduisant la représentation parcimonieuse de l’image, le modèle devient :
-\begin{equation}
-\mathbf{g} = \Phi \mathbf{f} = \Phi \Psi \mathbf{x} = \Phi' \mathbf{x},
-\label{eq:4}
-\end{equation}
-où $\Phi' = \Phi \Psi$.
-
-Lorsque le nombre de projections est limité, on a $m \ll n$, ce qui rend le système sous-déterminé.
-
-\begin{proposition}[Reconstruction CT par Compressed Sensing]
-La reconstruction de l’image consiste alors à résoudre le problème d’optimisation suivant :
-\begin{equation}
-\mathbf{x}
-=
-\arg\min_{\tilde{\mathbf{x}}}
-\left\| \tilde{\mathbf{x}} \right\|_{1}
-\quad
-\text{sous la contrainte}
-\quad
-\left\| \Phi^{'}\tilde{\mathbf{x}} - \mathbf{g} \right\|_{2} \leq \varepsilon,
-\end{equation}
-où $\varepsilon$ modélise le bruit présent dans les mesures.
-\end{proposition}
-
-Dans le cas particulier du CT, cette formulation est équivalente à une minimisation de la variation totale de l’image sous contrainte de fidélité aux données.
-
-\subsection{Algorithmes de reconstruction itérative en Compressed Sensing}
-\subsubsection{Descente de gradient}
-
-\begin{definition}[Descente de gradient pour la minimisation de la variation totale]
-Afin de minimiser la norme $\ell_1$ du gradient (variation totale), une méthode de descente de gradient est employée. La mise à jour de l'image $f$ s'effectue selon :
-\begin{equation}
-f^{\text{suivant}} = f^{\text{courant}} - \alpha \,\vec{\Delta}^{\,\text{courant}},
-\end{equation}
-où $\alpha$ est un pas de descente. Le terme $\vec{\Delta}$ correspond au gradient régularisé de la variation totale.
-\end{definition}
-
-
-% =======================================================================================================
-% \subsection{Formulation du problème}
-% \begin{definition}[Image et représentation parcimonieuse]
-% Considérons une image $f$, vue comme un vecteur colonne de dimension $n \times 1$ dans $\mathbb{R}^n$, dont les éléments individuels $f_j$, pour $j = 1, 2, \ldots, n$, représentent les $n$ valeurs de pixels de l'image. On développe le vecteur $f$ dans une base orthonormée $\Psi$ comme suit :
-% \[
-% f = \Psi \mathbf{x},
-% \]
-% où $\Psi$ est la matrice $n \times n$ $[\boldsymbol{\psi}_1, \ldots, \boldsymbol{\psi}_n]$, dont les vecteurs $\{\boldsymbol{\psi}_i\}_{i=1}^{n}$ de dimension $n \times 1$ constituent les colonnes, et où $\mathbf{x}$ est également un vecteur colonne de dimension $n \times 1$. Si toutes les composantes du vecteur $\mathbf{x}$, à l'exception de quelques-unes, sont nulles ou quasi nulles, on dira que $f$ est \textbf{parcimonieuse} dans le domaine $\Psi$ et que $\mathbf{x}$ est sa \textbf{représentation parcimonieuse}.
-% \end{definition}
-
-% Considérons l'exemple du fantôme de Shepp-Logan représenté à la \Cref{fig:shepp-logan} et de son équivalent en gradient à la \Cref{fig:shepp-logan-gradient}. On note l'intensité d'un pixel d'une image bidimensionnelle par $f_{h,w}$, où $h = 1,2,\ldots,H$ et $w = 1,2,\ldots,W$ ; $H$ et $W$ désignent respectivement la hauteur et la largeur de l'image 2D, et $W \times H = n$.
-
-% \begin{definition}[Module du gradient]
-% Si les valeurs des pixels sont notées $f_{h,w}$, le module du gradient est défini comme suit :
-% \begin{equation}
-% \left| \nabla f_{h,w} \right|
-% =
-% \sqrt{
-% \left( f_{h+1,w} - f_{h,w} \right)^2
-% +
-% \left( f_{h,w+1} - f_{h,w} \right)^2
-% }
-% \label{eq:gradient-modulus}
-% \end{equation}
-% \end{definition}
-
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom.png}
-%     \caption{Shepp-Logan phantom}
-%     \label{fig:shepp-logan}
-% \end{figure}
-
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom gradient.png}
-%     \caption{Shepp-Logan phantom gradient}
-%     \label{fig:shepp-logan-gradient}
-% \end{figure}
-
-% \begin{proposition}[Modèle d'acquisition en tomographie]
-% En imagerie CT réaliste, on suppose que les données de projection à faisceau parallèle échantillonnées de l'image $f$ sont modélisées par un système linéaire discret
-% \begin{equation}
-% \mathbf{g} = \Phi \mathbf{f},
-% \end{equation}
-% où le vecteur $\mathbf{g}$ est de longueur $m$, ses mesures individuelles étant notées $g_i$, pour $i = 1,2,\ldots,m$, et où $\Phi$ est la matrice système $m \times n$ produisant l'ensemble discret des mesures de projection pour un balayage à faisceau parallèle de l'objet.
-% En substituant $\Psi \mathbf{x}$ à $\mathbf{f}$, ce modèle s'écrit :
-% \begin{equation}
-% \mathbf{g} = \Phi \mathbf{f} = \Phi \Psi \mathbf{x} = \Phi' \mathbf{x},
-% \label{eq:4}
-% \end{equation}
-% où $\Phi' = \Phi \Psi$ est une matrice de dimension $m \times n$.
-% \end{proposition}
-
-% \begin{proposition}[Problème de reconstruction par minimisation $\ell_1$]
-% Pour une image parcimonieuse, puisque $m << n$ dans \eqref{eq:4}, il existe une infinité de vecteurs $\tilde{\mathbf{x}}$ satisfaisant $\mathbf{g} = \Phi' \tilde{\mathbf{x}}$. Par conséquent, la reconstruction d'image vise à déterminer le vecteur $\mathbf{x}$ dans le domaine transformé en résolvant le programme d'optimisation suivant :
-% \begin{equation}
-% \mathbf{x}
-% =
-% \arg\min_{\tilde{\mathbf{x}}}
-% \left\| \tilde{\mathbf{x}} \right\|_{1}
-% \quad
-% \text{sous la contrainte}
-% \quad
-% \left| \Phi^{'}\tilde{\mathbf{x}} - \mathbf{g} \right| < \varepsilon,
-% \end{equation}
-% où $\varepsilon$ est un petit facteur d'erreur tenant compte du bruit dans les mesures, et où la norme $\ell_1$ est définie par $\left\| \mathbf{x} \right\|_{1} = \sum_{i=1}^{N} |x_i|$.
-% \end{proposition}
-
-\begin{definition}[Mise à jour par descente de gradient pour la norme $\ell_1$ du gradient]
-    Pour minimiser la norme $\ell_{1}$ de l'image de gradient, une méthode de descente de gradient est employée. La mise à jour de l'image $f$ s'effectue itérativement selon :
-    \begin{equation}
-    f^{\text{suivant}} = f^{\text{courant}} - \alpha \,\vec{\Delta}^{\,\text{courant}},
-    \end{equation}
-    où $\alpha$ est une constante contrôlant la vitesse de descente. Le terme $\vec{\Delta}$ est une image dont la valeur de chaque pixel $(h,w)$ est donnée par la dérivée partielle de la norme $\ell_1$ du gradient :
-    \begin{equation}
-        \begin{array}{l l l}
-            \nu_{h,w} & = &
-            \dfrac{\partial \lVert \nabla f_{h,w} \rVert_{1}}{\partial f_{h,w}} \\[1.2ex]
-            & = &
-            \dfrac{2f_{h,w} - f_{h+1,w} - f_{h,w+1}}
-            {\sqrt{\varepsilon + (f_{h+1,w} - f_{h,w})^{2} + (f_{h,w+1} - f_{h,w})^{2}}} \\[2ex]
-            & + &
-            \dfrac{f_{h,w} - f_{h-1,w}}
-            {\sqrt{\varepsilon + (f_{h,w} - f_{h-1,w})^{2} + (f_{h-1,w+1} - f_{h-1,w})^{2}}} \\[2ex]
-            & + &
-            \dfrac{f_{h,w} - f_{h,w-1}}
-            {\sqrt{\varepsilon + (f_{h+1,w-1} - f_{h,w-1})^{2} + (f_{h,w} - f_{h,w-1})^{2}}}
-        \end{array}
-    \end{equation}
-\end{definition}
-
-\begin{definition}[Matrice système $\Phi$ et poids $\varphi_{i,j}$]
-Dans le cadre discret, le vecteur de données de projection à faisceau parallèle $\vec{g}$ est modélisé par une somme pondérée sur les pixels traversés par le rayon X :
-\begin{equation}
-g_i = \sum_{j=1}^{N} \varphi_{i,j} \cdot f_j, \quad \text{où } i = 1, 2, \cdots, M.
-\end{equation}
-Le coefficient de pondération $\varphi_{i,j}$ de la matrice système $\Phi$ est égal à la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.
-\end{definition}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle.png}
-    \caption{Calcul du coefficient de poids $\varphi_{i,j}$ de la matrice système $\Phi$ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}
-    \label{fig:phi}
-\end{figure}
-
-Le calcul direct de chaque $\varphi_{i,j}$ est coûteux. Pour accélérer la reconstruction, on peut pré-calculer et stocker ces poids, et exploiter les propriétés de symétrie des projections à faisceau parallèle pour réduire le nombre de calculs nécessaires.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle-2.png}
-    \caption{Mesures des rayons-\textbf{X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha$, $90-\alpha$, $90+\alpha$ et $180-\alpha$. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}
-    \label{fig:mesure-rayons-X}
-\end{figure}
-
-
-\subsubsection{Pseudo-code}
-\begin{algorithm}[H]
-\caption{Méthode de reconstruction hybride (SART + Descente de gradient)}
-\label{alg:hybrid-reconstruction}
-\begin{algorithmic}[1]
-\Require $\varphi$ - matrice de projection, $g$ - données d'acquisition,
-$M$ - nombre d'itérations SART, $\lambda$ - paramètre de relaxation,
-$\alpha$ - pas d'apprentissage
-\Ensure $\hat{f}$ - image reconstruite
-
-\Statex \textbf{(1) Initialisation de l'image}
-\State $f^{(0)} \gets 0$
-
-\Statex
-\Statex \textbf{(2) Processus itératif de type SART}
-\For{$k = 1$ \textbf{à} $M$} \Comment{Une période complète d'itération}
-    \For{$j = 1$ \textbf{à} $N$}
-        \State $f_j^{(k)} \gets f_j^{(k-1)}
-        + \lambda
-        \cdot
-        \frac{
-            g_i - \sum_{n=1}^{N} \varphi_{i,n} f_n^{(k-1)}
-        }{
-            \sum_{n=1}^{N} \varphi_{i,n}^2
-        }
-        \cdot \varphi_{i,j}$
-    \EndFor
-\EndFor
-
-\Statex
-\Statex \textbf{(3) Initialisation pour la descente de gradient}
-\State $\hat{f}^{(0)} \gets f^{(M)}$
-
-\Statex
-\Statex \textbf{(4) Descente de gradient (contrainte de parcimonie)}
-\For{$l = 1$ \textbf{à} $5$}
-    \State $\vec{\Delta}_l \gets
-    \left| \hat{f}^{(0)} - f^{(0)} \right|
-    \cdot
-    \frac{\nu_{x,y}}{\left| \nu_{x,y} \right|}$
-    \State $\hat{f}^{(l)} \gets \hat{f}^{(l-1)} - \alpha \cdot \vec{\Delta}_l$
-\EndFor
-
-\Statex
-\Statex \textbf{(5) Initialisation de l'étape itérative suivante}
-\State $f^{(0)} \gets \hat{f}^{(5)}$
-\State \Return $\hat{f}^{(5)}$
-
-\end{algorithmic}
-\end{algorithm}
-
-% \textbf{(1) Initialisation de l'image \(f\) :}
-% \[
-% f^{(0)} = 0 ;
-% \]
-
-% \medskip
-% \noindent
-% \textbf{(2) Processus itératif (type SART) :}
-% Pour \(k\) variant de \(1\) à \(M\) (une période complète d'itération) :
-% \[
-% f_j^{(k)} = f_j^{(k-1)} +
-% \lambda \,
-% \frac{
-% g_i - \sum_{n=1}^{N} \varphi_{i,n}\, f_n^{(k-1)}
-% }{
-% \sum_{i=1}^{N} \varphi_{i,n}^{2}
-% }
-% \, \varphi_{i,j} ;
-% \]
-% où le paramètre de relaxation \(\lambda\) est un nombre réel positif.
-
-% \medskip
-% \noindent
-% \textbf{(3) Initialisation de l'image pour la descente de gradient :}
-% \[
-% \hat{f}^{(0)} = f^{(M)} ;
-% \]
-
-% \medskip
-% \noindent
-% \textbf{(4) Itération de descente de gradient (contrainte de parcimonie) :}
-% Pour \(l = 1\) jusqu'à \(5\) :
-% \[
-%     \hat{f}^{(l)} = \hat{f}^{(l-1)} - \alpha \cdot \vec{\Delta}_l ,
-% \]
-% avec
-% \[
-%     \vec{\Delta}_l =
-%     \left| \hat{f}^{(0)} - f^{(0)} \right|
-%     \cdot
-%     \frac{\nu_{x,y}}{\left| \nu_{x,y} \right|}.
-% \]
-
-% \medskip
-% \noindent
-% \textbf{(5) Initialisation de l'étape itérative suivante :}
-% \[
-% f^{(0)} = \hat{f}^{(\text{end})} ;
-% \]
-
-Les étapes (2) à (5) sont répétées jusqu'à ce que la différence entre deux images successives $f^{(M)}$ soit inférieure à un seuil (e.g., $0.001$) ou que le nombre d'itérations dépasse une limite (e.g., $1000$). Les paramètres typiques sont $\lambda = 1.0$, $\varepsilon = 0.0001$, $\alpha = 0.5$.
-% =======================================================================================================
-
-
-
-\subsection{Métriques de performance}
-\begin{definition}[Métriques de similarité d'image]
-Soient $f_r$ et $f_o$ les vecteurs représentant respectivement l'image reconstruite et l'image originale, composées de $N$ pixels. On définit les métriques suivantes :
-\begin{itemize}
-    \item \textbf{Erreur quadratique moyenne (RMSE)} :
-    $\displaystyle \mathrm{RMSE} = \sqrt{\frac{\sum_{i=1}^{N} \left( f_{r_i} - f_{o_i} \right)^2}{N}}$
-    \item \textbf{Indice universel de qualité (UQI)} :
-    $\displaystyle \mathrm{UQI} =
-    \frac{2\,\mathrm{Cov}\{f_r,f_o\}}{D(f_r)+D(f_o)}
-    \cdot
-    \frac{2\,\bar{f}_r\,\bar{f}_o}{\bar{f}_r^{\,2}+\bar{f}_o^{\,2}}$
-    \item \textbf{Coefficient de corrélation (CC)} :
-    $\displaystyle \mathrm{CC} =
-    \frac{2\,\mathrm{Cov}\{f_r,f_o\}}
-    {\sqrt{D(f_r)\cdot D(f_o)}}$
-\end{itemize}
-avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\sum_{i=1}^{N} f_{r_i}$, $D(f) = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{i}-\bar{f}\right)^2$,\\ et \\$\mathrm{Cov}\{f_r,f_o\} = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{r_i}-\bar{f}_r\right) \left(f_{o_i}-\bar{f}_o\right)$.
-\end{definition}
-
-% ============================================== DRAFT ==============================================
-% Ce cadre permet de résoudre plusieurs limitations pratiques :
-% \paragraph{Réduction du nombre de mesures.}\text{}\\ 
-% De nombreux systèmes d'acquisition sont limités par le coût, le temps ou l'énergie. Le compressed sensing permet :
-% \begin{itemize}
-%     \item[-] une acquisition plus rapide des données,
-%     \item[-] une réduction de la complexité matérielle,
-%     \item[-] une diminution de la dose de radiation (par exemple en tomodensitométrie),
-%     \item[-] une réduction des coûts de stockage et de transmission.
-% \end{itemize}
-
-% \paragraph{Problèmes inverses mal posés (ill-posed inverse problems).}\text{}\\
-% Lorsque le nombre de mesures est insuffisant pour garantir une solution unique, le CS introduit une régularisation fondée sur la parcimonie, permettant une reconstruction stable. Les principales applications incluent :
-% \begin{itemize}
-%     \item[-] la tomographie (CT, IRM, PET),
-%     \item[-] l'imagerie à super-résolution,
-%     \item[-] la déconvolution,
-%     \item[-] les inversions géophysiques et les essais non destructifs.
-% \end{itemize}
-
-% \paragraph{Robustesse au bruit et aux données incomplètes.} \text{}\\
-% Le CS garantit une reconstruction stable même en présence de bruit, de corruptions ou d'observations manquantes.
-
-% \subsection{Reconstruction de signaux par Compressed Sensing}
-
-% \subsection{Reconstruction par optimisation}
-% La formulation canonique de la reconstruction est
-% \[
-% \min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad y = A \Psi \alpha,
-% \]
-% ou, en présence de bruit,
-% \[
-% \min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad \|A \Psi \alpha - y\|_{2} \le \epsilon.
-% \]
-% Cela correspond aux formulations de type \emph{Basis Pursuit} ou \emph{LASSO}. La minimisation de la norme \(\ell_1\) favorise la parcimonie tout en conservant un problème d'optimisation convexe et calculable efficacement.
-
-% \subsection{Algorithmes gloutons}
-
-% Des alternatives plus rapides incluent :
-% \begin{itemize}
-%     \item l'\emph{Orthogonal Matching Pursuit} (OMP),
-%     \item le \emph{Compressive Sampling Matching Pursuit} (CoSaMP),
-%     \item l'\emph{Iterative Hard Thresholding} (IHT).
-% \end{itemize}
-% Ces méthodes échangent une partie de la précision contre un coût computationnel réduit.
-
-% \subsection{Applications du Compressed Sensing}
-
-% \paragraph{Imagerie médicale.}
-% \begin{itemize}
-%     \item acquisition IRM accélérée,
-%     \item CT à dose réduite,
-%     \item échographie à haute cadence d'images.
-% \end{itemize}
-
-% \paragraph{Imagerie computationnelle.}
-% \begin{itemize}
-%     \item caméras à pixel unique,
-%     \item imagerie à ouverture codée,
-%     \item reconstruction hyperspectrale.
-% \end{itemize}
-
-% \paragraph{Télédétection et géophysique.}
-% \begin{itemize}
-%     \item inversion sismique parcimonieuse,
-%     \item imagerie radar et radar à synthèse d'ouverture (SAR).
-% \end{itemize}
-
-% \paragraph{Communications sans fil.}
-% \begin{itemize}
-%     \item estimation parcimonieuse de canaux,
-%     \item réduction des pilotes dans les systèmes MIMO massifs.
-% \end{itemize}
-
-% \paragraph{Apprentissage automatique et traitement du signal.}
-% \begin{itemize}
-%     \item régression parcimonieuse (LASSO),
-%     \item apprentissage de dictionnaires,
-%     \item ACP robuste et modèles de rang faible apparentés.
-% \end{itemize}
-
-
-% % Le compressed sensing (CS) est un cadre mathématique et algorithmique qui permet de reconstruire des signaux de grande dimension à partir d'un nombre de mesures bien inférieur à celui requis par les approches traditionnelles. Il exploite la parcimonie (sparsity) comme principal a priori structurel.
-% % \subsection{Hypothèse de parcimonie}
-% % Si un signal est parcimonieux ou compressible dans une certaine base, alors il peut être reconstruit exactement (ou avec une erreur contrôlée) à partir d'un nombre de mesures linéaires bien inférieur à sa dimension ambiante.
-% % \subsection{Incohérence et propriété de RIP}
-% % \subsection{Basis Pursuit et LASSO}
-% % \subsection{OMP et algorithmes gloutons}
-
+permettent d'établir un lien direct entre la théorie continue et son implémentation numérique, ouvrant ainsi la voie aux algorithmes d'optimisation itératifs.\vspace{7pt}\\
+En résumé, ce chapitre dresse un panorama cohérent des approches algorithmiques de la reconstruction tomographique. Il montre que si les méthodes analytiques offrent rapidité et simplicité dans des conditions idéales, les méthodes itératives régularisées, appuyées par la théorie du \textit{Compressed Sensing}, constituent une réponse incontournable aux défis de l'imagerie moderne : reconstruire davantage d'information à partir de moins de données, sans compromettre la qualité diagnostique ni la sécurité du patient. La maîtrise de ces outils mathématiques apparaît ainsi comme un levier essentiel pour le développement des méthodes de reconstruction de demain.

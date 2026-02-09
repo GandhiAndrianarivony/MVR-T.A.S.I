@@ -1,0 +1,30 @@
+
+\begin{thenomenclature} 
+\nomgroup{A}
+  \item [{ART}]\begingroup Algebraic reconstruction method\nomeqref {0.0}\nompageref{iii}
+  \item [{CART}]\begingroup Circular-arc Radon transform\nomeqref {0.0}\nompageref{iii}
+  \item [{CST}]\begingroup Compton scattering tomography\nomeqref {0.0}\nompageref{iii}
+  \item [{CT}]\begingroup Computed tomography\nomeqref {0.0}\nompageref{iii}
+  \item [{EM}]\begingroup Expectation maximisation\nomeqref {0.0}\nompageref{iii}
+  \item [{EQMR}]\begingroup Erreur quadratique moyenne relative\nomeqref {0.0}\nompageref{iii}
+  \item [{FBP}]\begingroup Filtered back projection\nomeqref {0.0}\nompageref{iii}
+  \item [{FFT}]\begingroup Fast Fourier transform\nomeqref {0.0}\nompageref{iii}
+  \item [{IRM}]\begingroup Imagerie par résonance magnétique\nomeqref {0.0}\nompageref{iii}
+  \item [{PSF}]\begingroup Point spread function\nomeqref {0.0}\nompageref{iii}
+  \item [{RSB}]\begingroup Rapport signal sur bruit\nomeqref {0.0}\nompageref{iii}
+  \item [{RSO}]\begingroup Radar à synthèse d’ouverture\nomeqref {0.0}\nompageref{iii}
+  \item [{SAR}]\begingroup Synthetic aperture radar\nomeqref {0.0}\nompageref{iii}
+  \item [{SIRT}]\begingroup Simultaneous iterative reconstruction tomography\nomeqref {0.0}\nompageref{iii}
+  \item [{SPECT}]\begingroup Single photon emission computed tomography\nomeqref {0.0}\nompageref{iii}
+  \item [{SVD}]\begingroup Singular value decomposition\nomeqref {0.0}\nompageref{iii}
+  \item [{TDM}]\begingroup Tomodensitométrie\nomeqref {0.0}\nompageref{iii}
+  \item [{TEP}]\begingroup Tomographie par émission de positons\nomeqref {0.0}\nompageref{iii}
+  \item [{TR}]\begingroup Transformée de Radon\nomeqref {0.0}\nompageref{iii}
+  \item [{TRAC}]\begingroup Transformée de Radon sur des arcs de cercle\nomeqref {0.0}\nompageref{iii}
+  \item [{TRS}]\begingroup Transformée de Radon sphérique\nomeqref {0.0}\nompageref{iii}
+  \item [{TRV}]\begingroup Transformée de Radon sur des lignes V\nomeqref {0.0}\nompageref{iii}
+  \item [{TRV1}]\begingroup Première transformée de Radon sur des lignes V étudiée\nomeqref {0.0}\nompageref{iii}
+  \item [{TRV2}]\begingroup Deuxième transformée de Radon sur des lignes V étudiée\nomeqref {0.0}\nompageref{iii}
+  \item [{TRVC}]\begingroup Transformée de Radon sur des lignes V composées\nomeqref {0.0}\nompageref{iii}
+
+\end{thenomenclature}
