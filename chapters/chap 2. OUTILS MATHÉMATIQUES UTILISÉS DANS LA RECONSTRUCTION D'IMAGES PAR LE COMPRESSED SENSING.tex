@@ -1193,6 +1193,32 @@ On obtient :
 \]
 
 En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un produit matriciel.
+
+\begin{definition}[Matrice système $\Phi$ et poids $\varphi_{i,j}$]
+Dans le cadre discret, le vecteur de données de projection à faisceau parallèle $\vec{g}$ est modélisé par une somme pondérée sur les pixels traversés par le rayon X :
+\begin{equation}
+g_i = \sum_{j=1}^{N} \varphi_{i,j} \cdot f_j, \quad \text{où } i = 1, 2, \cdots, M.
+\end{equation}
+Le coefficient de pondération $\varphi_{i,j}$ de la matrice système $\Phi$ est égal à la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.
+\end{definition}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle.png}
+    \caption{Calcul du coefficient de poids $\varphi_{i,j}$ de la matrice système $\Phi$ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}
+    \label{fig:phi}
+\end{figure}
+
+Le calcul direct de chaque $\varphi_{i,j}$ est coûteux. Pour accélérer la reconstruction, on peut pré-calculer et stocker ces poids, et exploiter les propriétés de symétrie des projections à faisceau parallèle pour réduire le nombre de calculs nécessaires.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle-2.png}
+    \caption{Mesures des rayons-\textbf{X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha$, $90-\alpha$, $90+\alpha$ et $180-\alpha$. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}
+    \label{fig:mesure-rayons-X}
+\end{figure}
+
+
 \subsection{Synthèse}
 Cette synthèse met en évidence la cohérence globale du passage du modèle continu vers une implémentation discrète. Elle permet de comprendre la FBP comme une succession structurée d’opérations linéaires. Cette vision prépare naturellement l’introduction de méthodes de reconstruction plus avancées.\vspace{7pt}\\
 Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes principales :

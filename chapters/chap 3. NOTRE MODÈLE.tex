@@ -2,10 +2,10 @@
 % ---- TODO -----
 % \section{Limites de la méthode analytique}
 % ============================================================
-\section{Théorie du Compressed Sensing}
+\section{Compressed Sensing}
 % ============================================================
 
-En tomodensitométrie (CT), la réduction du nombre de projections et de la dose de rayonnement
+En tomodensitométrie (CT), la réduction du nombre de projections et de la dose de rayonnement \cite{15}
 constitue un enjeu majeur de sécurité clinique et de performance opérationnelle. La diminution
 de l'exposition aux rayons $\mathbf{X}$ vise à limiter les risques biologiques associés aux
 rayonnements ionisants, en particulier dans les contextes d'examens répétés ou pour les
@@ -115,7 +115,7 @@ compressed sensing.
 Dans de nombreux problèmes d'imagerie, et en particulier en tomodensitométrie
 à faible dose, l'objectif est de reconstruire une image inconnue
 $\mathbf{x} \in \mathbb{R}^n$ à partir d'un ensemble de mesures
-$\mathbf{y} \in \mathbb{R}^m$ obtenues par un système d'acquisition indirect.
+$\mathbf{y} \in \mathbb{R}^m$ (i.e synogramme) obtenues par un système d'acquisition indirect.
 Ce processus est généralement modélisé par une relation linéaire de la forme
 \[
 \mathbf{y} = \mathcal{A}\mathbf{x} + \boldsymbol{\varepsilon},
@@ -137,7 +137,7 @@ opérateur $\mathcal{A}$, lorsque l'inversion directe de cet opérateur est
 impossible ou instable.
 \end{definition}
 
-\paragraph{Principe de la régularisation.}
+\subsubsection{Principe de la régularisation.}
 Afin de rendre le problème inverse traitable, il est nécessaire d'introduire
 des informations a priori sur la solution recherchée. Cette démarche est
 connue sous le nom de \emph{régularisation}.
@@ -158,7 +158,7 @@ au cadre bruité et mal posé, de sorte que
 même lorsque $\boldsymbol{\varepsilon} \neq \mathbf{0}$ ou que
 $\mathcal{A}$ n'est pas inversible.
 
-\paragraph{Formulation variationnelle.}
+\subsubsection{Formulation variationnelle.}
 Une approche largement utilisée pour implémenter la régularisation consiste à
 formuler le problème inverse comme un problème d'optimisation variationnelle,
 dans lequel on recherche une solution équilibrant fidélité aux données et
@@ -196,24 +196,24 @@ Les différents termes de cette formulation jouent des rôles complémentaires :
     lissée (grand $\alpha$).
 \end{itemize}
 
-\paragraph{Cas particulier : régularisation de Tikhonov.}
-Une régularisation classique consiste à choisir un régularisant quadratique,
-conduisant à la régularisation dite de Tikhonov. Par exemple, en supposant que
-la solution recherchée soit proche d'un modèle de référence $\boldsymbol{\mu}$,
-on peut définir
-\[
-\mathcal{R}(\mathbf{x})
-= \| \mathbf{x} - \boldsymbol{\mu} \|_{L^{2},\mathcal{Q}}^{2}
-:= \langle \mathbf{x} - \boldsymbol{\mu},
-\mathcal{Q}(\mathbf{x} - \boldsymbol{\mu}) \rangle,
-\]
-où $\mathcal{Q}$ est un opérateur positif définissant une pondération
-directionnelle.
+% \subsubsection{Cas particulier : régularisation de Tikhonov.}
+% Une régularisation classique consiste à choisir un régularisant quadratique,
+% conduisant à la régularisation dite de Tikhonov. Par exemple, en supposant que
+% la solution recherchée soit proche d'un modèle de référence $\boldsymbol{\mu}$,
+% on peut définir
+% \[
+% \mathcal{R}(\mathbf{x})
+% = \| \mathbf{x} - \boldsymbol{\mu} \|_{L^{2},\mathcal{Q}}^{2}
+% := \langle \mathbf{x} - \boldsymbol{\mu},
+% \mathcal{Q}(\mathbf{x} - \boldsymbol{\mu}) \rangle,
+% \]
+% où $\mathcal{Q}$ est un opérateur positif définissant une pondération
+% directionnelle.
 
-Bien que cette approche soit mathématiquement simple et numériquement stable,
-elle favorise des solutions lisses et ne permet pas de promouvoir des structures
-parcimonieuses. Dans le contexte de la reconstruction CT à faible dose, elle est
-souvent insuffisante pour préserver les contours et les détails fins.
+% Bien que cette approche soit mathématiquement simple et numériquement stable,
+% elle favorise des solutions lisses et ne permet pas de promouvoir des structures
+% parcimonieuses. Dans le contexte de la reconstruction CT à faible dose, elle est
+% souvent insuffisante pour préserver les contours et les détails fins.
 
 \medskip
 \noindent
@@ -265,14 +265,14 @@ La minimisation de la variation totale correspond à la minimisation de la norme
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom.png}
+    \includegraphics[width=0.4\textwidth, height=5cm]{./images/shepp-logan phantom.png}
     \caption{Fantôme de Shepp--Logan}
     \label{fig:shepp-logan}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom gradient.png}
+    \includegraphics[width=0.4\textwidth, height=5cm]{./images/shepp-logan phantom gradient.png}
     \caption{Gradient du fantôme de Shepp--Logan}
     \label{fig:shepp-logan-gradient}
 \end{figure}
@@ -311,242 +311,452 @@ où $\varepsilon$ modélise le bruit présent dans les mesures.
 
 Dans le cas particulier du CT, cette formulation est équivalente à une minimisation de la variation totale de l’image sous contrainte de fidélité aux données.
 
-\subsection{Algorithmes de reconstruction itérative en Compressed Sensing}
-\subsubsection{Descente de gradient}
+\subsection{ADMM (Alternating Direction Method of Multipliers)}
+Cette section expose brièvement deux algorithmes d'optimisation précurseurs de ADMM, fournissant ainsi le contexte théorique nécessaire à sa compréhension.
 
-\begin{definition}[Descente de gradient pour la minimisation de la variation totale]
-Afin de minimiser la norme $\ell_1$ du gradient (variation totale), une méthode de descente de gradient est employée. La mise à jour de l'image $f$ s'effectue selon :
+\subsubsection{Ascension Duale.}
+Considérons le problème d'optimisation convexe sous contrainte d'égalité
 \begin{equation}
-f^{\text{suivant}} = f^{\text{courant}} - \alpha \,\vec{\Delta}^{\,\text{courant}},
+    \begin{aligned}
+        & \text{minimiser} && f(x) \\
+        & \text{sous contrainte} && Ax = b,
+    \end{aligned}
+    \label{eq:optimisation_convexe}
 \end{equation}
-où $\alpha$ est un pas de descente. Le terme $\vec{\Delta}$ correspond au gradient régularisé de la variation totale.
-\end{definition}
 
+avec la variable \( x \in \mathbb{R}^n \), où \( A \in \mathbb{R}^{m \times n} \) et \( f : \mathbb{R}^n \to \mathbb{R} \) est convexe.
+Le Lagrangien pour ce problème est
+\[L(x, y) = f(x) + y^T(Ax - b)\]
+et la fonction duale est
+\[g(y) = \inf_x L(x, y) = -f^*(-A^Ty) - b^Ty,\]
+où \( y \) est la variable duale ou le multiplicateur de Lagrange, et \( f^* \) est le conjugué convexe de \( f \).\\
+Le problème duale est
+\[\text{maximiser } g(y),\]
 
-% =======================================================================================================
-% \subsection{Formulation du problème}
-% \begin{definition}[Image et représentation parcimonieuse]
-% Considérons une image $f$, vue comme un vecteur colonne de dimension $n \times 1$ dans $\mathbb{R}^n$, dont les éléments individuels $f_j$, pour $j = 1, 2, \ldots, n$, représentent les $n$ valeurs de pixels de l'image. On développe le vecteur $f$ dans une base orthonormée $\Psi$ comme suit :
-% \[
-% f = \Psi \mathbf{x},
-% \]
-% où $\Psi$ est la matrice $n \times n$ $[\boldsymbol{\psi}_1, \ldots, \boldsymbol{\psi}_n]$, dont les vecteurs $\{\boldsymbol{\psi}_i\}_{i=1}^{n}$ de dimension $n \times 1$ constituent les colonnes, et où $\mathbf{x}$ est également un vecteur colonne de dimension $n \times 1$. Si toutes les composantes du vecteur $\mathbf{x}$, à l'exception de quelques-unes, sont nulles ou quasi nulles, on dira que $f$ est \textbf{parcimonieuse} dans le domaine $\Psi$ et que $\mathbf{x}$ est sa \textbf{représentation parcimonieuse}.
-% \end{definition}
+avec la variable \( y \in \mathbb{R}^m \). En supposant qu'il y a une dualité forte, les valeurs optimales des problèmes primal et dual sont les mêmes. Nous pouvons retrouver un point optimal primal \( x^* \) à partir d'un point optimal dual \( y^* \) comme
 
-% Considérons l'exemple du fantôme de Shepp-Logan représenté à la \Cref{fig:shepp-logan} et de son équivalent en gradient à la \Cref{fig:shepp-logan-gradient}. On note l'intensité d'un pixel d'une image bidimensionnelle par $f_{h,w}$, où $h = 1,2,\ldots,H$ et $w = 1,2,\ldots,W$ ; $H$ et $W$ désignent respectivement la hauteur et la largeur de l'image 2D, et $W \times H = n$.
+\[x^* = \arg\min_x L(x, y^*),\]
 
-% \begin{definition}[Module du gradient]
-% Si les valeurs des pixels sont notées $f_{h,w}$, le module du gradient est défini comme suit :
-% \begin{equation}
-% \left| \nabla f_{h,w} \right|
-% =
-% \sqrt{
-% \left( f_{h+1,w} - f_{h,w} \right)^2
-% +
-% \left( f_{h,w+1} - f_{h,w} \right)^2
-% }
-% \label{eq:gradient-modulus}
-% \end{equation}
-% \end{definition}
+à condition qu'il n'y ait qu'un seul minimiseur de \( L(x, y^*) \). (C'est le cas si, par exemple, \( f \) est strictement convexe.) Dans la suite, nous utiliserons la notation \(\arg\min_x F(x)\) pour désigner n'importe quel minimiseur de \( F \), même lorsque \( F \) n'a pas un minimiseur unique.
 
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom.png}
-%     \caption{Shepp-Logan phantom}
-%     \label{fig:shepp-logan}
-% \end{figure}
+Dans la méthode d'ascension duale, nous résolvons le problème dual en utilisant l'ascension de gradient. En supposant que \( g \) est différentiable, le gradient \( \nabla g(y) \) peut être évalué comme suit. Nous trouvons d'abord \( x^+ = \arg\min_x L(x, y) \) ; ensuite nous avons \( \nabla g(y) = Ax^+ - b \), qui est le résidu pour la contrainte d'égalité. La méthode d'ascension duale consiste à itérer les mises à jour\\
+Étape 1: 
+\[x^{k+1} := \arg\min_x L(x, y^k) \]
+Étape 2: 
+\[y^{k+1} := y^k + \alpha^k (Ax^{k+1} - b),\]
 
-% \begin{figure}[H]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{./images/shepp-logan phantom gradient.png}
-%     \caption{Shepp-Logan phantom gradient}
-%     \label{fig:shepp-logan-gradient}
-% \end{figure}
+où \( \alpha^k > 0 \) est une taille de pas, et l'exposant est le compteur d'itération. La première étape est une étape de minimisation en \( x \), et la deuxième étape est une mise à jour de la variable duale. La variable duale \( y \) peut être interprétée comme un vecteur de prix, et la mise à jour de \( y \) est alors appelée mise à jour des prix ou étape d'ajustement des prix. Cet algorithme est appelé ascension duale car, avec un choix approprié de \( \alpha^k \), la fonction duale augmente à chaque étape, c'est-à-dire \( g(y^{k+1}) > g(y^k) \).
 
-% \begin{proposition}[Modèle d'acquisition en tomographie]
-% En imagerie CT réaliste, on suppose que les données de projection à faisceau parallèle échantillonnées de l'image $f$ sont modélisées par un système linéaire discret
-% \begin{equation}
-% \mathbf{g} = \Phi \mathbf{f},
-% \end{equation}
-% où le vecteur $\mathbf{g}$ est de longueur $m$, ses mesures individuelles étant notées $g_i$, pour $i = 1,2,\ldots,m$, et où $\Phi$ est la matrice système $m \times n$ produisant l'ensemble discret des mesures de projection pour un balayage à faisceau parallèle de l'objet.
-% En substituant $\Psi \mathbf{x}$ à $\mathbf{f}$, ce modèle s'écrit :
-% \begin{equation}
-% \mathbf{g} = \Phi \mathbf{f} = \Phi \Psi \mathbf{x} = \Phi' \mathbf{x},
-% \label{eq:4}
-% \end{equation}
-% où $\Phi' = \Phi \Psi$ est une matrice de dimension $m \times n$.
-% \end{proposition}
+La méthode d'ascension duale peut être utilisée même dans certains cas où \( g \) n'est pas différentiable. Dans ce cas, le résidu \( Ax^{k+1} - b \) n'est pas le gradient de \( g \), mais l'opposé d'un sous-gradient de \(-g\). Ce cas nécessite un choix différent de \( \alpha^k \) que lorsque \( g \) est différentiable, et la convergence n'est pas monotone ; il arrive souvent que \( g(y^{k+1}) \neq g(y^k) \). Dans ce cas, l'algorithme est habituellement appelé la méthode de sous-gradient dual.
 
-% \begin{proposition}[Problème de reconstruction par minimisation $\ell_1$]
-% Pour une image parcimonieuse, puisque $m << n$ dans \eqref{eq:4}, il existe une infinité de vecteurs $\tilde{\mathbf{x}}$ satisfaisant $\mathbf{g} = \Phi' \tilde{\mathbf{x}}$. Par conséquent, la reconstruction d'image vise à déterminer le vecteur $\mathbf{x}$ dans le domaine transformé en résolvant le programme d'optimisation suivant :
-% \begin{equation}
-% \mathbf{x}
-% =
-% \arg\min_{\tilde{\mathbf{x}}}
-% \left\| \tilde{\mathbf{x}} \right\|_{1}
-% \quad
-% \text{sous la contrainte}
-% \quad
-% \left| \Phi^{'}\tilde{\mathbf{x}} - \mathbf{g} \right| < \varepsilon,
-% \end{equation}
-% où $\varepsilon$ est un petit facteur d'erreur tenant compte du bruit dans les mesures, et où la norme $\ell_1$ est définie par $\left\| \mathbf{x} \right\|_{1} = \sum_{i=1}^{N} |x_i|$.
-% \end{proposition}
+Si \( \alpha^k \) est choisi de manière appropriée et que plusieurs autres hypothèses sont vérifiées, alors \( x^k \) converge vers un point optimal et \( y^k \) converge vers un point dual optimal. Cependant, ces hypothèses ne sont pas vérifiées dans de nombreuses applications, donc l'ascension duale ne peut souvent pas être utilisée. Par exemple, si \( f \) est une fonction affine non nulle d'une composante quelconque de \( x \), alors la mise à jour de \( x \) échoue, car \( L \) n'est pas bornée inférieurement en \( x \) pour la plupart des \( y \).
 
-\begin{definition}[Mise à jour par descente de gradient pour la norme $\ell_1$ du gradient]
-    Pour minimiser la norme $\ell_{1}$ de l'image de gradient, une méthode de descente de gradient est employée. La mise à jour de l'image $f$ s'effectue itérativement selon :
-    \begin{equation}
-    f^{\text{suivant}} = f^{\text{courant}} - \alpha \,\vec{\Delta}^{\,\text{courant}},
-    \end{equation}
-    où $\alpha$ est une constante contrôlant la vitesse de descente. Le terme $\vec{\Delta}$ est une image dont la valeur de chaque pixel $(h,w)$ est donnée par la dérivée partielle de la norme $\ell_1$ du gradient :
-    \begin{equation}
-        \begin{array}{l l l}
-            \nu_{h,w} & = &
-            \dfrac{\partial \lVert \nabla f_{h,w} \rVert_{1}}{\partial f_{h,w}} \\[1.2ex]
-            & = &
-            \dfrac{2f_{h,w} - f_{h+1,w} - f_{h,w+1}}
-            {\sqrt{\varepsilon + (f_{h+1,w} - f_{h,w})^{2} + (f_{h,w+1} - f_{h,w})^{2}}} \\[2ex]
-            & + &
-            \dfrac{f_{h,w} - f_{h-1,w}}
-            {\sqrt{\varepsilon + (f_{h,w} - f_{h-1,w})^{2} + (f_{h-1,w+1} - f_{h-1,w})^{2}}} \\[2ex]
-            & + &
-            \dfrac{f_{h,w} - f_{h,w-1}}
-            {\sqrt{\varepsilon + (f_{h+1,w-1} - f_{h,w-1})^{2} + (f_{h,w} - f_{h,w-1})^{2}}}
-        \end{array}
-    \end{equation}
-\end{definition}
+\subsubsection{Décomposition Duale.}
+L'avantage majeur de la méthode d'ascension duale est qu'elle peut conduire à un algorithme décentralisé dans certains cas. Supposons, par exemple, que l'objectif \( f \) est séparable (par rapport à une partition ou un éclatement de la variable en sous-vecteurs), ce qui signifie que
 
-\begin{definition}[Matrice système $\Phi$ et poids $\varphi_{i,j}$]
-Dans le cadre discret, le vecteur de données de projection à faisceau parallèle $\vec{g}$ est modélisé par une somme pondérée sur les pixels traversés par le rayon X :
+\[f(x) = \sum_{i=1}^N f_i(x_i),\]
+
+où \( x = (x_1, \ldots, x_N) \) et les variables \( x_i \in \mathbb{R}^{n_i} \) sont des sous-vecteurs de \( x \). En partitionnant la matrice \( A \) de manière conforme comme
+
+\[A = [A_1 \cdots A_N],\]
+
+ainsi \( Ax = \sum_{i=1}^N A_i x_i \), le Lagrangien peut s'écrire comme
+
+\[L(x, y) = \sum_{i=1}^N L_i(x_i, y) = \sum_{i=1}^N \left( f_i(x_i) + y^T A_i x_i - (1/N)y^T b \right),\]
+
+qui est également séparable en \( x \). Cela signifie que l'étape de minimisation en \( x \) se divise en \( N \) problèmes distincts qui peuvent être résolus en parallèle. Explicitement, l'algorithme est
 \begin{equation}
-g_i = \sum_{j=1}^{N} \varphi_{i,j} \cdot f_j, \quad \text{où } i = 1, 2, \cdots, M.
+    x_i^{k+1} := \arg\min_{x_i} L_i(x_i, y^k) 
+    \label{eq:x_minimisation}
 \end{equation}
-Le coefficient de pondération $\varphi_{i,j}$ de la matrice système $\Phi$ est égal à la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.
-\end{definition}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle.png}
-    \caption{Calcul du coefficient de poids $\varphi_{i,j}$ de la matrice système $\Phi$ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}
-    \label{fig:phi}
-\end{figure}
+\begin{equation}
+    y^{k+1} := y^k + \alpha^k (Ax^{k+1} - b)
+    \label{eq:dual_update}
+\end{equation}
 
-Le calcul direct de chaque $\varphi_{i,j}$ est coûteux. Pour accélérer la reconstruction, on peut pré-calculer et stocker ces poids, et exploiter les propriétés de symétrie des projections à faisceau parallèle pour réduire le nombre de calculs nécessaires.
+L'étape de minimisation en \( x \) \eqref{eq:x_minimisation} est effectuée indépendamment, en parallèle, pour chaque \( i = 1, \ldots, N \). Dans ce cas, nous nous référons à la méthode d'ascension duale sous le nom de décomposition duale.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle-2.png}
-    \caption{Mesures des rayons-\textbf{X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha$, $90-\alpha$, $90+\alpha$ et $180-\alpha$. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}
-    \label{fig:mesure-rayons-X}
-\end{figure}
+Dans le cas général, chaque itération de la méthode de décomposition duale nécessite une opération de diffusion et une opération de collecte. Dans l'étape de mise à jour duale \eqref{eq:dual_update}, les contributions du résidu de la contrainte d'égalité \( A_i x_i^{k+1} \) sont collectées (rassemblées) afin de calculer le résidu \( Ax^{k+1} - b \). Une fois que la variable duale (globale) \( y^{k+1} \) est calculée, elle doit être distribuée (diffusée) aux processeurs qui effectuent les \( N \) étapes individuelles de minimisation de \( x_i \) \eqref{eq:x_minimisation}.
 
+\subsubsection{Lagrangiens Augmentés et la Méthode des Multiplicateurs.}
+Les méthodes de Lagrangien augmenté ont été développées en partie pour apporter de la robustesse à la méthode d'ascension duale, et en particulier, pour obtenir une convergence sans hypothèses comme la stricte convexité ou le caractère fini de \( f \). Le Lagrangien augmenté pour \eqref{eq:optimisation_convexe} est
 
-\subsubsection{Pseudo-code}
-\begin{algorithm}[H]
-\caption{Méthode de reconstruction hybride (SART + Descente de gradient)}
-\label{alg:hybrid-reconstruction}
-\begin{algorithmic}[1]
-\Require $\varphi$ - matrice de projection, $g$ - données d'acquisition,
-$M$ - nombre d'itérations SART, $\lambda$ - paramètre de relaxation,
-$\alpha$ - pas d'apprentissage
-\Ensure $\hat{f}$ - image reconstruite
+\begin{equation}
+L_\rho(x, y) = f(x) + y^T(Ax - b) + (\rho/2)\|Ax - b\|_2^2
+    \label{eq:lagrangien_augmente}
+\end{equation}
 
-\Statex \textbf{(1) Initialisation de l'image}
-\State $f^{(0)} \gets 0$
+où \( \rho > 0 \) est appelé le paramètre de pénalité. (Notez que \( L_0 \) est le Lagrangien standard pour le problème.) Le Lagrangien augmenté peut être vu comme le Lagrangien (non augmenté) associé au problème
 
-\Statex
-\Statex \textbf{(2) Processus itératif de type SART}
-\For{$k = 1$ \textbf{à} $M$} \Comment{Une période complète d'itération}
-    \For{$j = 1$ \textbf{à} $N$}
-        \State $f_j^{(k)} \gets f_j^{(k-1)}
-        + \lambda
-        \cdot
-        \frac{
-            g_i - \sum_{n=1}^{N} \varphi_{i,n} f_n^{(k-1)}
-        }{
-            \sum_{n=1}^{N} \varphi_{i,n}^2
-        }
-        \cdot \varphi_{i,j}$
-    \EndFor
-\EndFor
+\[\text{minimiser } f(x) + (\rho/2)\|Ax - b\|_2^2\]
+\[\text{sous contrainte } Ax = b.\]
 
-\Statex
-\Statex \textbf{(3) Initialisation pour la descente de gradient}
-\State $\hat{f}^{(0)} \gets f^{(M)}$
+Ce problème est clairement équivalent au problème original \eqref{eq:optimisation_convexe}, puisque pour tout \( x \) réalisable, le terme ajouté à l'objectif est nul. La fonction duale associée est \[g_\rho(y) = \inf_x L_\rho(x, y)\].
 
-\Statex
-\Statex \textbf{(4) Descente de gradient (contrainte de parcimonie)}
-\For{$l = 1$ \textbf{à} $5$}
-    \State $\vec{\Delta}_l \gets
-    \left| \hat{f}^{(0)} - f^{(0)} \right|
-    \cdot
-    \frac{\nu_{x,y}}{\left| \nu_{x,y} \right|}$
-    \State $\hat{f}^{(l)} \gets \hat{f}^{(l-1)} - \alpha \cdot \vec{\Delta}_l$
-\EndFor
+L'avantage d'inclure le terme de pénalité est que \( g_\rho \) peut être démontrée comme étant différentiable sous des conditions plutôt faibles sur le problème original. Le gradient de la fonction duale augmentée est trouvé de la même manière qu'avec le Lagrangien ordinaire, c'est-à-dire en minimisant sur \( x \), puis en évaluant le résidu de la contrainte d'égalité résultant. En appliquant l'ascension duale au problème modifié, on obtient l'algorithme
 
-\Statex
-\Statex \textbf{(5) Initialisation de l'étape itérative suivante}
-\State $f^{(0)} \gets \hat{f}^{(5)}$
-\State \Return $\hat{f}^{(5)}$
+\begin{equation}
+x^{k+1} := \arg\min_x L_\rho(x, y^k)
+\label{eq:methodes_multiplicateurs1}
+\end{equation}
 
-\end{algorithmic}
-\end{algorithm}
+\begin{equation}
+y^{k+1} := y^k + \rho (Ax^{k+1} - b)
+\label{eq:methodes_multiplicateurs2}
+\end{equation}
 
-% \textbf{(1) Initialisation de l'image \(f\) :}
-% \[
-% f^{(0)} = 0 ;
-% \]
+qui est connu sous le nom de méthode des multiplicateurs pour résoudre \eqref{eq:optimisation_convexe}. C'est la même chose que l'ascension duale standard, sauf que l'étape de minimisation en \( x \) utilise le Lagrangien augmenté, et que le paramètre de pénalité \( \rho \) est utilisé comme taille de pas \( \alpha^k \). La méthode des multiplicateurs converge sous des conditions bien plus générales que l'ascension duale, y compris dans les cas où \( f \) prend la valeur \( +\infty \) ou n'est pas strictement convexe.
 
-% \medskip
-% \noindent
-% \textbf{(2) Processus itératif (type SART) :}
-% Pour \(k\) variant de \(1\) à \(M\) (une période complète d'itération) :
-% \[
-% f_j^{(k)} = f_j^{(k-1)} +
-% \lambda \,
-% \frac{
-% g_i - \sum_{n=1}^{N} \varphi_{i,n}\, f_n^{(k-1)}
-% }{
-% \sum_{i=1}^{N} \varphi_{i,n}^{2}
-% }
-% \, \varphi_{i,j} ;
-% \]
-% où le paramètre de relaxation \(\lambda\) est un nombre réel positif.
+Il est facile de motiver le choix de la taille de pas particulière \( \rho \) dans la mise à jour duale \eqref{eq:methodes_multiplicateurs2}. Par souci de simplicité, nous supposons ici que \( f \) est différentiable, bien que cela ne soit pas nécessaire pour le bon fonctionnement de l'algorithme. Les conditions d'optimalité pour \eqref{eq:optimisation_convexe} sont la faisabilité primale et duale, c'est-à-dire
 
-% \medskip
-% \noindent
-% \textbf{(3) Initialisation de l'image pour la descente de gradient :}
-% \[
-% \hat{f}^{(0)} = f^{(M)} ;
-% \]
+\[Ax^* - b = 0, \quad \nabla f(x^*) + A^T y^k = 0,\]
 
-% \medskip
-% \noindent
-% \textbf{(4) Itération de descente de gradient (contrainte de parcimonie) :}
-% Pour \(l = 1\) jusqu'à \(5\) :
-% \[
-%     \hat{f}^{(l)} = \hat{f}^{(l-1)} - \alpha \cdot \vec{\Delta}_l ,
-% \]
-% avec
-% \[
-%     \vec{\Delta}_l =
-%     \left| \hat{f}^{(0)} - f^{(0)} \right|
-%     \cdot
-%     \frac{\nu_{x,y}}{\left| \nu_{x,y} \right|}.
-% \]
+respectivement. Par définition, \( x^{k+1} \) minimise \( L_\rho(x, y^k) \), donc
 
-% \medskip
-% \noindent
-% \textbf{(5) Initialisation de l'étape itérative suivante :}
-% \[
-% f^{(0)} = \hat{f}^{(\text{end})} ;
-% \]
+\[
+    \begin{array}{l l l}
+        0 &=& \nabla_x L_\rho(x^{k+1}, y^k)\\
+        &=& \nabla_x f(x^{k+1}) + A^T \left( y^k + \rho (Ax^{k+1} - b) \right)\\
+        &=& \nabla_x f(x^{k+1}) + A^T y^{k+1}
+    \end{array}
+\]
 
-Les étapes (2) à (5) sont répétées jusqu'à ce que la différence entre deux images successives $f^{(M)}$ soit inférieure à un seuil (e.g., $0.001$) ou que le nombre d'itérations dépasse une limite (e.g., $1000$). Les paramètres typiques sont $\lambda = 1.0$, $\varepsilon = 0.0001$, $\alpha = 0.5$.
-% =======================================================================================================
+Nous voyons qu'en utilisant \( \rho \) comme taille de pas dans la mise à jour duale, l'itéré \((x^{k+1}, y^{k+1})\) est dualement réalisable. Au fur et à mesure que la méthode des multiplicateurs progresse, le résidu primal \( Ax^{k+1} - b \) converge vers zéro, ce qui donne l'optimalité.
+
+Les propriétés de convergence grandement améliorées de la méthode des multiplicateurs par rapport à l'ascension duale ont un coût. Lorsque \( f \) est séparable, le Lagrangien augmenté \( L_\rho \) n'est pas séparable, donc l'étape de minimisation en \( x \) \eqref{eq:methodes_multiplicateurs1} ne peut pas être effectuée séparément en parallèle pour chaque \( x_i \). Cela signifie que la méthode de base des multiplicateurs ne peut pas être utilisée pour la décomposition. Nous verrons comment résoudre ce problème ensuite.
+
+\subsubsection{ADMM algorithme}
+L'ADMM est un algorithme conçu pour fusionner la décomposabilité de l'ascension duale avec les propriétés de convergence supérieures de la méthode des multiplicateurs. L'algorithme résout des problèmes de la forme
 
 
+\begin{equation}
+    \begin{aligned}
+        & \text{minimiser} && f(x) + g(z)\\
+        & \text{sous contrainte} && Ax + Bz = c,
+    \end{aligned}
+    \label{eq:new_optimisation_convexe}
+\end{equation}
 
-\subsection{Métriques de performance}
+avec les variables \( x \in \mathbb{R}^n \) et \( z \in \mathbb{R}^m \), où \( A \in \mathbb{R}^{p \times n} \), \( B \in \mathbb{R}^{p \times m} \), et \( c \in \mathbb{R}^p \). Nous supposerons que \( f \) et \( g \) sont convexes. La seule différence par rapport au problème général sous contrainte d'égalité linéaire \eqref{eq:optimisation_convexe} est que la variable, appelée \( x \) dans ce problème, a été divisée en deux parties, appelées \( x \) et \( z \) ici, avec la fonction objectif séparable selon cette division. La valeur optimale du problème \eqref{eq:new_optimisation_convexe} sera notée par
+
+\[p^\star = \inf \{ f(x) + g(z) | Ax + Bz = c \}.\]
+
+Comme dans la méthode des multiplicateurs, nous formons le Lagrangien augmenté
+
+\[L_\rho(x, z, y) = f(x) + g(z) + y^T(Ax + Bz - c) + (\rho/2) \|Ax + Bz - c\|_2^2.\]
+
+
+L'ADMM consiste en les itérations suivantes :
+\begin{equation}
+    x^{k+1} := \arg\min_x L_\rho(x, z^k, y^k)
+    \label{eq:x_update}
+\end{equation}
+
+\begin{equation}
+    z^{k+1} := \arg\min_z L_\rho(x^{k+1}, z, y^k)
+    \label{eq:z_update}
+\end{equation}
+
+\begin{equation}
+    y^{k+1} := y^k + \rho(Ax^{k+1} + Bz^{k+1} - c)
+    \label{eq:y_update}
+\end{equation}
+
+où \(\rho > 0\). L'algorithme est très similaire à l'ascension duale et à la méthode des multiplicateurs : il consiste en une étape de minimisation en \(x\) \eqref{eq:x_update}, une étape de minimisation en \(z\) \eqref{eq:z_update}, et une mise à jour de la variable duale \eqref{eq:y_update}. Comme dans la méthode des multiplicateurs, la mise à jour de la variable duale utilise une taille de pas égale au paramètre du Lagrangien augmenté \(\rho\).
+
+La méthode des multiplicateurs pour \eqref{eq:new_optimisation_convexe} a la forme
+\[
+    \begin{array}{l l l}
+        (x^{k+1}, z^{k+1}) &:=& \arg\min_{x,z} L_\rho(x, z, y^k)\\
+        y^{k+1} &:=& y^k + \rho(Ax^{k+1} + Bz^{k+1} - c)
+    \end{array}
+\]
+
+Ici, le Lagrangien augmenté est minimisé conjointement par rapport aux deux variables primales. Dans ADMM, en revanche, \(x\) et \(z\) sont mis à jour de manière alternée ou séquentielle, ce qui explique le terme direction alternée. Séparer la minimisation sur \(x\) et \(z\) en deux étapes est précisément ce qui permet la décomposition lorsque \(f\) ou \(g\) sont séparables.\\
+L'état de l'algorithme dans ADMM est constitué de \(z^k\) et \(y^k\). En d'autres termes, \((z^{k+1}, y^{k+1})\) est une fonction de \((z^k, y^k)\). La variable \(x^k\) ne fait pas partie de l'état ; c'est un résultat intermédiaire calculé à partir de l'état précédent \((z^{k-1}, y^{k-1})\).
+
+Si nous échangeons (réétiquetons) \(x\) et \(z\), \(f\) et \(g\), et \(A\) et \(B\) dans le problème \eqref{eq:new_optimisation_convexe}, nous obtenons une variante d'ADMM avec l'ordre de l'étape de mise à jour de \(x\) \eqref{eq:x_update} et de l'étape de mise à jour de \(z\) \eqref{eq:z_update} inversé. Les rôles de \(x\) et \(z\) sont presque symétriques, mais pas tout à fait, puisque la mise à jour duale est effectuée après la mise à jour de \(z\) mais avant la mise à jour de \(x\).
+
+
+\subsubsection{Forme Mise à l'Echelle}
+L'ADMM peut être écrit sous une forme légèrement différente, souvent plus pratique, en combinant les termes linéaires et quadratiques dans le Lagrangien augmenté et en mettant à l'échelle la variable duale. En définissant le résidu \( r = Ax + Bz - c \), nous avons
+
+\[
+    \begin{array}{l l l}
+        y^T r + (\rho/2) \|r\|_2^2 &=& (\rho/2) \|r + (1/\rho)y\|_2^2 - (1/2\rho) \|y\|_2^2\\
+        &=& (\rho/2) \|r + u\|_2^2 - (\rho/2) \|u\|_2^2,
+    \end{array}
+\]
+
+où \( u = (1/\rho)y \) est la variable duale mise à l'échelle. En utilisant la variable duale mise à l'échelle, nous pouvons exprimer l'ADMM comme
+\begin{equation}
+    x^{k+1} := \arg\min_x \left( f(x) + (\rho/2) \|Ax + Bz^k - c + u^k\|_2^2 \right)
+    \label{eq:x_update_scaled}
+\end{equation}
+
+\begin{equation}
+    z^{k+1} := \arg\min_z \left( g(z) + (\rho/2) \|Ax^{k+1} + Bz - c + u^k\|_2^2 \right)
+    \label{eq:z_update_scaled}
+\end{equation}
+
+\begin{equation}
+    u^{k+1} := u^k + Ax^{k+1} + Bz^{k+1} - c
+    \label{eq:u_update_scaled}
+\end{equation}
+
+En définissant le résidu à l'itération \( k \) comme \( r^k = Ax^k + Bz^k - c \), nous voyons que
+\[u^k = u^0 + \sum_{j=1}^k r^j,\]
+la somme cumulée des résidus.\vspace{5pt}\\
+Nous appelons la première forme de l'ADMM ci-dessus, donnée par (\eqref{eq:x_update}-\eqref{eq:y_update}), la forme non mise à l'échelle, et la seconde forme (\eqref{eq:x_update_scaled}-\eqref{eq:u_update_scaled}) la forme mise à l'échelle, car elle est exprimée en fonction d'une version mise à l'échelle de la variable duale. Les deux sont clairement équivalentes, mais les formules dans la forme mise à l'échelle de l'ADMM sont souvent plus courtes que dans la forme non mise à l'échelle, donc nous utiliserons la forme mise à l'échelle dans la suite. Nous utiliserons la forme non mise à l'échelle lorsque nous souhaitons souligner le rôle de la variable duale ou donner une interprétation qui repose sur la variable duale (non mise à l'échelle).
+
+% ===================================================================
+\subsection{Transformées en Ondelettes Biorthogonales}
+% \subsection{ Introduction Générale}
+
+L'analyse et le traitement du signal constituent un pilier fondamental des sciences et technologies modernes. De la compression d'images médicales à la reconnaissance de formes en passant par la transmission de données numériques, les outils mathématiques permettant de représenter, transformer et interpréter les signaux sont au cœur d'innombrables innovations.
+
+Parmi ces outils, la transformée de Fourier a longtemps régné en maître, offrant une représentation fréquentielle des signaux qui a révolutionné notre compréhension des phénomènes physiques. Pourtant, cette représentation présente une limitation majeure : elle perd toute information temporelle. Pour un signal variant dans le temps, savoir quelles fréquences le composent sans savoir à quel moment elles apparaissent revient à lire une partition sans connaître le tempo.
+
+C'est dans ce contexte que les ondelettes ont émergé comme une alternative puissante et élégante. Véritables "fenêtres mathématiques", elles permettent une analyse conjointe dans les domaines temporel et fréquentiel, offrant ainsi une résolution adaptative qui fait défaut à la transformée de Fourier classique.
+
+Les ondelettes sont utiles dans diverses applications telles que la sismologie, l'analyse et le traitement du signal. Il est difficile de représenter efficacement des signaux avec une petite valeur de fonction calculable. Généralement, les ondelettes sont liées au filtrage. Il existe certaines similitudes entre les évaluations multi-résolution en temps continu, tandis que le banc de filtres signifie un filtrage sous-bande en temps discret. L'objectif principal du traitement des données est de générer des fonctions basées sur la construction de l'ensemble. Cela permet une description incisive, efficace et explicative du signal. La sélection du signal de base dépend du signal. Les exponentielles complexes de Fourier sont disponibles pour les signaux lisses, mais leurs performances sont médiocres pour les signaux discontinus dans les zones de hautes et basses fréquences. Les ondelettes ne sont rien d'autre qu'une petite fenêtre facile à traiter. Par conséquent, récemment, la transformation en ondelettes a joué un rôle important.
+
+Cette thèse se propose d'explorer deux familles majeures d'ondelettes : les ondelettes orthogonales et les ondelettes biorthogonales. La distinction entre ces deux approches, bien que subtile dans sa formulation mathématique, a des implications profondes sur leurs propriétés et leurs domaines d'application privilégiés.
+
+Dans de nombreux cas, la transformée en ondelettes joue un rôle important. Différentes familles d'ondelettes sont disponibles, telles que les ondelettes orthogonales, biorthogonales et biorthogonales inverses, l'ondelette de Daubechies, l'ondelette de Haar, les Symlets, les Coifflets et l'ondelette de Meyer discrète. Les familles d'ondelettes orthogonales et biorthogonales démontrent une propriété de phase linéaire utile dans la reconstruction des données.
+
+
+\subsection{Fondements Théoriques des Ondelettes}
+
+\subsubsection{Introduction}
+
+Avant de plonger au cœur de notre étude comparative, il est essentiel de poser les bases conceptuelles et mathématiques qui sous-tendent la théorie des ondelettes. Ce introductif vise à familiariser le lecteur avec les concepts fondamentaux, depuis les prémices de l'analyse fréquentielle jusqu'à la formulation moderne de la transformation en ondelettes.
+
+\subsubsection{De Fourier aux Ondelettes : Une Évolution Nécessaire}
+
+L'orthogonalité est un aspect important lié au traitement du signal car c'est une méthode facile dans les langages pour construire des structures de contrôle et de données. Sa nature est simple, elle a donc de nombreuses conceptions orthogonales avec moins d'attentes. Grâce à cela, nous sommes capables de lire, d'écrire et d'apprendre n'importe quel aspect d'un langage de programmation. Les significations des caractéristiques de l'orthogonalité sont indépendantes pour chaque contexte [1], [2], [3]. L'orthogonalité reflète les angles droits, c'est-à-dire \(90^{\circ}\).
+
+\subsubsection{ Concepts Fondamentaux}
+
+\subsubsection{ Orthogonalité}
+
+Dans le modèle mathématique, l'orthogonalité décrit la perpendicularité pour l'algèbre linéaire avec des formes bilinéaires. Il y a deux éléments, x et y, qui sont orthogonaux. Si B(x, y) = angle de 90 degrés. L'espace vectoriel a des vecteurs non nuls, qui sont auto-orthogonaux. La famille de fonctions orthogonales est utile dans la formation de la base.
+
+<center>Figure 1.1. Orthogonalité </center>
+
+\subsubsection{Signal Orthogonal}
+
+Le signal orthogonal est formé à l'aide du filtre miroir conjugué. Le filtre miroir divise l'axe des fréquences en différents intervalles. Ces intervalles ont des tailles différentes. Le banc de filtres conjugués correspond à diverses bases de paquets. Il est nécessaire d'isoler les petites fenêtres, c'est-à-dire la fenêtre d'ondelettes en présence du système variant dans le temps, car elle est responsable de la modification des propriétés du signal. Généralement, les bases cosinus locales sont obtenues par la simple multiplication des fenêtres et de la fonction cosinus. Ici, un paquet d'ondelettes divise l'axe des fréquences et est systématiquement transcrit dans le temps. Les bases cosinus locales divisent l'axe du temps et sont systématiquement transcrites en fréquence.
+
+En fait, la condition linéaire et quadratique n'est pas suffisante pour la production d'un système orthogonal. La fonction \(\psi (x)\) fournit le système orthogonal. Cela signifie que les \(\psi_{j,k}\) comprennent la base orthonormale lorsqu'ils satisfont à la condition ci-dessous :
+
+\[\int_{-\infty}^{\infty}\theta (x)\theta (x - k)dx = \delta_{0,k} \quad (1)\]
+
+Cette condition donne la condition équivalente pour l'orthogonalité.
+
+\subsubsection{Transformée de Fourier}
+
+La transformée de Fourier est mathématiquement représentée par :
+
+\[F(\omega) = \int_{-\infty}^{\infty}f(t)\exp (-j\omega t)dt \quad (2)\]
+
+La conversion du signal du domaine temporel au domaine fréquentiel se fait à l'aide de la transformée de Fourier en considérant l'axe temporel complet.
+
+En fait, les transformées de Fourier indiquent des informations sur le signal. Elles montrent les détails concernant la composante de fréquence qui apparaît ou est présente dans le signal. Elles ne donnent pas de détails sur la valeur exacte de la fréquence présente à cet instant précis.
+
+\subsubsection{Transformée de Fourier à Court Terme (STFT)}
+
+La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
+
+\[S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)\]
+
+\subsubsection{Transformation en Ondelettes}
+
+Une ondelette est l'une des fonctions mathématiques utiles pour diviser un signal temporel continu ou une fonction en différentes composantes d'échelle. Fondamentalement, les ondelettes sont des oscillations qui ont une certaine valeur d'amplitude. Elles commencent à zéro, puis augmentent, et diminuent à nouveau pour revenir à 0. Cela ressemble aux brèves oscillations qui se produisent sur un sismographe.
+
+<center>Figure 1.2. Transformation en ondelettes </center>
+
+Une plage de fréquences est assignée à chaque composante d'échelle. L'étude de chaque composante porte une résolution qui correspond à l'échelle. L'ondelette est utilisée pour diverses applications. Elle utilise la convolution. Les ondelettes sont très utiles pour obtenir la partie inconnue. Elle est combinée avec la partie connue d'un signal détruit pour récupérer les données des parties inconnues.
+
+Fondamentalement, la transformée en ondelettes entre en jeu au moment où le signal est analysé, à la fois dans les domaines temporel et fréquentiel. Elle est surtout applicable au système variant dans le temps car elle offre une résolution de fréquence variable à la fin du processus de décomposition, en alternant STFT et Fourier. Ici, la STFT supporte la transformée de Fourier pour le temps instantané t avec une fenêtre courte ayant un point médian au temps t. La longueur de la fenêtre est constante pour la STFT, donc elle ne supporte pas l'anatomie multi-résolution des signaux. L'ondelette est différente en ce sens qu'elle fournit à la fois une résolution temporelle et fréquentielle.
+
+La fonction de transformation est appelée ondelette 'Mère'. Le nom d'ondelette est dérivé des bébés ondes. Ces bébés ondes sont appelées une fonction oscillatoire. Le nom 'Mère' entre en jeu car ces ondelettes sont formées à partir de diverses transformations de base.
+
+Considérons l'ondelette mère, qui est une fonction fenêtrée, qui est décalée avec le signal temporel où le temps varie de 0 à T. Les coefficients d'ondelette sont calculés par un processus simple. Après avoir multiplié une partie/morceau du signal dans la fenêtre et l'ondelette mère, leur intégration sur le temps complet aboutit à la génération du coefficient d'ondelette. Techniquement, la fenêtre de l'ondelette mère est aussi appelée la fenêtre de support. En raison de l'apparition d'un problème de résolution lié au temps et à la fréquence, la croyance complète en les ondelettes émane de la transformée de Fourier [6], [7].
+
+Une ondelette mère \(\psi (t)\) est fondamentalement la fonction de moyenne 0. Mathématiquement, elle est représentée par :
+
+\[\int_{-\infty}^{\infty}\psi (t)dt = 0 \quad (4)\]
+
+La fonction ci-dessus est mise à l'échelle par a' puis translatée vers un second scalaire b'. Alors son ondelette mère est représentée par :
+
+\[\psi_{a,T}(t) = \frac{1}{\sqrt{a}}\psi \left(\frac{t - T}{a}\right) \quad (5)\]
+
+La transformée en ondelettes W(a, T) est représentée par :
+
+\[W_{x}(a,T) = \int_{-\infty}^{\infty}y(t)\frac{1}{\sqrt{a}}\Psi^{n}\left(\frac{t - T}{a}\right)dt \quad (6)\]
+
+où :
+- \(\mathrm{T} =\) Point quelconque dans le temps
+- \(\Psi^{*}(a,T)(t) =\) fonction ondelette
+- y(t) \(=\) entrée
+
+Nous pouvons concevoir n'importe quelle base d'ondelettes orthogonale en utilisant le filtre miroir conjugué \(\hat{h} (\omega)\) :
+
+\[\left|H_{\theta}(\omega)\right|^{2} + \left|H_{\theta}(\omega +\pi)\right|^{2} = 2 \quad (7)\]
+
+\[H_{\theta}(0) = \sqrt{2} \quad (8)\]
+
+Le filtre qui satisfait la relation ci-dessus est appelé filtre miroir conjugué [8], [9]. Un filtre miroir conjugué est l'un des moyens les plus simples pour la construction d'une base d'ondelettes orthogonale. Le filtre miroir conjugué et la multi-résolution sont les méthodes de base pour la base d'ondelettes orthogonale [10], [11].
+
+\subsubsection{Propriétés des Ondelettes}
+
+La mise à l'échelle, le décalage, la remise à l'échelle, les moments disparaissants, le support, la régularité et la symétrie sont les propriétés de base de la transformation en ondelettes. L'approximation, le support compact, la symétrie, la régularité et les bases inconditionnelles sont quelques propriétés du système d'ondelettes biorthogonal. Le filtre d'échelle est utile pour déterminer la fonction d'échelle. Chaque filtre d'ondelette est décomposé en procédures de lifting, qui sont présentées par Sweldens et Daubechies.
+
+La représentation de la décomposition d'une ondelette biorthogonale avec la forme du "schéma de lifting" est représentée comme suit :
+
+\[\begin{array}{l}{d^{1 =}s_{2j} - \frac{1}{2}\left[s_{2j - 1} + s_{2j + 2}\right]}\\ {}\\ {s^{1 =}s_{2j - 1} + \frac{1}{4}\left[d_{j - 1}^{1} + d^{(1)}\right]}\\ {}\\ {D = \frac{1}{\sqrt{2}} d^{(1)}}\\ {}\\ {s_{1} = \sqrt{2} s^{(1)}} \end{array} \quad (10)\]
+
+À partir de l'équation mathématique ci-dessus, nous obtenons le nouveau signal \(\mathrm{s} = [\mathrm{s}_1\mathrm{D}]\).
+
+\subsubsection{Conclusion}
+
+Ce introductif a posé les fondements théoriques nécessaires à la compréhension des ondelettes. Nous avons vu comment la transformation en ondelettes dépasse les limitations de l'analyse de Fourier en offrant une représentation temps-fréquence adaptative. Les concepts d'orthogonalité, de fonction d'échelle et d'ondelette mère constituent la base sur laquelle nous allons maintenant construire notre étude comparative.
+
+
+
+\subsection{Ondelettes Orthogonales : Théorie et Propriétés}
+
+\subsubsection{Introduction}
+
+L'ondelette orthogonale est liée à la transformée en ondelettes, et elles sont orthogonales entre elles. L'orthogonalité évite les interférences afin qu'une sortie sans erreur puisse être obtenue. Grâce à ces caractéristiques, elle est le plus souvent préférable. Une ondelette orthogonale est l'adjoint de la transformée en ondelettes. Une fonction d'échelle unique avec une ondelette unique est le résultat d'une ondelette orthogonale.
+
+\subsubsection{Définition et Caractérisation}
+
+Une ondelette orthogonale génère une ondelette dont la nature est orthogonale. Cela signifie qu'une transformée en ondelettes inverse ou transposée n'est rien d'autre que l'adjoint d'une transformée en ondelettes.
+
+Une ondelette de Daubechies a une réponse en phase linéaire par rapport à un filtre orthogonal.
+
+\subsubsection{Exemples d'Ondelettes Orthogonales}
+
+\subsubsection{L'Ondelette de Daubechies}
+
+L'ondelette de Daubechies appartient à la catégorie des ondelettes orthogonales. Un nombre plus élevé de moments disparaissants pour une longueur prédéfinie est une caractéristique de cette ondelette. Le nombre de moments est égal à la moitié de la longueur du support. Le nom de l'ondelette représente dbN, où N indique l'ordre de l'ondelette. N varie de 1 à 8. La figure ci-dessous montre l'ondelette de Daubechies pour différentes valeurs de N allant de 2 à 10.
+
+<center>Figure 2.1. Ondelette de Daubechies pour différentes valeurs </center>
+
+\subsubsection{ L'Ondelette de Haar}
+
+L'ondelette de Haar a été étudiée par Alfred Haar et est considérée comme la première ondelette mère. Elle est célèbre car elle supporte la longueur la plus courte parmi toutes les ondelettes. Elle échoue en cas de reconstruction d'une fonction lisse car elle a un seul mouvement disparaissant. En tant que concept simple avec une réponse plus rapide, un moyen plus facile de détecter les informations et une utilisation efficace de la mémoire, l'ondelette de Haar est plus utile que les autres ondelettes. Elle est discontinue et similaire à une fonction échelon. Le signal divisé en deux sous-signaux de demi-longueur est décomposé par l'ondelette de Haar. Elle représente la fonction d'ondelette Daubechies 1.
+
+\subsubsection{ Formulation Mathématique}
+
+Ici, nous définissons la fonction d'ondelette de Haar comme suit :
+
+\[\psi^{Haar}(x) = \left\{ \begin{array}{ll}1, & 0\leq x\leq \frac{1}{2}\\ -1, & \frac{1}{2}\leq x\leq 1\\ 0, & ailleurs \end{array} \right. \quad (14)\]
+
+À partir de cela, nous obtenons la fonction suivante :
+
+\[\psi^{Haar}_{j,k}(x) = 2^{j / 2}\psi^{Haar}(2^{j}x - k) = \left\{ \begin{array}{ll}1, & \frac{1}{2}\leq x\leq \frac{k + 1 / 2}{2}\\ -1, & \frac{k + 1 / 2}{2}\leq x\leq \frac{k + 1}{2}\\ 0, & ailleurs, \end{array} \right. \quad (15)\]
+
+Un \(\phi\) (t) est une fonction d'échelle dans le temps t, qui est nommée l'ondelette père (fonction d'échelle, caractérise l'échelle de base de l'ondelette) :
+
+\[\phi_{j,k}(t) = 2^{j / 2}\phi (2^{j}t - k) \quad (16)\]
+
+où \(\mathrm{j} =\) paramètre d'échelle; \(\mathrm{k} =\) paramètre de translation; \(\mathrm{j}\) et \(\mathrm{k}\) appartiennent à S. S est un ensemble d'entiers.
+
+La translation et l'échelle sont responsables de la génération d'une famille de fonctions, et à l'aide de la dilatation, peuvent former l'équation suivante :
+
+\[\phi (t) = \sqrt{2\sum_{n}h_{n}\phi (2t - n)} \quad (17)\]
+
+Ici, \(h_n\) est l'ensemble des coefficients du filtre et \(\sqrt{2}\) est un facteur d'échelle. L'existence de l'ondelette mère (fonction ondelette, caractérise la forme de base de l'ondelette) est représentée par :
+
+\[\psi_{j,k}(t) = 2^{j / 2}\psi (2^{j}t - k) \quad (18)\]
+
+Ceci est responsable de la formation de la base orthogonale pour \(L^2 R\). Ici, \(\psi (t)\) représente la somme pondérée des \(\psi (2t)\) décalés :
+
+\[\psi (t) = \sqrt{2\sum_{n}g_{n}\phi (2t - n)} \quad (19)\]
+
+La partie ondelette nécessite un espace complémentaire orthogonal. L'orthogonalité nécessite le filtre d'ondelette et les coefficients d'échelle, qui sont liés entre eux par :
+
+\[g_{n} = (-1)^{n}h_{1 - n} \quad (20)\]
+
+Ici, la paire de \(g_{n}\) et \(h_{n}\) est appelée un filtre miroir en quadrature passe-haut et passe-bas.
+
+\subsubsection{ II.5 Avantages et Limitations}
+
+Les ondelettes orthogonales offrent une représentation efficace et sans redondance des signaux. Cependant, de fortes limitations apparaissent au moment de la construction de l'ondelette, en raison de la propriété d'orthogonalité. Il est difficile de chercher ou de trouver des ondelettes qui soient symétriques, à support compact et orthogonales.
+
+
+\subsection{Ondelettes Biorthogonales : Généralisation et Flexibilité}
+
+\subsubsection{ Introduction}
+
+Dans certains cas, lorsque la condition d'orthogonalité échoue, cela donne lieu à des ondelettes biorthogonales. À ce stade, les ondelettes biorthogonales se forment et l'orthogonalité des ondelettes disparaît.
+
+\subsubsection{ III.2 De l'Orthogonalité à la Biorthogonalité}
+
+Fondamentalement, l'ondelette biorthogonale est le résultat de la généralisation de l'orthogonale classique. Une ondelette biorthogonale associée à la transformation en ondelettes est inversible. Si elle est inversible, elle n'a pas besoin d'être orthogonale. Dans le cas de la conception d'ondelettes orthogonales, l'ondelette biorthogonale permet une liberté maximale. Elle supporte également la construction de fonctions d'ondelettes symétriques.
+
+Une ondelette biorthogonale génère une ondelette et une fonction d'échelle pour la décomposition et une paire supplémentaire pour la reconstruction. Deux fonctions d'échelle sont responsables de la génération de diverses analyses multi-résolution.
+
+\subsubsection{Formulation Mathématique}
+
+Ici, la fonction d'échelle duale est représentée mathématiquement comme suit :
+
+\[\tilde{\phi} (t) = \sqrt{2}\sum_{n}\tilde{h}_{n}\tilde{\phi} (2t - n) \quad (21)\]
+
+De même, l'ondelette duale est représentée par :
+
+\[\tilde{\psi} (t) = \sqrt{2}\sum_{n}\tilde{g}_{n}\tilde{\phi} (2t - n) \quad (22)\]
+
+Maintenant, l'échelle duale est liée comme suit :
+
+\[\begin{array}{l}{g_{n} = (-1)^{n}h_{1 - n}}\\ {\tilde{g}_{n} = (-1)^{n}h_{1 - n}} \end{array} \quad (23)\]
+
+\subsubsection{Construction par le Schéma de Lifting}
+
+W. Sweldens a introduit la construction de l'ondelette biorthogonale en utilisant le schéma de lifting. Fondamentalement, le lifting est une méthode simple utile pour augmenter les moments disparaissants pour les ondelettes duales.
+
+La naissance du schéma de lifting vient de Cohen et al. et Swelden. Nous avons supposé que l'ensemble initial \(\{h,\tilde{h}^0,g^0,\tilde{g}\}\) concernait des ondelettes biorthogonales finies. Ainsi, nous avons rassemblé un nouvel ensemble \(\{h,\tilde{h},g,\tilde{g}\}\) , qui consiste en un filtre biorthogonal fini.
+
+\[\begin{array}{l}\tilde{h} (\omega) = \tilde{h}^0 (\omega) + \tilde{g} (\omega)\overline{s(2\omega)} \\ \tilde{g} (\omega) = g^0 (\omega) + h(\omega)s2(\omega) \end{array} \quad (25)\]
+
+D'après les équations ci-dessus, il est clair que les filtres d'échelle et d'ondelette duale ne sont pas modifiés. Par conséquent, les fonctions biorthogonales sont dérivées des filtres ci-dessus. L'ensemble \(\{\phi ,\tilde{\phi}^0,\psi^0,\tilde{\psi}^0\}\) est l'ensemble initial, qui contient la fonction d'échelle biorthogonale. Le nouvel ensemble obtenu est \(\{\phi ,\tilde{\phi},\psi ,\tilde{\psi}\}\) . Ainsi, l'ondelette biorthogonale a été obtenue comme suit :
+
+\[\psi (x) = \psi^0 (x) - \sum_k s_k\phi (x - k) \quad (27)\]
+
+\[\tilde{\phi} (x) = 2\sum_k\tilde{h}_k^0\phi (2x - k) + \sum_k s_{-k}\tilde{\psi} (x - k) \quad (28)\]
+
+\[\tilde{\psi} (x) = 2\sum_k\tilde{g}_k\tilde{\phi} (2x - k) \quad (29)\]
+
+Ici \(s_k\) peut être choisi aléatoirement. La valeur de s est responsable de la manipulation des fonctions duales et des ondelettes dérivées d'une fonction d'échelle simple [15], [16].
+
+\subsubsection{Propriétés des Ondelettes Biorthogonales}
+
+Une ondelette biorthogonale permet deux analyses multi-résolution : \(V_{j},W_{j},\phi_{j,k},\psi_{j,k}\) et \(\tilde{V}_{j},\tilde{W}_{j},\tilde{\phi}_{j,k},\tilde{\psi}_{j,k}\). La dilatation et la translation des fonctions d'échelle, \((\tilde{\phi}_{j,k}(x))\) et \((\tilde{\psi}_{j,k}(x))\) constituent la base pour \(\tilde{V}_{j}\) et \(\tilde{W}_{j}\), respectivement. La biorthogonalité satisfait les propriétés suivantes :
+
+\[\begin{array}{l}\tilde{V}_j\perp W_j\\ V_j\perp \tilde{W}_j\\ (\tilde{\phi}_{j,l},\phi_{j,l'}) = \delta_{l,l'}\\ (\tilde{\psi}_{j,l},\psi_{j,l'}) = \delta_{j,j'}\delta_{l,l'}\\ (\tilde{\phi}_{j,l},\psi_{j,l'}) = 0\quad et\quad (\tilde{\psi}_{j,l},\phi_{j,l'}) = 0. \end{array} \quad (37)\]
+
+La caractéristique la plus significative de la biorthogonalité est la reconstruction parfaite.
+
+\subsubsection{Comparaison avec les Ondelettes Orthogonales}
+
+Une ondelette biorthogonale est plus avancée qu'une ondelette orthogonale. Cependant, elle nécessite plus d'efforts de calcul et est un processus plus long. Une variation de longueur est la principale différence entre l'ondelette orthogonale et l'ondelette biorthogonale lors de l'analyse, ainsi que dans le processus de synthèse. Dans une ondelette orthogonale, des filtres de même longueur sont utilisés et dans l'ondelette biorthogonale, des filtres de longueurs différentes sont utilisés [4], [5].
+
+La différence entre les ondelettes orthogonales et biorthogonales est qu'une ondelette orthogonale fournit une matrice orthogonale avec transformation unitaire, tandis qu'une ondelette biorthogonale donne une matrice inversible, c'est-à-dire une matrice inverse avec reconstruction parfaite. Dans le cas d'un filtre d'ondelette biorthogonal, le filtre passe-bas (LPF) et le filtre passe-haut (HPF) ont des longueurs différentes. Le filtre passe-bas démontre la symétrie, tandis que le filtre passe-haut est asymétrique ou symétrique [19].
+
+\subsubsection{Conclusion}
+Depuis plusieurs décennies, la transformation en ondelettes s'est imposée comme un outil mathématique fondamental dans de nombreux domaines scientifiques et technologiques. Les aspects théoriques et l'analyse des ondelettes trouvent des applications dans la modélisation mathématique, les réseaux de neurones artificiels, le traitement numérique du signal, ainsi que le traitement d'images et les méthodes numériques. Le terme orthogonal relève de la partie mathématique qui couvre un large domaine du traitement numérique du signal et du traitement d'images. Une ondelette orthogonale génère une ondelette dont la nature est orthogonale. Cela signifie qu'une transformée en ondelettes inverse ou transposée n'est rien d'autre que l'adjoint d'une transformée en ondelettes. Si cette condition échoue en raison d'un manque d'orthogonalité, cela peut conduire à des ondelettes biorthogonales. Des fonctions d'échelle uniques et des ondelettes uniques sont générées, mais avec un banc de filtres d'ondelettes orthogonal. L'ondelette biorthogonale associée à la transformation en ondelettes est inversible. Si elle est inversible, elle n'a pas besoin d'être orthogonale. Dans le cas de la conception d'ondelettes orthogonales, l'ondelette biorthogonale permet une liberté maximale. Elle supporte également la construction de fonctions d'ondelettes symétriques. Dans les ondelettes biorthogonales, comme leur nom l'indique, deux facteurs ou fonctions d'échelle sont responsables de la génération de diverses multi-résolutions basées sur différentes ondelettes. Pour la reconstruction d'images et de signaux, nous avons besoin de cette ondelette. En présence d'ondelettes biorthogonales, nous obtenons de meilleurs résultats. Dans le travail actuel, nous avons analysé les performances des filtres d'ondelettes orthogonaux et biorthogonaux pour le traitement d'images. Nous testons l'image et observons les coefficients de filtre et la qualité d'image pour l'ondelette orthogonale et biorthogonale. Sur la base de l'analyse des performances, il est conclu que les ondelettes biorthogonales sont supérieures aux ondelettes orthogonales.
+
+% ===================================================================
+
+% ===================================================================
+\subsection{Indicateurs permettant d'évaluer la qualité de la reconstruction}
+\subsubsection{Structural Similarity Index (SSIM)}
+\subsubsection{Peak Signal-to-Noise Ratio (PSNR)}
+\subsection{Reconstruction d'image en Compressed Sensing par ondelettes biorthogonales 4.4 et ADMM}
 \begin{definition}[Métriques de similarité d'image]
 Soient $f_r$ et $f_o$ les vecteurs représentant respectivement l'image reconstruite et l'image originale, composées de $N$ pixels. On définit les métriques suivantes :
 \begin{itemize}
@@ -567,7 +777,7 @@ avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\s
 
 % ============================================== DRAFT ==============================================
 % Ce cadre permet de résoudre plusieurs limitations pratiques :
-% \paragraph{Réduction du nombre de mesures.}\text{}\\ 
+% \subsubsection{Réduction du nombre de mesures.}\text{}\\ 
 % De nombreux systèmes d'acquisition sont limités par le coût, le temps ou l'énergie. Le compressed sensing permet :
 % \begin{itemize}
 %     \item[-] une acquisition plus rapide des données,
@@ -576,7 +786,7 @@ avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\s
 %     \item[-] une réduction des coûts de stockage et de transmission.
 % \end{itemize}
 
-% \paragraph{Problèmes inverses mal posés (ill-posed inverse problems).}\text{}\\
+% \subsubsection{Problèmes inverses mal posés (ill-posed inverse problems).}\text{}\\
 % Lorsque le nombre de mesures est insuffisant pour garantir une solution unique, le CS introduit une régularisation fondée sur la parcimonie, permettant une reconstruction stable. Les principales applications incluent :
 % \begin{itemize}
 %     \item[-] la tomographie (CT, IRM, PET),
@@ -585,7 +795,7 @@ avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\s
 %     \item[-] les inversions géophysiques et les essais non destructifs.
 % \end{itemize}
 
-% \paragraph{Robustesse au bruit et aux données incomplètes.} \text{}\\
+% \subsubsection{Robustesse au bruit et aux données incomplètes.} \text{}\\
 % Le CS garantit une reconstruction stable même en présence de bruit, de corruptions ou d'observations manquantes.
 
 % \subsection{Reconstruction de signaux par Compressed Sensing}
@@ -613,33 +823,33 @@ avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\s
 
 % \subsection{Applications du Compressed Sensing}
 
-% \paragraph{Imagerie médicale.}
+% \subsubsection{Imagerie médicale.}
 % \begin{itemize}
 %     \item acquisition IRM accélérée,
 %     \item CT à dose réduite,
 %     \item échographie à haute cadence d'images.
 % \end{itemize}
 
-% \paragraph{Imagerie computationnelle.}
+% \subsubsection{Imagerie computationnelle.}
 % \begin{itemize}
 %     \item caméras à pixel unique,
 %     \item imagerie à ouverture codée,
 %     \item reconstruction hyperspectrale.
 % \end{itemize}
 
-% \paragraph{Télédétection et géophysique.}
+% \subsubsection{Télédétection et géophysique.}
 % \begin{itemize}
 %     \item inversion sismique parcimonieuse,
 %     \item imagerie radar et radar à synthèse d'ouverture (SAR).
 % \end{itemize}
 
-% \paragraph{Communications sans fil.}
+% \subsubsection{Communications sans fil.}
 % \begin{itemize}
 %     \item estimation parcimonieuse de canaux,
 %     \item réduction des pilotes dans les systèmes MIMO massifs.
 % \end{itemize}
 
-% \paragraph{Apprentissage automatique et traitement du signal.}
+% \subsubsection{Apprentissage automatique et traitement du signal.}
 % \begin{itemize}
 %     \item régression parcimonieuse (LASSO),
 %     \item apprentissage de dictionnaires,
