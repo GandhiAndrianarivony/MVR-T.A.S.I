@@ -262,7 +262,9 @@ La transformée de Fourier joue un rôle fondamental dans la reconstruction d'im
     = \int_{-\infty}^{\infty} f(x)\, e^{-2\pi i \xi x}\, dx.
     \]
 \end{definition}
-La transformée de Fourier est fréquemment utilisée en analyse du signal et permet de transformer une fonction du temps en une fonction de la fréquence ; la variable $x$ représente le temps en secondes et la variable \( \xi \) représente la fréquence de la fonction en hertz.\\
+La transformée de Fourier est fréquemment utilisée en analyse du signal et permet de transformer une fonction du temps en une fonction de la fréquence ; la variable $x$ représente le temps en secondes et la variable \( \xi \) représente la fréquence de la fonction en hertz. En fait, les transformées de Fourier indiquent des informations sur le signal. Elles montrent les détails concernant la composante de fréquence qui apparaît ou est présente
+dans le signal. Elles ne donnent pas de détails sur la valeur exacte de la fréquence présente
+à cet instant précis.\\
 
 Il existe une définition alternative faisant intervenir la fréquence angulaire $w=2\pi \xi$, ce qui conduit à l'expression suivante.
 \[(\mathcal{F}f)(w) = \int_{-\infty}^{\infty} f(x)\, e^{-i w x}\, dx\]
@@ -351,6 +353,16 @@ g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
 %    - CT basse dose
 %    - Les méthodes variationnelles et itératives
 % =================================================
+\subsection{Transformée de Fourier à Court Terme (STFT)}
+
+La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
+
+\begin{equation}
+    S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)
+    \label{eq:stft}
+\end{equation}
+
+
 
 \section{Convolution}
 La convolution joue un rôle clé dans la reconstruction d'image par rétroprojection filtrée (FBP), car elle intervient directement dans l'étape de filtrage des projections. Avant la rétroprojection, chaque projection mesurée est convoluée avec un filtre adapté afin de compenser le flou intrinsèque introduit par la rétroprojection simple. Cette opération permet de renforcer les hautes fréquences et d'améliorer la résolution de l'image reconstruite.

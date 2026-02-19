@@ -10,5 +10,8 @@
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {3.1}{\ignorespaces Fantôme de Shepp--Logan}}{41}{figure.caption.9}%
 \contentsline {figure}{\numberline {3.2}{\ignorespaces Gradient du fantôme de Shepp--Logan}}{41}{figure.caption.10}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Orthogonalité}}{48}{figure.caption.11}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Transformation en ondelettes}}{49}{figure.caption.12}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Ondelette de Daubechies pour différentes valeurs}}{52}{figure.caption.13}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Simulation de l'algorithme FBP}}{59}{figure.caption.11}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Simulation de l'algorithme FBP}}{58}{figure.caption.14}%

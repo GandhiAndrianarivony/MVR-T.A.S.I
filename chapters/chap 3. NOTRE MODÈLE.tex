@@ -512,243 +512,263 @@ Nous appelons la première forme de l'ADMM ci-dessus, donnée par (\eqref{eq:x_u
 
 % ===================================================================
 \subsection{Transformées en Ondelettes Biorthogonales}
-% \subsection{ Introduction Générale}
 
 L'analyse et le traitement du signal constituent un pilier fondamental des sciences et technologies modernes. De la compression d'images médicales à la reconnaissance de formes en passant par la transmission de données numériques, les outils mathématiques permettant de représenter, transformer et interpréter les signaux sont au cœur d'innombrables innovations.
 
 Parmi ces outils, la transformée de Fourier a longtemps régné en maître, offrant une représentation fréquentielle des signaux qui a révolutionné notre compréhension des phénomènes physiques. Pourtant, cette représentation présente une limitation majeure : elle perd toute information temporelle. Pour un signal variant dans le temps, savoir quelles fréquences le composent sans savoir à quel moment elles apparaissent revient à lire une partition sans connaître le tempo.
 
-C'est dans ce contexte que les ondelettes ont émergé comme une alternative puissante et élégante. Véritables "fenêtres mathématiques", elles permettent une analyse conjointe dans les domaines temporel et fréquentiel, offrant ainsi une résolution adaptative qui fait défaut à la transformée de Fourier classique.
+C'est dans ce contexte que les ondelettes ont émergé comme une alternative puissante et élégante. Véritables fenêtres mathématiques, elles permettent une analyse conjointe dans les domaines temporel et fréquentiel, offrant ainsi une résolution adaptative qui fait défaut à la transformée de Fourier classique.
 
 Les ondelettes sont utiles dans diverses applications telles que la sismologie, l'analyse et le traitement du signal. Il est difficile de représenter efficacement des signaux avec une petite valeur de fonction calculable. Généralement, les ondelettes sont liées au filtrage. Il existe certaines similitudes entre les évaluations multi-résolution en temps continu, tandis que le banc de filtres signifie un filtrage sous-bande en temps discret. L'objectif principal du traitement des données est de générer des fonctions basées sur la construction de l'ensemble. Cela permet une description incisive, efficace et explicative du signal. La sélection du signal de base dépend du signal. Les exponentielles complexes de Fourier sont disponibles pour les signaux lisses, mais leurs performances sont médiocres pour les signaux discontinus dans les zones de hautes et basses fréquences. Les ondelettes ne sont rien d'autre qu'une petite fenêtre facile à traiter. Par conséquent, récemment, la transformation en ondelettes a joué un rôle important.
-
-Cette thèse se propose d'explorer deux familles majeures d'ondelettes : les ondelettes orthogonales et les ondelettes biorthogonales. La distinction entre ces deux approches, bien que subtile dans sa formulation mathématique, a des implications profondes sur leurs propriétés et leurs domaines d'application privilégiés.
 
 Dans de nombreux cas, la transformée en ondelettes joue un rôle important. Différentes familles d'ondelettes sont disponibles, telles que les ondelettes orthogonales, biorthogonales et biorthogonales inverses, l'ondelette de Daubechies, l'ondelette de Haar, les Symlets, les Coifflets et l'ondelette de Meyer discrète. Les familles d'ondelettes orthogonales et biorthogonales démontrent une propriété de phase linéaire utile dans la reconstruction des données.
 
 
-\subsection{Fondements Théoriques des Ondelettes}
+\subsubsection{Fondements Théoriques des Ondelettes}
+Avant de comparer leurs performances, posons les fondations mathématiques sur lesquelles repose l'édifice des ondelettes \cite{17}.
+% \subsubsection{ Concepts Fondamentaux}
 
-\subsubsection{Introduction}
+\paragraph{Orthogonalité : } L'orthogonalité est un aspect important lié au traitement du signal car c'est une méthode facile dans les langages pour construire des structures de contrôle et de données. Sa nature est simple, elle a donc de nombreuses conceptions orthogonales avec moins d'attentes. Grâce à cela, nous sommes capables de lire, d'écrire et d'apprendre n'importe quel aspect d'un langage de programmation. Les significations des caractéristiques de l'orthogonalité sont indépendantes pour chaque contexte \cite{18}. L'orthogonalité reflète les angles droits, c'est-à-dire \(90^{\circ}\).\\Dans le modèle mathématique, l'orthogonalité décrit la perpendicularité pour l'algèbre linéaire avec des formes bilinéaires. Il y a deux éléments, x et y, qui sont orthogonaux. Si B(x, y) = angle de 90 degrés. L'espace vectoriel a des vecteurs non nuls, qui sont auto-orthogonaux. La famille de fonctions orthogonales est utile dans la formation de la base.
 
-Avant de plonger au cœur de notre étude comparative, il est essentiel de poser les bases conceptuelles et mathématiques qui sous-tendent la théorie des ondelettes. Ce introductif vise à familiariser le lecteur avec les concepts fondamentaux, depuis les prémices de l'analyse fréquentielle jusqu'à la formulation moderne de la transformation en ondelettes.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/orthogonality.png}
+    \caption{Orthogonalité}
+    \label{fig:vector_orthogonal}
+\end{figure}
+% <center>Figure 1.1. Orthogonalité </center>
 
-\subsubsection{De Fourier aux Ondelettes : Une Évolution Nécessaire}
-
-L'orthogonalité est un aspect important lié au traitement du signal car c'est une méthode facile dans les langages pour construire des structures de contrôle et de données. Sa nature est simple, elle a donc de nombreuses conceptions orthogonales avec moins d'attentes. Grâce à cela, nous sommes capables de lire, d'écrire et d'apprendre n'importe quel aspect d'un langage de programmation. Les significations des caractéristiques de l'orthogonalité sont indépendantes pour chaque contexte [1], [2], [3]. L'orthogonalité reflète les angles droits, c'est-à-dire \(90^{\circ}\).
-
-\subsubsection{ Concepts Fondamentaux}
-
-\subsubsection{ Orthogonalité}
-
-Dans le modèle mathématique, l'orthogonalité décrit la perpendicularité pour l'algèbre linéaire avec des formes bilinéaires. Il y a deux éléments, x et y, qui sont orthogonaux. Si B(x, y) = angle de 90 degrés. L'espace vectoriel a des vecteurs non nuls, qui sont auto-orthogonaux. La famille de fonctions orthogonales est utile dans la formation de la base.
-
-<center>Figure 1.1. Orthogonalité </center>
-
-\subsubsection{Signal Orthogonal}
-
-Le signal orthogonal est formé à l'aide du filtre miroir conjugué. Le filtre miroir divise l'axe des fréquences en différents intervalles. Ces intervalles ont des tailles différentes. Le banc de filtres conjugués correspond à diverses bases de paquets. Il est nécessaire d'isoler les petites fenêtres, c'est-à-dire la fenêtre d'ondelettes en présence du système variant dans le temps, car elle est responsable de la modification des propriétés du signal. Généralement, les bases cosinus locales sont obtenues par la simple multiplication des fenêtres et de la fonction cosinus. Ici, un paquet d'ondelettes divise l'axe des fréquences et est systématiquement transcrit dans le temps. Les bases cosinus locales divisent l'axe du temps et sont systématiquement transcrites en fréquence.
+\paragraph{Signal Orthogonal : } Le signal orthogonal est formé à l'aide du filtre miroir conjugué. Le filtre miroir divise l'axe des fréquences en différents intervalles. Ces intervalles ont des tailles différentes. Le banc de filtres conjugués correspond à diverses bases de paquets. Il est nécessaire d'isoler les petites fenêtres, c'est-à-dire la fenêtre d'ondelettes en présence du système variant dans le temps, car elle est responsable de la modification des propriétés du signal. Généralement, les bases cosinus locales sont obtenues par la simple multiplication des fenêtres et de la fonction cosinus. Ici, un paquet d'ondelettes divise l'axe des fréquences et est systématiquement transcrit dans le temps. Les bases cosinus locales divisent l'axe du temps et sont systématiquement transcrites en fréquence.
 
 En fait, la condition linéaire et quadratique n'est pas suffisante pour la production d'un système orthogonal. La fonction \(\psi (x)\) fournit le système orthogonal. Cela signifie que les \(\psi_{j,k}\) comprennent la base orthonormale lorsqu'ils satisfont à la condition ci-dessous :
 
-\[\int_{-\infty}^{\infty}\theta (x)\theta (x - k)dx = \delta_{0,k} \quad (1)\]
+\begin{equation}
+    \int_{-\infty}^{\infty}\theta (x)\theta (x - k)dx = \delta_{0,k} \quad (1)
+    \label{eq:orthogonality_condition}
+\end{equation}
 
 Cette condition donne la condition équivalente pour l'orthogonalité.
 
-\subsubsection{Transformée de Fourier}
+% \subsubsection{Transformée de Fourier}
 
-La transformée de Fourier est mathématiquement représentée par :
+% La transformée de Fourier est mathématiquement représentée par :
 
-\[F(\omega) = \int_{-\infty}^{\infty}f(t)\exp (-j\omega t)dt \quad (2)\]
+% \[F(\omega) = \int_{-\infty}^{\infty}f(t)\exp (-j\omega t)dt \quad (2)\]
 
-La conversion du signal du domaine temporel au domaine fréquentiel se fait à l'aide de la transformée de Fourier en considérant l'axe temporel complet.
+% La conversion du signal du domaine temporel au domaine fréquentiel se fait à l'aide de la transformée de Fourier en considérant l'axe temporel complet.
 
-En fait, les transformées de Fourier indiquent des informations sur le signal. Elles montrent les détails concernant la composante de fréquence qui apparaît ou est présente dans le signal. Elles ne donnent pas de détails sur la valeur exacte de la fréquence présente à cet instant précis.
+% En fait, les transformées de Fourier indiquent des informations sur le signal. Elles montrent les détails concernant la composante de fréquence qui apparaît ou est présente dans le signal. Elles ne donnent pas de détails sur la valeur exacte de la fréquence présente à cet instant précis.
 
-\subsubsection{Transformée de Fourier à Court Terme (STFT)}
+% \subsubsection{Transformée de Fourier à Court Terme (STFT)}
 
-La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
+% La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
 
-\[S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)\]
+% \[S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)\]
 
-\subsubsection{Transformation en Ondelettes}
+\paragraph{Transformation en Ondelettes : } Une ondelette est l'une des fonctions mathématiques utiles pour diviser un signal temporel continu ou une fonction en différentes composantes d'échelle. Fondamentalement, les ondelettes sont des oscillations qui ont une certaine valeur d'amplitude. Elles commencent à zéro, puis augmentent, et diminuent à nouveau pour revenir à 0. Cela ressemble aux brèves oscillations qui se produisent sur un sismographe.
 
-Une ondelette est l'une des fonctions mathématiques utiles pour diviser un signal temporel continu ou une fonction en différentes composantes d'échelle. Fondamentalement, les ondelettes sont des oscillations qui ont une certaine valeur d'amplitude. Elles commencent à zéro, puis augmentent, et diminuent à nouveau pour revenir à 0. Cela ressemble aux brèves oscillations qui se produisent sur un sismographe.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/wt.png}
+    \caption{Transformation en ondelettes}
+    \label{fig:wavelet_transformation}
+\end{figure}
+% <center>Figure 1.2. Transformation en ondelettes </center>
 
-<center>Figure 1.2. Transformation en ondelettes </center>
-
-Une plage de fréquences est assignée à chaque composante d'échelle. L'étude de chaque composante porte une résolution qui correspond à l'échelle. L'ondelette est utilisée pour diverses applications. Elle utilise la convolution. Les ondelettes sont très utiles pour obtenir la partie inconnue. Elle est combinée avec la partie connue d'un signal détruit pour récupérer les données des parties inconnues.
-
-Fondamentalement, la transformée en ondelettes entre en jeu au moment où le signal est analysé, à la fois dans les domaines temporel et fréquentiel. Elle est surtout applicable au système variant dans le temps car elle offre une résolution de fréquence variable à la fin du processus de décomposition, en alternant STFT et Fourier. Ici, la STFT supporte la transformée de Fourier pour le temps instantané t avec une fenêtre courte ayant un point médian au temps t. La longueur de la fenêtre est constante pour la STFT, donc elle ne supporte pas l'anatomie multi-résolution des signaux. L'ondelette est différente en ce sens qu'elle fournit à la fois une résolution temporelle et fréquentielle.
-
-La fonction de transformation est appelée ondelette 'Mère'. Le nom d'ondelette est dérivé des bébés ondes. Ces bébés ondes sont appelées une fonction oscillatoire. Le nom 'Mère' entre en jeu car ces ondelettes sont formées à partir de diverses transformations de base.
-
-Considérons l'ondelette mère, qui est une fonction fenêtrée, qui est décalée avec le signal temporel où le temps varie de 0 à T. Les coefficients d'ondelette sont calculés par un processus simple. Après avoir multiplié une partie/morceau du signal dans la fenêtre et l'ondelette mère, leur intégration sur le temps complet aboutit à la génération du coefficient d'ondelette. Techniquement, la fenêtre de l'ondelette mère est aussi appelée la fenêtre de support. En raison de l'apparition d'un problème de résolution lié au temps et à la fréquence, la croyance complète en les ondelettes émane de la transformée de Fourier [6], [7].
+Une plage de fréquences est assignée à chaque composante d'échelle. L'étude de chaque composante porte une résolution qui correspond à l'échelle. L'ondelette est utilisée pour diverses applications. Elle utilise la convolution. Les ondelettes sont très utiles pour obtenir la partie inconnue. Elle est combinée avec la partie connue d'un signal détruit pour récupérer les données des parties inconnues.\\
+Fondamentalement, la transformée en ondelettes entre en jeu au moment où le signal est analysé, à la fois dans les domaines temporel et fréquentiel. Elle est surtout applicable au système variant dans le temps car elle offre une résolution de fréquence variable à la fin du processus de décomposition, en alternant STFT (Voir Equation \eqref{eq:stft}) et Fourier. Ici, la STFT supporte la transformée de Fourier pour le temps instantané t avec une fenêtre courte ayant un point médian au temps t. La longueur de la fenêtre est constante pour la STFT, donc elle ne supporte pas l'anatomie multi-résolution des signaux. L'ondelette est différente en ce sens qu'elle fournit à la fois une résolution temporelle et fréquentielle.\\
+La fonction de transformation est appelée ondelette \textit{Mère}. Le nom d'ondelette est dérivé des bébés ondes. Ces bébés ondes sont appelées une fonction oscillatoire. Le nom \textit{Mère} entre en jeu car ces ondelettes sont formées à partir de diverses transformations de base.\\
+Considérons l'ondelette mère, qui est une fonction fenêtrée, qui est décalée avec le signal temporel où le temps varie de 0 à T. Les coefficients d'ondelette sont calculés par un processus simple. Après avoir multiplié une partie/morceau du signal dans la fenêtre et l'ondelette mère, leur intégration sur le temps complet aboutit à la génération du coefficient d'ondelette. Techniquement, la fenêtre de l'ondelette mère est aussi appelée la fenêtre de support. En raison de l'apparition d'un problème de résolution lié au temps et à la fréquence, la croyance complète en les ondelettes émane de la transformée de Fourier.
 
 Une ondelette mère \(\psi (t)\) est fondamentalement la fonction de moyenne 0. Mathématiquement, elle est représentée par :
-
-\[\int_{-\infty}^{\infty}\psi (t)dt = 0 \quad (4)\]
-
-La fonction ci-dessus est mise à l'échelle par a' puis translatée vers un second scalaire b'. Alors son ondelette mère est représentée par :
+\begin{equation}
+    \int_{-\infty}^{\infty}\psi (t)dt = 0 \quad (4)
+    \label{eq:mean_zero_wt}
+\end{equation}
+La fonction ci-dessus est mise à l'échelle par $\mathbf{a}$ puis translatée vers un second scalaire $\mathbf{b}$. Alors son ondelette mère est représentée par :
 
 \[\psi_{a,T}(t) = \frac{1}{\sqrt{a}}\psi \left(\frac{t - T}{a}\right) \quad (5)\]
 
 La transformée en ondelettes W(a, T) est représentée par :
 
-\[W_{x}(a,T) = \int_{-\infty}^{\infty}y(t)\frac{1}{\sqrt{a}}\Psi^{n}\left(\frac{t - T}{a}\right)dt \quad (6)\]
+\begin{equation}
+    W_{x}(a,T) = \int_{-\infty}^{\infty}y(t)\frac{1}{\sqrt{a}}\Psi^{n}\left(\frac{t - T}{a}\right)dt \quad (6)
+    \label{eq:wt_func}
+\end{equation}
 
 où :
-- \(\mathrm{T} =\) Point quelconque dans le temps
-- \(\Psi^{*}(a,T)(t) =\) fonction ondelette
-- y(t) \(=\) entrée
-
+\begin{itemize}
+    \item[-] \(\mathrm{T} =\) Point quelconque dans le temps
+    \item[-] \(\Psi^{*}(a,T)(t) =\) fonction ondelette
+    \item[-] y(t) \(=\) entrée
+\end{itemize}
 Nous pouvons concevoir n'importe quelle base d'ondelettes orthogonale en utilisant le filtre miroir conjugué \(\hat{h} (\omega)\) :
 
-\[\left|H_{\theta}(\omega)\right|^{2} + \left|H_{\theta}(\omega +\pi)\right|^{2} = 2 \quad (7)\]
-
-\[H_{\theta}(0) = \sqrt{2} \quad (8)\]
-
-Le filtre qui satisfait la relation ci-dessus est appelé filtre miroir conjugué [8], [9]. Un filtre miroir conjugué est l'un des moyens les plus simples pour la construction d'une base d'ondelettes orthogonale. Le filtre miroir conjugué et la multi-résolution sont les méthodes de base pour la base d'ondelettes orthogonale [10], [11].
-
-\subsubsection{Propriétés des Ondelettes}
-
+\begin{equation}
+    \left|H_{\theta}(\omega)\right|^{2} + \left|H_{\theta}(\omega +\pi)\right|^{2} = 2 \quad (7)
+    \label{eq:mirror_filter}
+\end{equation}
+\begin{equation}
+    H_{\theta}(0) = \sqrt{2} \quad (8)
+    \label{eq:mirror_filter_zero}
+\end{equation}
+Le filtre qui satisfait la relation ci-dessus est appelé filtre miroir conjugué \cite{19}. Un filtre miroir conjugué est l'un des moyens les plus simples pour la construction d'une base d'ondelettes orthogonale. Le filtre miroir conjugué et la multi-résolution sont les méthodes de base pour la base d'ondelettes orthogonale \cite{20}\vspace{7pt}\\
+% \paragraph{Propriétés des Ondelettes}
 La mise à l'échelle, le décalage, la remise à l'échelle, les moments disparaissants, le support, la régularité et la symétrie sont les propriétés de base de la transformation en ondelettes. L'approximation, le support compact, la symétrie, la régularité et les bases inconditionnelles sont quelques propriétés du système d'ondelettes biorthogonal. Le filtre d'échelle est utile pour déterminer la fonction d'échelle. Chaque filtre d'ondelette est décomposé en procédures de lifting, qui sont présentées par Sweldens et Daubechies.
 
-La représentation de la décomposition d'une ondelette biorthogonale avec la forme du "schéma de lifting" est représentée comme suit :
+La représentation de la décomposition d'une ondelette biorthogonale avec la forme du schéma de lifting est représentée comme suit :
 
-\[\begin{array}{l}{d^{1 =}s_{2j} - \frac{1}{2}\left[s_{2j - 1} + s_{2j + 2}\right]}\\ {}\\ {s^{1 =}s_{2j - 1} + \frac{1}{4}\left[d_{j - 1}^{1} + d^{(1)}\right]}\\ {}\\ {D = \frac{1}{\sqrt{2}} d^{(1)}}\\ {}\\ {s_{1} = \sqrt{2} s^{(1)}} \end{array} \quad (10)\]
+\[
+    \begin{array}{l}
+        {d^{1} = s_{2j} - \frac{1}{2}\left[s_{2j - 1} + s_{2j + 2}\right]}\\
+        {}\\
+        {s^{1}=s_{2j - 1} + \frac{1}{4}\left[d_{j - 1}^{1} + d^{(1)}\right]}\\
+        {}\\ 
+        {D = \frac{1}{\sqrt{2}} d^{(1)}}\\ {}\\ {s_{1} = \sqrt{2} s^{(1)}} 
+        
+    \end{array} 
+\]
 
-À partir de l'équation mathématique ci-dessus, nous obtenons le nouveau signal \(\mathrm{s} = [\mathrm{s}_1\mathrm{D}]\).
-
-\subsubsection{Conclusion}
-
-Ce introductif a posé les fondements théoriques nécessaires à la compréhension des ondelettes. Nous avons vu comment la transformation en ondelettes dépasse les limitations de l'analyse de Fourier en offrant une représentation temps-fréquence adaptative. Les concepts d'orthogonalité, de fonction d'échelle et d'ondelette mère constituent la base sur laquelle nous allons maintenant construire notre étude comparative.
+À partir de l'équation mathématique ci-dessus, nous obtenons le nouveau signal \[\mathrm{s} = [\mathrm{s}_1\mathrm{D}]\]
+% \subsubsection{Conclusion}
+% Ce introductif a posé les fondements théoriques nécessaires à la compréhension des ondelettes. Nous avons vu comment la transformation en ondelettes dépasse les limitations de l'analyse de Fourier en offrant une représentation temps-fréquence adaptative. Les concepts d'orthogonalité, de fonction d'échelle et d'ondelette mère constituent la base sur laquelle nous allons maintenant construire notre étude comparative.
 
 
 
 \subsection{Ondelettes Orthogonales : Théorie et Propriétés}
+% \subsubsection{Introduction}
 
-\subsubsection{Introduction}
-
-L'ondelette orthogonale est liée à la transformée en ondelettes, et elles sont orthogonales entre elles. L'orthogonalité évite les interférences afin qu'une sortie sans erreur puisse être obtenue. Grâce à ces caractéristiques, elle est le plus souvent préférable. Une ondelette orthogonale est l'adjoint de la transformée en ondelettes. Une fonction d'échelle unique avec une ondelette unique est le résultat d'une ondelette orthogonale.
-
-\subsubsection{Définition et Caractérisation}
-
+L'ondelette orthogonale est liée à la transformée en ondelettes, et elles sont orthogonales entre elles. L'orthogonalité évite les interférences afin qu'une sortie sans erreur puisse être obtenue. Grâce à ces caractéristiques, elle est le plus souvent préférable. Une ondelette orthogonale est l'adjoint de la transformée en ondelettes. Une fonction d'échelle unique avec une ondelette unique est le résultat d'une ondelette orthogonale.\vspace{7pt}\\
+% \subsubsection{Définition et Caractérisation}
 Une ondelette orthogonale génère une ondelette dont la nature est orthogonale. Cela signifie qu'une transformée en ondelettes inverse ou transposée n'est rien d'autre que l'adjoint d'une transformée en ondelettes.
-
-Une ondelette de Daubechies a une réponse en phase linéaire par rapport à un filtre orthogonal.
+% Une ondelette de Daubechies a une réponse en phase linéaire par rapport à un filtre orthogonal.
 
 \subsubsection{Exemples d'Ondelettes Orthogonales}
+\paragraph{L'Ondelette de Daubechies : } appartient à la catégorie des ondelettes orthogonales. Un nombre plus élevé de moments disparaissants pour une longueur prédéfinie est une caractéristique de cette ondelette. Le nombre de moments est égal à la moitié de la longueur du support. Le nom de l'ondelette représente dbN, où N indique l'ordre de l'ondelette. N varie de 1 à 8. La figure ci-dessous montre l'ondelette de Daubechies pour différentes valeurs de N allant de 2 à 10.
 
-\subsubsection{L'Ondelette de Daubechies}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./images/Daubechies.png}
+    \caption{Ondelette de Daubechies pour différentes valeurs}
+    \label{fig:daubechies}
+\end{figure}
+% <center>Figure 2.1. Ondelette de Daubechies pour différentes valeurs </center>
 
-L'ondelette de Daubechies appartient à la catégorie des ondelettes orthogonales. Un nombre plus élevé de moments disparaissants pour une longueur prédéfinie est une caractéristique de cette ondelette. Le nombre de moments est égal à la moitié de la longueur du support. Le nom de l'ondelette représente dbN, où N indique l'ordre de l'ondelette. N varie de 1 à 8. La figure ci-dessous montre l'ondelette de Daubechies pour différentes valeurs de N allant de 2 à 10.
-
-<center>Figure 2.1. Ondelette de Daubechies pour différentes valeurs </center>
-
-\subsubsection{ L'Ondelette de Haar}
-
-L'ondelette de Haar a été étudiée par Alfred Haar et est considérée comme la première ondelette mère. Elle est célèbre car elle supporte la longueur la plus courte parmi toutes les ondelettes. Elle échoue en cas de reconstruction d'une fonction lisse car elle a un seul mouvement disparaissant. En tant que concept simple avec une réponse plus rapide, un moyen plus facile de détecter les informations et une utilisation efficace de la mémoire, l'ondelette de Haar est plus utile que les autres ondelettes. Elle est discontinue et similaire à une fonction échelon. Le signal divisé en deux sous-signaux de demi-longueur est décomposé par l'ondelette de Haar. Elle représente la fonction d'ondelette Daubechies 1.
-
-\subsubsection{ Formulation Mathématique}
-
+\paragraph{ L'Ondelette de Haar : } a été étudiée par Alfred Haar et est considérée comme la première ondelette mère. Elle est célèbre car elle supporte la longueur la plus courte parmi toutes les ondelettes. Elle échoue en cas de reconstruction d'une fonction lisse car elle a un seul mouvement disparaissant. En tant que concept simple avec une réponse plus rapide, un moyen plus facile de détecter les informations et une utilisation efficace de la mémoire, l'ondelette de Haar est plus utile que les autres ondelettes. Elle est discontinue et similaire à une fonction échelon. Le signal divisé en deux sous-signaux de demi-longueur est décomposé par l'ondelette de Haar. Elle représente la fonction d'ondelette Daubechies 1.\vspace{7pt}\\
 Ici, nous définissons la fonction d'ondelette de Haar comme suit :
 
-\[\psi^{Haar}(x) = \left\{ \begin{array}{ll}1, & 0\leq x\leq \frac{1}{2}\\ -1, & \frac{1}{2}\leq x\leq 1\\ 0, & ailleurs \end{array} \right. \quad (14)\]
-
+\begin{equation}
+    \psi^{Haar}(x) = \left\{ \begin{array}{ll}1, & 0\leq x\leq \frac{1}{2}\\ -1, & \frac{1}{2}\leq x\leq 1\\ 0, & ailleurs \end{array} \right. 
+\end{equation}
 À partir de cela, nous obtenons la fonction suivante :
-
-\[\psi^{Haar}_{j,k}(x) = 2^{j / 2}\psi^{Haar}(2^{j}x - k) = \left\{ \begin{array}{ll}1, & \frac{1}{2}\leq x\leq \frac{k + 1 / 2}{2}\\ -1, & \frac{k + 1 / 2}{2}\leq x\leq \frac{k + 1}{2}\\ 0, & ailleurs, \end{array} \right. \quad (15)\]
-
+\begin{equation}
+    \psi^{Haar}_{j,k}(x) = 2^{j / 2}\psi^{Haar}(2^{j}x - k) = \left\{ \begin{array}{ll}1, & \frac{1}{2}\leq x\leq \frac{k + 1 / 2}{2}\\ -1, & \frac{k + 1 / 2}{2}\leq x\leq \frac{k + 1}{2}\\ 0, & ailleurs, \end{array} \right. 
+\end{equation}
 Un \(\phi\) (t) est une fonction d'échelle dans le temps t, qui est nommée l'ondelette père (fonction d'échelle, caractérise l'échelle de base de l'ondelette) :
 
-\[\phi_{j,k}(t) = 2^{j / 2}\phi (2^{j}t - k) \quad (16)\]
+\begin{equation}
+    \phi_{j,k}(t) = 2^{j / 2}\phi (2^{j}t - k) 
+    % \quad (16)
+\end{equation}
 
 où \(\mathrm{j} =\) paramètre d'échelle; \(\mathrm{k} =\) paramètre de translation; \(\mathrm{j}\) et \(\mathrm{k}\) appartiennent à S. S est un ensemble d'entiers.
 
 La translation et l'échelle sont responsables de la génération d'une famille de fonctions, et à l'aide de la dilatation, peuvent former l'équation suivante :
-
-\[\phi (t) = \sqrt{2\sum_{n}h_{n}\phi (2t - n)} \quad (17)\]
+\begin{equation}
+    \phi (t) = \sqrt{2\sum_{n}h_{n}\phi (2t - n)} 
+\end{equation}
 
 Ici, \(h_n\) est l'ensemble des coefficients du filtre et \(\sqrt{2}\) est un facteur d'échelle. L'existence de l'ondelette mère (fonction ondelette, caractérise la forme de base de l'ondelette) est représentée par :
 
-\[\psi_{j,k}(t) = 2^{j / 2}\psi (2^{j}t - k) \quad (18)\]
+\begin{equation}
+    \psi_{j,k}(t) = 2^{j / 2}\psi (2^{j}t - k) 
+\end{equation}
+
 
 Ceci est responsable de la formation de la base orthogonale pour \(L^2 R\). Ici, \(\psi (t)\) représente la somme pondérée des \(\psi (2t)\) décalés :
-
-\[\psi (t) = \sqrt{2\sum_{n}g_{n}\phi (2t - n)} \quad (19)\]
-
+\begin{equation}
+    \psi (t) = \sqrt{2\sum_{n}g_{n}\phi (2t - n)} 
+\end{equation}
 La partie ondelette nécessite un espace complémentaire orthogonal. L'orthogonalité nécessite le filtre d'ondelette et les coefficients d'échelle, qui sont liés entre eux par :
 
-\[g_{n} = (-1)^{n}h_{1 - n} \quad (20)\]
-
+\begin{equation}
+    g_{n} = (-1)^{n}h_{1 - n} 
+\end{equation}
 Ici, la paire de \(g_{n}\) et \(h_{n}\) est appelée un filtre miroir en quadrature passe-haut et passe-bas.
 
-\subsubsection{ II.5 Avantages et Limitations}
-
+\paragraph{Avantages et Limitations.}
 Les ondelettes orthogonales offrent une représentation efficace et sans redondance des signaux. Cependant, de fortes limitations apparaissent au moment de la construction de l'ondelette, en raison de la propriété d'orthogonalité. Il est difficile de chercher ou de trouver des ondelettes qui soient symétriques, à support compact et orthogonales.
 
 
-\subsection{Ondelettes Biorthogonales : Généralisation et Flexibilité}
-
-\subsubsection{ Introduction}
-
-Dans certains cas, lorsque la condition d'orthogonalité échoue, cela donne lieu à des ondelettes biorthogonales. À ce stade, les ondelettes biorthogonales se forment et l'orthogonalité des ondelettes disparaît.
-
-\subsubsection{ III.2 De l'Orthogonalité à la Biorthogonalité}
-
+\subsection{Ondelettes Biorthogonales}
+Dans certains cas, lorsque la condition d'orthogonalité échoue, cela donne lieu à des ondelettes biorthogonales. À ce stade, les ondelettes biorthogonales se forment et l'orthogonalité des ondelettes disparaît.\vspace{7pt}\\
+% \subsubsection{ De l'Orthogonalité à la Biorthogonalité}
 Fondamentalement, l'ondelette biorthogonale est le résultat de la généralisation de l'orthogonale classique. Une ondelette biorthogonale associée à la transformation en ondelettes est inversible. Si elle est inversible, elle n'a pas besoin d'être orthogonale. Dans le cas de la conception d'ondelettes orthogonales, l'ondelette biorthogonale permet une liberté maximale. Elle supporte également la construction de fonctions d'ondelettes symétriques.
 
-Une ondelette biorthogonale génère une ondelette et une fonction d'échelle pour la décomposition et une paire supplémentaire pour la reconstruction. Deux fonctions d'échelle sont responsables de la génération de diverses analyses multi-résolution.
-
-\subsubsection{Formulation Mathématique}
-
+Une ondelette biorthogonale génère une ondelette et une fonction d'échelle pour la décomposition et une paire supplémentaire pour la reconstruction. Deux fonctions d'échelle sont responsables de la génération de diverses analyses multi-résolution.\vspace{7pt}\\
+% \subsubsection{Formulation Mathématique}
 Ici, la fonction d'échelle duale est représentée mathématiquement comme suit :
 
-\[\tilde{\phi} (t) = \sqrt{2}\sum_{n}\tilde{h}_{n}\tilde{\phi} (2t - n) \quad (21)\]
-
+\begin{equation}
+    \tilde{\phi} (t) = \sqrt{2}\sum_{n}\tilde{h}_{n}\tilde{\phi} (2t - n) 
+\end{equation}
 De même, l'ondelette duale est représentée par :
 
-\[\tilde{\psi} (t) = \sqrt{2}\sum_{n}\tilde{g}_{n}\tilde{\phi} (2t - n) \quad (22)\]
-
+\begin{equation}
+    \tilde{\psi} (t) = \sqrt{2}\sum_{n}\tilde{g}_{n}\tilde{\phi} (2t - n) 
+\end{equation}
 Maintenant, l'échelle duale est liée comme suit :
 
-\[\begin{array}{l}{g_{n} = (-1)^{n}h_{1 - n}}\\ {\tilde{g}_{n} = (-1)^{n}h_{1 - n}} \end{array} \quad (23)\]
+\begin{equation}
+    \begin{array}{l}{g_{n} = (-1)^{n}h_{1 - n}}\\ {\tilde{g}_{n} = (-1)^{n}h_{1 - n}} \end{array} 
+\end{equation}
 
-\subsubsection{Construction par le Schéma de Lifting}
-
+\subsubsection{Construction par le Schéma de Lifting. }
 W. Sweldens a introduit la construction de l'ondelette biorthogonale en utilisant le schéma de lifting. Fondamentalement, le lifting est une méthode simple utile pour augmenter les moments disparaissants pour les ondelettes duales.
 
-La naissance du schéma de lifting vient de Cohen et al. et Swelden. Nous avons supposé que l'ensemble initial \(\{h,\tilde{h}^0,g^0,\tilde{g}\}\) concernait des ondelettes biorthogonales finies. Ainsi, nous avons rassemblé un nouvel ensemble \(\{h,\tilde{h},g,\tilde{g}\}\) , qui consiste en un filtre biorthogonal fini.
+La naissance du schéma de lifting vient de Cohen et al. et Swelden \cite{21}. Nous avons supposé que l'ensemble initial \(\{h,\tilde{h}^0,g^0,\tilde{g}\}\) concernait des ondelettes biorthogonales finies. Ainsi, nous avons rassemblé un nouvel ensemble \(\{h,\tilde{h},g,\tilde{g}\}\) , qui consiste en un filtre biorthogonal fini.
 
-\[\begin{array}{l}\tilde{h} (\omega) = \tilde{h}^0 (\omega) + \tilde{g} (\omega)\overline{s(2\omega)} \\ \tilde{g} (\omega) = g^0 (\omega) + h(\omega)s2(\omega) \end{array} \quad (25)\]
-
+\begin{equation}
+    \begin{array}{l}\tilde{h} (\omega) = \tilde{h}^0 (\omega) + \tilde{g} (\omega)\overline{s(2\omega)} \\ \tilde{g} (\omega) = g^0 (\omega) + h(\omega)s2(\omega) \end{array} 
+\end{equation}
 D'après les équations ci-dessus, il est clair que les filtres d'échelle et d'ondelette duale ne sont pas modifiés. Par conséquent, les fonctions biorthogonales sont dérivées des filtres ci-dessus. L'ensemble \(\{\phi ,\tilde{\phi}^0,\psi^0,\tilde{\psi}^0\}\) est l'ensemble initial, qui contient la fonction d'échelle biorthogonale. Le nouvel ensemble obtenu est \(\{\phi ,\tilde{\phi},\psi ,\tilde{\psi}\}\) . Ainsi, l'ondelette biorthogonale a été obtenue comme suit :
 
-\[\psi (x) = \psi^0 (x) - \sum_k s_k\phi (x - k) \quad (27)\]
+\begin{equation}
+    \psi (x) = \psi^0 (x) - \sum_k s_k\phi (x - k) 
+\end{equation}
 
-\[\tilde{\phi} (x) = 2\sum_k\tilde{h}_k^0\phi (2x - k) + \sum_k s_{-k}\tilde{\psi} (x - k) \quad (28)\]
+\begin{equation}
+    \tilde{\phi} (x) = 2\sum_k\tilde{h}_k^0\phi (2x - k) + \sum_k s_{-k}\tilde{\psi} (x - k) 
+\end{equation}
 
-\[\tilde{\psi} (x) = 2\sum_k\tilde{g}_k\tilde{\phi} (2x - k) \quad (29)\]
+\begin{equation}
+    \tilde{\psi} (x) = 2\sum_k\tilde{g}_k\tilde{\phi} (2x - k)
+\end{equation}
 
-Ici \(s_k\) peut être choisi aléatoirement. La valeur de s est responsable de la manipulation des fonctions duales et des ondelettes dérivées d'une fonction d'échelle simple [15], [16].
+Ici \(s_k\) peut être choisi aléatoirement. La valeur de s est responsable de la manipulation des fonctions duales et des ondelettes dérivées d'une fonction d'échelle simple.
 
 \subsubsection{Propriétés des Ondelettes Biorthogonales}
-
 Une ondelette biorthogonale permet deux analyses multi-résolution : \(V_{j},W_{j},\phi_{j,k},\psi_{j,k}\) et \(\tilde{V}_{j},\tilde{W}_{j},\tilde{\phi}_{j,k},\tilde{\psi}_{j,k}\). La dilatation et la translation des fonctions d'échelle, \((\tilde{\phi}_{j,k}(x))\) et \((\tilde{\psi}_{j,k}(x))\) constituent la base pour \(\tilde{V}_{j}\) et \(\tilde{W}_{j}\), respectivement. La biorthogonalité satisfait les propriétés suivantes :
 
-\[\begin{array}{l}\tilde{V}_j\perp W_j\\ V_j\perp \tilde{W}_j\\ (\tilde{\phi}_{j,l},\phi_{j,l'}) = \delta_{l,l'}\\ (\tilde{\psi}_{j,l},\psi_{j,l'}) = \delta_{j,j'}\delta_{l,l'}\\ (\tilde{\phi}_{j,l},\psi_{j,l'}) = 0\quad et\quad (\tilde{\psi}_{j,l},\phi_{j,l'}) = 0. \end{array} \quad (37)\]
+\begin{equation}
+    \begin{array}{l}
+        \tilde{V}_j\perp W_j\\ V_j\perp \tilde{W}_j\\ 
+        \langle\tilde{\phi}_{j,l},\phi_{j,l'}\rangle = \delta_{l,l'}\\
+        \langle\tilde{\psi}_{j,l},\psi_{j,l'}\rangle = \delta_{j,j'}\delta_{l,l'}\\
+        \langle \tilde{\phi}_{j,l},\psi_{j,l'} \rangle = 0\quad et \quad \langle \tilde{\psi}_{j,l},\phi_{j,l'}\rangle = 0. 
+    \end{array} 
+\end{equation}
 
 La caractéristique la plus significative de la biorthogonalité est la reconstruction parfaite.
 
 \subsubsection{Comparaison avec les Ondelettes Orthogonales}
 
-Une ondelette biorthogonale est plus avancée qu'une ondelette orthogonale. Cependant, elle nécessite plus d'efforts de calcul et est un processus plus long. Une variation de longueur est la principale différence entre l'ondelette orthogonale et l'ondelette biorthogonale lors de l'analyse, ainsi que dans le processus de synthèse. Dans une ondelette orthogonale, des filtres de même longueur sont utilisés et dans l'ondelette biorthogonale, des filtres de longueurs différentes sont utilisés [4], [5].
+Une ondelette biorthogonale est plus avancée qu'une ondelette orthogonale. Cependant, elle nécessite plus d'efforts de calcul et est un processus plus long. Une variation de longueur est la principale différence entre l'ondelette orthogonale et l'ondelette biorthogonale lors de l'analyse, ainsi que dans le processus de synthèse. Dans une ondelette orthogonale, des filtres de même longueur sont utilisés et dans l'ondelette biorthogonale, des filtres de longueurs différentes sont utilisés.
 
-La différence entre les ondelettes orthogonales et biorthogonales est qu'une ondelette orthogonale fournit une matrice orthogonale avec transformation unitaire, tandis qu'une ondelette biorthogonale donne une matrice inversible, c'est-à-dire une matrice inverse avec reconstruction parfaite. Dans le cas d'un filtre d'ondelette biorthogonal, le filtre passe-bas (LPF) et le filtre passe-haut (HPF) ont des longueurs différentes. Le filtre passe-bas démontre la symétrie, tandis que le filtre passe-haut est asymétrique ou symétrique [19].
+La différence entre les ondelettes orthogonales et biorthogonales est qu'une ondelette orthogonale fournit une matrice orthogonale avec transformation unitaire, tandis qu'une ondelette biorthogonale donne une matrice inversible, c'est-à-dire une matrice inverse avec reconstruction parfaite. Dans le cas d'un filtre d'ondelette biorthogonal, le filtre passe-bas (LPF) et le filtre passe-haut (HPF) ont des longueurs différentes. Le filtre passe-bas démontre la symétrie, tandis que le filtre passe-haut est asymétrique ou symétrique.
 
-\subsubsection{Conclusion}
-Depuis plusieurs décennies, la transformation en ondelettes s'est imposée comme un outil mathématique fondamental dans de nombreux domaines scientifiques et technologiques. Les aspects théoriques et l'analyse des ondelettes trouvent des applications dans la modélisation mathématique, les réseaux de neurones artificiels, le traitement numérique du signal, ainsi que le traitement d'images et les méthodes numériques. Le terme orthogonal relève de la partie mathématique qui couvre un large domaine du traitement numérique du signal et du traitement d'images. Une ondelette orthogonale génère une ondelette dont la nature est orthogonale. Cela signifie qu'une transformée en ondelettes inverse ou transposée n'est rien d'autre que l'adjoint d'une transformée en ondelettes. Si cette condition échoue en raison d'un manque d'orthogonalité, cela peut conduire à des ondelettes biorthogonales. Des fonctions d'échelle uniques et des ondelettes uniques sont générées, mais avec un banc de filtres d'ondelettes orthogonal. L'ondelette biorthogonale associée à la transformation en ondelettes est inversible. Si elle est inversible, elle n'a pas besoin d'être orthogonale. Dans le cas de la conception d'ondelettes orthogonales, l'ondelette biorthogonale permet une liberté maximale. Elle supporte également la construction de fonctions d'ondelettes symétriques. Dans les ondelettes biorthogonales, comme leur nom l'indique, deux facteurs ou fonctions d'échelle sont responsables de la génération de diverses multi-résolutions basées sur différentes ondelettes. Pour la reconstruction d'images et de signaux, nous avons besoin de cette ondelette. En présence d'ondelettes biorthogonales, nous obtenons de meilleurs résultats. Dans le travail actuel, nous avons analysé les performances des filtres d'ondelettes orthogonaux et biorthogonaux pour le traitement d'images. Nous testons l'image et observons les coefficients de filtre et la qualité d'image pour l'ondelette orthogonale et biorthogonale. Sur la base de l'analyse des performances, il est conclu que les ondelettes biorthogonales sont supérieures aux ondelettes orthogonales.
+% \subsubsection{Conclusion}
+% Depuis plusieurs décennies, la transformation en ondelettes s'est imposée comme un outil mathématique fondamental dans de nombreux domaines scientifiques et technologiques. Les aspects théoriques et l'analyse des ondelettes trouvent des applications dans la modélisation mathématique, les réseaux de neurones artificiels, le traitement numérique du signal, ainsi que le traitement d'images et les méthodes numériques. Le terme orthogonal relève de la partie mathématique qui couvre un large domaine du traitement numérique du signal et du traitement d'images. Une ondelette orthogonale génère une ondelette dont la nature est orthogonale. Cela signifie qu'une transformée en ondelettes inverse ou transposée n'est rien d'autre que l'adjoint d'une transformée en ondelettes. Si cette condition échoue en raison d'un manque d'orthogonalité, cela peut conduire à des ondelettes biorthogonales. Des fonctions d'échelle uniques et des ondelettes uniques sont générées, mais avec un banc de filtres d'ondelettes orthogonal. L'ondelette biorthogonale associée à la transformation en ondelettes est inversible. Si elle est inversible, elle n'a pas besoin d'être orthogonale. Dans le cas de la conception d'ondelettes orthogonales, l'ondelette biorthogonale permet une liberté maximale. Elle supporte également la construction de fonctions d'ondelettes symétriques. Dans les ondelettes biorthogonales, comme leur nom l'indique, deux facteurs ou fonctions d'échelle sont responsables de la génération de diverses multi-résolutions basées sur différentes ondelettes. Pour la reconstruction d'images et de signaux, nous avons besoin de cette ondelette. En présence d'ondelettes biorthogonales, nous obtenons de meilleurs résultats. Dans le travail actuel, nous avons analysé les performances des filtres d'ondelettes orthogonaux et biorthogonaux pour le traitement d'images. Nous testons l'image et observons les coefficients de filtre et la qualité d'image pour l'ondelette orthogonale et biorthogonale. Sur la base de l'analyse des performances, il est conclu que les ondelettes biorthogonales sont supérieures aux ondelettes orthogonales.
 
 % ===================================================================
 
@@ -774,93 +794,3 @@ Soient $f_r$ et $f_o$ les vecteurs représentant respectivement l'image reconstr
 \end{itemize}
 avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\sum_{i=1}^{N} f_{r_i}$, $D(f) = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{i}-\bar{f}\right)^2$,\\ et \\$\mathrm{Cov}\{f_r,f_o\} = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{r_i}-\bar{f}_r\right) \left(f_{o_i}-\bar{f}_o\right)$.
 \end{definition}
-
-% ============================================== DRAFT ==============================================
-% Ce cadre permet de résoudre plusieurs limitations pratiques :
-% \subsubsection{Réduction du nombre de mesures.}\text{}\\ 
-% De nombreux systèmes d'acquisition sont limités par le coût, le temps ou l'énergie. Le compressed sensing permet :
-% \begin{itemize}
-%     \item[-] une acquisition plus rapide des données,
-%     \item[-] une réduction de la complexité matérielle,
-%     \item[-] une diminution de la dose de radiation (par exemple en tomodensitométrie),
-%     \item[-] une réduction des coûts de stockage et de transmission.
-% \end{itemize}
-
-% \subsubsection{Problèmes inverses mal posés (ill-posed inverse problems).}\text{}\\
-% Lorsque le nombre de mesures est insuffisant pour garantir une solution unique, le CS introduit une régularisation fondée sur la parcimonie, permettant une reconstruction stable. Les principales applications incluent :
-% \begin{itemize}
-%     \item[-] la tomographie (CT, IRM, PET),
-%     \item[-] l'imagerie à super-résolution,
-%     \item[-] la déconvolution,
-%     \item[-] les inversions géophysiques et les essais non destructifs.
-% \end{itemize}
-
-% \subsubsection{Robustesse au bruit et aux données incomplètes.} \text{}\\
-% Le CS garantit une reconstruction stable même en présence de bruit, de corruptions ou d'observations manquantes.
-
-% \subsection{Reconstruction de signaux par Compressed Sensing}
-
-% \subsection{Reconstruction par optimisation}
-% La formulation canonique de la reconstruction est
-% \[
-% \min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad y = A \Psi \alpha,
-% \]
-% ou, en présence de bruit,
-% \[
-% \min_{\alpha} \|\alpha\|_{1} \quad \text{s.c.} \quad \|A \Psi \alpha - y\|_{2} \le \epsilon.
-% \]
-% Cela correspond aux formulations de type \emph{Basis Pursuit} ou \emph{LASSO}. La minimisation de la norme \(\ell_1\) favorise la parcimonie tout en conservant un problème d'optimisation convexe et calculable efficacement.
-
-% \subsection{Algorithmes gloutons}
-
-% Des alternatives plus rapides incluent :
-% \begin{itemize}
-%     \item l'\emph{Orthogonal Matching Pursuit} (OMP),
-%     \item le \emph{Compressive Sampling Matching Pursuit} (CoSaMP),
-%     \item l'\emph{Iterative Hard Thresholding} (IHT).
-% \end{itemize}
-% Ces méthodes échangent une partie de la précision contre un coût computationnel réduit.
-
-% \subsection{Applications du Compressed Sensing}
-
-% \subsubsection{Imagerie médicale.}
-% \begin{itemize}
-%     \item acquisition IRM accélérée,
-%     \item CT à dose réduite,
-%     \item échographie à haute cadence d'images.
-% \end{itemize}
-
-% \subsubsection{Imagerie computationnelle.}
-% \begin{itemize}
-%     \item caméras à pixel unique,
-%     \item imagerie à ouverture codée,
-%     \item reconstruction hyperspectrale.
-% \end{itemize}
-
-% \subsubsection{Télédétection et géophysique.}
-% \begin{itemize}
-%     \item inversion sismique parcimonieuse,
-%     \item imagerie radar et radar à synthèse d'ouverture (SAR).
-% \end{itemize}
-
-% \subsubsection{Communications sans fil.}
-% \begin{itemize}
-%     \item estimation parcimonieuse de canaux,
-%     \item réduction des pilotes dans les systèmes MIMO massifs.
-% \end{itemize}
-
-% \subsubsection{Apprentissage automatique et traitement du signal.}
-% \begin{itemize}
-%     \item régression parcimonieuse (LASSO),
-%     \item apprentissage de dictionnaires,
-%     \item ACP robuste et modèles de rang faible apparentés.
-% \end{itemize}
-
-
-% % Le compressed sensing (CS) est un cadre mathématique et algorithmique qui permet de reconstruire des signaux de grande dimension à partir d'un nombre de mesures bien inférieur à celui requis par les approches traditionnelles. Il exploite la parcimonie (sparsity) comme principal a priori structurel.
-% % \subsection{Hypothèse de parcimonie}
-% % Si un signal est parcimonieux ou compressible dans une certaine base, alors il peut être reconstruit exactement (ou avec une erreur contrôlée) à partir d'un nombre de mesures linéaires bien inférieur à sa dimension ambiante.
-% % \subsection{Incohérence et propriété de RIP}
-% % \subsection{Basis Pursuit et LASSO}
-% % \subsection{OMP et algorithmes gloutons}
-
