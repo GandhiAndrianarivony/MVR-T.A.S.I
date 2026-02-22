@@ -1,11 +1,11 @@
-\nomenclatureentry{aCT@[{CT}]\begingroup Computed tomography\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aTDM@[{TDM}]\begingroup Tomodensitométrie\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aFBP@[{FBP}]\begingroup Filtered back projection\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aTEP@[{TEP}]\begingroup Tomographie par émission de positons\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aLNT@[{LNT}]\begingroup Linear No-threshold Theory\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aALARA@[{ALARA}]\begingroup As Low As Reasonably Achievable\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aTV@[{TV}]\begingroup Total Variation\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aISTA@[{ISTA}]\begingroup Iterative Shrinkage-Thresholding Algorithm\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aFISTA@[{FISTA}]\begingroup FISTA: Accelerated proximal gradient method\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aADMM@[{ADMM}]\begingroup Alternating direction method of multipliers\nomeqref {0.0}|nompageref}{iii}
-\nomenclatureentry{aSTFT@[{STFT}]\begingroup Short-time Fourier transform\nomeqref {0.0}|nompageref}{iii}
+\nomenclatureentry{aCT@[{CT}]\begingroup Computed tomography\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aTDM@[{TDM}]\begingroup Tomodensitométrie\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aFBP@[{FBP}]\begingroup Filtered back projection\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aTEP@[{TEP}]\begingroup Tomographie par émission de positons\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aLNT@[{LNT}]\begingroup Linear No-threshold Theory\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aALARA@[{ALARA}]\begingroup As Low As Reasonably Achievable\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aTV@[{TV}]\begingroup Total Variation\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aISTA@[{ISTA}]\begingroup Iterative Shrinkage-Thresholding Algorithm\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aFISTA@[{FISTA}]\begingroup FISTA: Accelerated proximal gradient method\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aADMM@[{ADMM}]\begingroup Alternating direction method of multipliers\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aSTFT@[{STFT}]\begingroup Short-time Fourier transform\nomeqref {0.0}|nompageref}{iv}

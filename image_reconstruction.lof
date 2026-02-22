@@ -8,10 +8,16 @@
 \contentsline {figure}{\numberline {2.5}{\ignorespaces Calcul du coefficient de poids $\varphi _{i,j}$ de la matrice système $\Phi $ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}}{34}{figure.caption.7}%
 \contentsline {figure}{\numberline {2.6}{\ignorespaces Mesures des rayons-\textbf {X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha $, $90-\alpha $, $90+\alpha $ et $180-\alpha $. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}}{35}{figure.caption.8}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Fantôme de Shepp--Logan}}{41}{figure.caption.9}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Gradient du fantôme de Shepp--Logan}}{41}{figure.caption.10}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Orthogonalité}}{48}{figure.caption.11}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Transformation en ondelettes}}{49}{figure.caption.12}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Fantôme de Shepp--Logan}}{42}{figure.caption.9}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Gradient du fantôme de Shepp--Logan}}{42}{figure.caption.10}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Orthogonalité}}{49}{figure.caption.11}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Transformation en ondelettes}}{50}{figure.caption.12}%
 \contentsline {figure}{\numberline {3.5}{\ignorespaces Ondelette de Daubechies pour différentes valeurs}}{52}{figure.caption.13}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Simulation de l'algorithme FBP}}{58}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Processus de transformation de Radon}}{63}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Diagramme de génération d'un sinogramme}}{63}{figure.caption.15}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Images-Sinogrammes pairs}}{64}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Pipeline de sous-échantillonnage angulaire}}{67}{figure.caption.17}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Opérateur de Transformée en Ondelettes}}{69}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Opérateur $A$ et son Adjoint $A^T$ pour la Reconstruction CT}}{73}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Flux d'exécution de la reconstruction tomographique par ADMM}}{75}{figure.caption.20}%

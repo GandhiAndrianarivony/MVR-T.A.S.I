@@ -1,520 +1,371 @@
-\chapter{SIMULATION, DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES}
-\section{Algorithme de rétroprojection filtrée pour la reconstruction d'images en tomodensitométrie}
+\chapter{SIMULATION, DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES CT}
+\section{Collecte des données}
+\subsection{Transformée de Radon et de la Génération de Sinogrammes}
+La génération d'un sinogramme \Ref{fig:sinogram_generation} constitue une étape centrale en tomographie, notamment en imagerie médicale et industrielle. Elle repose sur un outil mathématique fondamental appelé transformée de Radon, qui permet de représenter une image bidimensionnelle sous forme d'un ensemble de projections unidimensionnelles. Ce processus consiste à mesurer l'intégrale de l'intensité de l'image le long de droites orientées selon différents angles, simulant ainsi le principe physique de l'acquisition tomographique. Cette transformation permet de passer de l'espace spatial de l'image à un espace de projections, appelé espace de Radon, qui contient l'information nécessaire à la reconstruction de l'image originale. L'implémentation numérique complète de ce processus, incluant la discrétisation, le calcul des projections et la construction du sinogramme, est présentée dans le code fourni en Annexe A.\vspace{5pt}\\
+La transformée de Radon d'une fonction continue $f(x,y)$, représentant l'intensité de l'image, est définie comme l'intégrale de cette fonction le long d'une droite caractérisée par un angle $\theta$ et une distance $s$ par rapport à l'origine. Mathématiquement, elle s'écrit :
 
-La tomodensitométrie (CT) est une modalité d'imagerie médicale permettant de visualiser les structures internes du corps à partir de mesures d'atténuation des rayons X. La qualité des images reconstruites dépend directement de l'algorithme utilisé pour transformer les projections en image. L'algorithme de rétroprojection filtrée, ou \emph{Filtered Backprojection} (FBP), est l'une des méthodes les plus utilisées dans ce contexte.
+$$\mathcal{R}f(\theta, s) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} f(x,y),\delta(x\cos\theta + y\sin\theta - s),dx,dy$$
 
-Le principe de FBP repose sur deux étapes principales : le filtrage et la rétroprojection. L'étape de filtrage vise à corriger le flou inhérent aux projections en amplifiant les composantes haute fréquence. Elle consiste à appliquer un filtre de rampe aux données de sinogramme obtenues à partir des mesures CT. Ensuite, l'étape de rétroprojection additionne les projections filtrées le long des trajectoires des rayons X pour former l'image reconstruite.
-
-L'implémentation pratique de cet algorithme peut être illustrée par le code Python suivant. Il montre comment générer un sinogramme à partir d'une image, appliquer un filtre en rampe et réaliser la rétroprojection pour obtenir l'image finale.
-
-\begin{minted}{python}
-import numpy as np
-import matplotlib.pyplot as plt
-
-def generate_sinogram(image, theta):
-    """
-    Générer des données de sinogramme à partir d'une image et d'un tableau d'angles.
-    
-    Paramètres :
-        image (ndarray) : image d'entrée
-        theta (ndarray) : tableau d'angles en radians
-        
-    Renvoie :
-        sinogram (ndarray) : données de sinogramme
-    """
-    sinogram = np.zeros((len(theta), image.shape[0]))
-    for i, angle in enumerate(theta):
-        rotated_image = np.rot90(image, -int(np.degrees(angle) / 90) % 4)
-        sinogram[i] = np.sum(rotated_image, axis=0)
-    return sinogram
-
-def ramp_filter(sinogram):
-    """
-    Appliquer un filtre de rampe aux données de sinogramme.
-    
-    Paramètres :
-        sinogram (ndarray) : données du sinogramme
-        
-    Renvoie :
-        filtered_sinogram (ndarray) : sinogramme filtré
-    """
-    freq = np.fft.fftfreq(sinogram.shape[1])
-    ramp = np.abs(freq)
-    filtered_sinogram = np.real(np.fft.ifft(np.fft.fft(sinogram) * ramp))
-    return filtered_sinogram
-
-def backproject(filtered_sinogram, theta, image_shape):
-    """
-    Rétroprojeter les données filtrées pour reconstruire l'image.
-    
-    Paramètres :
-        filtered_sinogram (ndarray) : données filtrées
-        theta (ndarray) : tableau d'angles
-        image_shape (tuple) : dimensions de l'image reconstruite
-        
-    Renvoie :
-        reconstructed_image (ndarray) : image reconstruite
-    """
-    reconstructed_image = np.zeros(image_shape)
-    for i, angle in enumerate(theta):
-        reconstructed_image += np.rot90(
-            np.tile(filtered_sinogram[i][:, np.newaxis], (1, image_shape[0])),
-            int(np.degrees(angle) / 90) % 4
-        )
-    return reconstructed_image / len(theta)
-
-def main():
-    # Générer un exemple d'image
-    image = np.zeros((256, 256))
-    image[100:150, 100:150] = 1
-
-    # Générer des données de sinogramme
-    theta = np.linspace(0, np.pi, 180, endpoint=False)
-    sinogram = generate_sinogram(image, theta)
-
-    # Appliquer l'algorithme FBP
-    filtered_sinogram = ramp_filter(sinogram)
-    reconstructed_image = backproject(filtered_sinogram, theta, image.shape)
-
-    # Afficher les résultats
-    plt.figure(figsize=(12, 6))
-    plt.subplot(1, 3, 1)
-    plt.imshow(image, cmap='gray')
-    plt.title("Image originale")
-
-    plt.subplot(1, 3, 2)
-    plt.imshow(sinogram, cmap='gray', aspect='auto')
-    plt.title("Sinogramme")
-
-    plt.subplot(1, 3, 3)
-    plt.imshow(reconstructed_image, cmap='gray')
-    plt.title("Image reconstruite")
-    
-    plt.show()
-
-if __name__ == "__main__":
-    main()
-\end{minted}
-
-Ce code illustre de manière pratique le fonctionnement de l’algorithme FBP. Il génère un exemple simple avec un objet carré, simule les mesures CT en produisant un sinogramme, applique le filtrage et la rétroprojection, puis affiche l'image originale, le sinogramme et l'image reconstruite. L'algorithme constitue ainsi une méthode efficace et largement utilisée pour la reconstruction d'images tomodensitométriques, combinant rapidité et fidélité visuelle.
+où $\delta$ désigne la fonction delta de Dirac, qui permet de sélectionner uniquement les points appartenant à la droite considérée. Cette formulation exprime le fait que chaque valeur de la transformée correspond à une projection de l'image selon une direction donnée. D'un point de vue géométrique, pour un angle fixé, la transformée calcule la somme des intensités de tous les points situés le long de droites parallèles. En faisant varier l'angle, on obtient un ensemble complet de projections décrivant l'image sous différents points de vue.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/fbp_simulation.png}
-    \caption{Simulation de l'algorithme FBP}
-    \label{fig:l_t_theta}
+    
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/Radon-transform-of-projections-at-different-angles2.png}
+        % \caption{Image 1}
+        % \label{fig:img1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/A-2-D-illustration-of-Radon-transform-geometry-On-the-right-Radon-transform-of-a-pixel.png}
+        % \caption{Image 2}
+        % \label{fig:img2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/Radon_transform.png}
+        % \caption{Image 3}
+        % \label{fig:img3}
+    \end{subfigure}
+    
+    \caption{Processus de transformation de Radon}
+    % \label{fig:three_images}
+    
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth, height=0.6\textwidth]{images/creation_de_sinogramme.png}
+    \caption{Diagramme de génération d'un sinogramme}
+    \label{fig:sinogram_generation}
+\end{figure}
 
-% =============================================================
-\section{Compressive sensing using forward-backward}
-Le compressed sensing est une technique révolutionnaire en traitement du signal qui permet d'acquérir et de reconstruire un signal en utilisant beaucoup moins de mesures que ce qu'exige le théorème d'échantillonnage de Nyquist-Shannon. Ceci est possible lorsque le signal est \textbf{creux} (sparse) dans une certaine base. Le compressed sensing s’inscrit dans un cadre théorique plus large visant à exploiter les structures intrinsèques des signaux naturels. En pratique, de nombreux signaux d’intérêt (images, signaux biomédicaux, signaux radar ou sismiques) ne sont pas arbitraires, mais présentent une forte redondance lorsqu’ils sont représentés dans une base appropriée (ondelettes, cosinus, dictionnaires appris, etc.). Cette observation remet en question l’approche classique de l’échantillonnage uniforme et ouvre la voie à des stratégies d’acquisition plus efficaces. \vspace{5pt}\\
-L’idée fondamentale du compressed sensing repose sur deux piliers théoriques : la \emph{parcimonie} du signal et l’\emph{incohérence} entre la base de représentation du signal et le système de mesure. Lorsque ces conditions sont satisfaites, il devient possible de reconstruire exactement le signal original à partir d’un nombre de mesures très inférieur à sa dimension ambiante.\vspace{10pt}\\
-Le problème d'optimisation s'écrit :
-\begin{equation}
-\min\limits_x \|Ax-y\|_2^2 + \tau \|x\|_1
-\label{eq:main_problem}
-\end{equation}
+Dans la pratique, cette transformation continue doit être discrétisée afin d'être implémentée numériquement. Les angles de projection sont échantillonnés uniformément dans l'intervalle $[0,180^\circ[$ selon la relation :
+$$\theta_k = \frac{180^\circ}{N} \cdot k, \quad k = 0, 1, ..., N-1$$
+où $N$ représente le nombre total de projections. Pour chaque angle discret, l'image est projetée sur un ensemble de détecteurs qui échantillonnent la variable spatiale $s$. Le résultat de ce processus est organisé sous forme d'une matrice appelée sinogramme, notée $S \in \mathbb{R}^{M \times N}$, où $M$ correspond au nombre de détecteurs et $N$ au nombre d'angles. Chaque colonne du sinogramme contient la projection de l'image pour un angle donné, tandis que chaque ligne correspond à la variation des projections pour un détecteur donné lorsque l'angle change. L'algorithme détaillé de cette discrétisation ainsi que la structure matricielle utilisée pour stocker les données sont explicitement décrits dans le code de l'Annexe A, afin d'assurer la reproductibilité des résultats présentés.
+
+\begin{figure}[H]
+    \centering
+    
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/A-Shepp-Logan-Phantom-and-reconstructed-Image-Sinogram-a-Original-image-b-radon.png}
+        % \caption{Image 1}
+        % \label{fig:img1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/Examples-of-reconstructed-images-and-sinograms-with-different-labels-for-a-body-part.png}
+        % \caption{Image 2}
+        % \label{fig:img2}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/Examples-of-reconstructed-images-and-sinograms-with-different-labels-for-a-body-part.png}
+        % \caption{Image 3}
+        % \label{fig:img3}
+    \end{subfigure}
+    
+    \caption{Images-Sinogrammes pairs}
+    \label{fig:three_images}
+    
+\end{figure}
+
+Dans les systèmes réels, les mesures sont inévitablement affectées par le bruit, provenant principalement des limitations électroniques des détecteurs, des fluctuations statistiques du signal et des perturbations environnementales. Ce bruit est généralement modélisé comme un bruit additif gaussien, ce qui conduit à l'expression :
+
+$$S_{\text{bruité}}(s, \theta) = S(s, \theta) + \eta(s, \theta)$$
+
+où $\eta(s,\theta)$ est une variable aléatoire suivant une distribution normale de moyenne nulle et de variance $\sigma^2$. Cette modélisation permet de reproduire de manière réaliste les conditions expérimentales et constitue une étape essentielle pour l'évaluation des algorithmes de reconstruction. Le mécanisme d'ajout de bruit, paramétré par un niveau de variance contrôlé, est également intégré dans l'implémentation fournie en Annexe A.
+
+La transformée de Radon possède plusieurs propriétés mathématiques fondamentales qui expliquent son importance en tomographie. Elle est linéaire, ce qui signifie que la projection d'une combinaison linéaire de fonctions est égale à la combinaison linéaire de leurs projections. Elle présente également une propriété de symétrie qui réduit la plage angulaire nécessaire à l'acquisition. Plus important encore, elle est étroitement liée à la transformée de Fourier par le théorème de la coupe centrale, selon lequel la transformée de Fourier d'une projection correspond à une coupe radiale de la transformée de Fourier bidimensionnelle de l'image. Cette propriété constitue le fondement théorique de nombreux algorithmes de reconstruction, notamment la rétroprojection filtrée.
+
+D'un point de vue physique, la génération d'un sinogramme correspond à la mesure de l'atténuation d'un rayonnement traversant un objet selon différentes directions. Chaque projection représente l'accumulation des interactions du rayonnement avec la matière le long de sa trajectoire. Cette représentation permet de transformer un problème de reconstruction bidimensionnelle en un ensemble structuré de mesures unidimensionnelles, facilitant ainsi l'analyse, la modélisation et le traitement numérique.
+
+\subsection{Sous-Échantillonnage Angulaire en Tomographie pour le Compressed Sensing}
+
+L'introduction de ce rapport présente le sous-échantillonnage angulaire comme une technique centrale en tomographie moderne, notamment dans le cadre du Compressed Sensing (CS). Cette approche permet de réduire la dose d'irradiation lors des acquisitions médicales tout en conservant une qualité d'image satisfaisante, grâce à des algorithmes de reconstruction avancés. Elle répond aux besoins croissants de sécurité des patients et d'acquisition rapide, tout en exploitant les propriétés structurelles des images médicales.\vspace{7pt}\\
+
+En tomographie conventionnelle, le critère de Nyquist définit le nombre minimal d'angles nécessaires pour éviter les artefacts de repliement spectral dans le sinogramme. Formellement, on a :
+\[
+N_{\text{angles}} \geq \frac{\pi}{2} \cdot N_{\text{pixels}}
+\]
+Le sous-échantillonnage consiste à acquérir volontairement moins d'angles que cette limite. Ainsi, le nombre d'angles sous-échantillonnés s'écrit :
+\[
+N_{\text{sous-échantillonné}} = \alpha \cdot N_{\text{complet}}
+\]
+où \(\alpha \in [0,1]\) représente le facteur de sous-échantillonnage. Cette réduction entraîne une perte d'information, mais le Compressed Sensing permet de compenser cette limitation grâce à des hypothèses de parcimonie sur l'image.\vspace{7pt}\\
+
+La sélection des angles pour le sous-échantillonnage suit généralement un processus aléatoire uniforme, sans remise, afin de garantir l'incohérence nécessaire au CS :
+\[
+\Theta_{\text{sous}} = \{\theta_{i_1}, \theta_{i_2}, ..., \theta_{i_M}\}
+\]
+où \(\{i_1, i_2, ..., i_M\}\) est un sous-ensemble aléatoire de \(\{0, 1, ..., N-1\}\), et \(M = \lfloor \alpha \cdot N \rfloor\) correspond au nombre d'angles acquis. Les indices sont triés pour préserver l'ordre angulaire, ce qui facilite l'interprétation du sinogramme (Voir Annexe A pour l'implémentation).\vspace{7pt}\\
+
+Le Compressed Sensing repose sur trois concepts fondamentaux : la parcimonie, qui veut que l'image soit parcimonieuse dans un domaine de transformation \(\Psi\) (c'est-à-dire que seule une fraction des coefficients est significative) ; l'incohérence, qui exige que la matrice de mesure \(\Phi\) soit incohérente par rapport à la base dans laquelle l'image est parcimonieuse ; et la reconstruction non-linéaire, où le signal est reconstruit via une optimisation qui favorise la parcimonie, typiquement par la minimisation de la norme \(L_1\).  
+
+Pour une image \(x \in \mathbb{R}^n\), le sinogramme sous-échantillonné \(y\) est obtenu par :
+\[
+y = \Phi x + \epsilon
+\]
+où \(y \in \mathbb{R}^m\) est le sinogramme (\(m \ll n\)), \(\Phi \in \mathbb{R}^{m \times n}\) représente l'opérateur de mesure (transformée de Radon partielle), et \(\epsilon\) est le bruit de mesure. Cette formulation traduit un problème inverse sous-déterminé.\vspace{7pt}\\
+
+Pour garantir une reconstruction fiable, la matrice de mesure \(\Phi\) doit respecter la propriété d'isométrie restreinte (RIP) :
+\[
+(1-\delta_k)\|x\|_2^2 \leq \|\Phi x\|_2^2 \leq (1+\delta_k)\|x\|_2^2
+\]
+pour tous les vecteurs \(k\)-parcimonieux \(x\), avec \(\delta_k \in [0,1)\). Cette condition garantit que les distances entre vecteurs parcimonieux sont approximativement conservées après projection.\vspace{7pt}\\
+
+Le théorème de la coupe centrale (Fourier Slice Theorem) établit que la transformée de Radon d'une image correspond à des lignes radiales dans son espace de Fourier. Ainsi, le sous-échantillonnage angulaire entraîne un sous-échantillonnage radial :
+\[
+\mathcal{F}_{1D}[\mathcal{R}f(\theta, s)](\omega) = \mathcal{F}_{2D}[f](\omega \cos\theta, \omega \sin\theta)
+\]
+En pratique, seules certaines lignes radiales sont acquises, ce qui crée des zones vides dans le plan de Fourier (Voir Annexe A pour l'implémentation).\vspace{7pt}\\
+
+L'opérateur de Radon partiel \(\mathcal{R}_{\Theta}\) ne conserve qu'un sous-ensemble des angles :
+\[
+\mathcal{R}_{\Theta}f(s) = \{\mathcal{R}f(\theta, s) : \theta \in \Theta_{\text{sous}}\}
+\]
+On obtient ainsi un problème inverse sous-déterminé :
+\[
+y = \mathcal{R}_{\Theta}x
+\]
+Le taux de sous-échantillonnage est simplement le ratio entre le nombre d'angles acquis et le nombre total d'angles complets :
+\[
+\text{Taux} = \frac{M}{N} = \alpha
+\]
+où \(M\) est le nombre d'angles réellement acquis.\vspace{7pt}\\
+
+La reconstruction consiste à résoudre l'optimisation :
+\[
+\hat{x} = \arg\min_{x} \|\Psi x\|_1 \quad \text{sous contrainte} \quad \|\mathcal{R}_{\Theta}x - y\|_2 \leq \epsilon
+\]
+où \(\Psi\) est un opérateur de transformation vers un domaine parcimonieux (i.e Bi-orthogonal Wavelet Transform, gradient, DCT), \(\|\cdot\|_1\) favorise la parcimonie, et \(\epsilon\) représente le niveau de bruit (Voir Annexe A pour l'implémentation).  
+
+Dans la plupart des applications, la parcimonie est obtenue dans le domaine des ondelettes :
+\[
+x = \Psi c
+\]
+avec \(\|c\|_0 \ll n\) où \(\|c\|_0\) est le nombre de coefficients significatifs.\vspace{7pt}\\
+
+Le pipeline complet (Voir Figure \ref{fig:sinogram_undersampling_pipeline}) du processus peut être visualisé comme suit : l'image originale \(x\) subit une transformée de Radon complète, puis un sous-échantillonnage angulaire aléatoire basé sur le facteur \(\alpha\) pour produire un sinogramme sous-échantillonné \(y\). Ce sinogramme est ensuite traité par un algorithme de reconstruction CS, qui utilise la minimisation L1 dans un domaine de parcimonie \(\Psi\) pour finalement produire l'image reconstruite \(\hat{x}\) (Voir Annexe A pour l'implémentation).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth, height=1.2\textwidth]{images/undersample_sinogram.png}
+    \caption{Pipeline de sous-échantillonnage angulaire}
+    \label{fig:sinogram_undersampling_pipeline}
+\end{figure}
+
+Le nombre minimal d'angles pour une reconstruction fidèle est donné par :
+\[
+M \geq C \cdot k \cdot \log\left(\frac{n}{k}\right)
+\]
+où \(k\) est la parcimonie de l'image, \(n\) sa dimension et \(C\) une constante dépendant de l'opérateur de mesure. L'erreur de reconstruction est bornée par :
+\[
+\|\hat{x} - x\|_2 \leq C_1 \frac{\|x - x_k\|_1}{\sqrt{k}} + C_2 \epsilon
+\]
+avec \(x_k\) la meilleure approximation \(k\)-parcimonieuse de \(x\). Le processus reste robuste au bruit tant que :
+\[
+\frac{\|\epsilon\|_2}{\|y\|_2} \ll \frac{1}{\sqrt{\log n}}.
+\]\vspace{7pt}\\
+
+Dans les applications cliniques, le sous-échantillonnage angulaire permet de diminuer la dose d'irradiation proportionnellement au facteur \(\alpha\) :
+\[
+\text{Dose}_{\text{réduite}} = \alpha \cdot \text{Dose}_{\text{complète}}
+\]
+En imagerie cardiaque, l'acquisition sous-échantillonnée peut être synchronisée avec le cycle cardiaque :
+\[
+\Theta_{\text{cardio}} = \{\theta \in [0,180] : \text{phase cardiaque} = \text{cible}\}
+\]
+Pour l'imagerie dynamique (tomographie 4D), les angles peuvent varier dans le temps :
+\[
+y(t) = \mathcal{R}_{\Theta(t)}x(t)
+\]
+
+
+
+\subsection{Opérateur de Transformée en Ondelettes}
+
+La transformation par ondelettes est un outil fondamental en traitement d'images et en optimisation, permettant de représenter une image dans une base multi-résolution. Elle établit une correspondance linéaire entre l'espace des pixels et l'espace des coefficients d'ondelettes. Le diagramme présenté à la Figure \ref{fig:wt_creation} illustre la construction de cet opérateur ainsi que ses transformations directe et adjointe. L'implémentation correspondante est fournie en Annexe~B.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth, height=1.2\textwidth]{images/wt_creation.png}
+    \caption{Opérateur de Transformée en Ondelettes}
+    \label{fig:wt_creation}
+\end{figure}
+
+Mathématiquement, une image discrète de taille \(H \times W\) peut être représentée sous forme vectorielle \(x \in \mathbb{R}^n\), où \(n = H \times W\). L'opérateur de transformation en ondelettes est défini comme un opérateur linéaire :
+
+\[
+W : \mathbb{R}^n \rightarrow \mathbb{R}^m
+\]
+
+qui associe à chaque image \(x\) un vecteur de coefficients d'ondelettes :
+
+\[
+w = W x
+\]
+
+Ces coefficients représentent l'image dans une base multi-échelle composée de :
+
+\[
+w = \left\{ a_J, d_J^H, d_J^V, d_J^D, \dots, d_1^H, d_1^V, d_1^D \right\}
+\]
+
 où :
+
 \begin{itemize}
-    \item $y \in \mathbb{R}^m$ : mesures acquises
-    \item $A \in \mathbb{R}^{m \times n}$ : matrice de mesure ($m < n$)
-    \item $x \in \mathbb{R}^n$ : signal à reconstruire
-    \item $\tau > 0$ : paramètre de régularisation
-\end{itemize}
-Le problème d’optimisation présenté à l’équation~\eqref{eq:main_problem} correspond à une formulation dite \emph{régularisée}, largement utilisée en pratique. Le premier terme impose une cohérence entre les mesures acquises et le signal reconstruit, tandis que le second terme agit comme une contrainte indirecte sur la structure du signal recherché.
-
-Cette formulation peut également être interprétée comme une relaxation convexe du problème initial, qui consisterait à minimiser directement le nombre de composantes non nulles du signal. En remplaçant la pseudo-norme $\ell_0$ par la norme $\ell_1$, on obtient un problème convexe, garantissant l’existence d’une solution globale et permettant l’utilisation d’algorithmes d’optimisation efficaces.
-
-
-
-\subsubsection{Interprétation des termes}
-L’équilibre entre ces deux termes est crucial pour la qualité de la reconstruction. Un poids trop faible accordé à la régularisation peut conduire à une solution bruitée et peu parcimonieuse, tandis qu’un poids excessif peut supprimer des composantes pertinentes du signal. Le choix du paramètre $\tau$ constitue donc un aspect fondamental du problème, souvent traité par validation croisée ou analyse de sensibilité.
-\begin{itemize}
-    \item $\|Ax-y\|_2^2$ : terme de fidélité aux données (L2-norm)
-    \item $\|x\|_1$ : terme de régularisation favorisant la parcimonie (L1-norm)
-    \item $\tau$ : contrôle le compromis entre fidélité et parcimonie
+\item \(a_J\) représente les coefficients d'approximation à basse résolution,
+\item \(d_j^H, d_j^V, d_j^D\) représentent respectivement les coefficients de détail horizontal, vertical et diagonal au niveau \(j\).
 \end{itemize}
 
-Afin d’illustrer concrètement les principes du compressed sensing, nous considérons dans la suite une simulation numérique. Cette approche permet de valider expérimentalement les résultats théoriques et d’évaluer les performances de reconstruction dans un cadre contrôlé, où le signal original est parfaitement connu.
-\subsection{Configuration du problème}
-\subsubsection{Paramètres de la simulation}
-Nous allons reconstruire un signal de dimension $n=5000$ avec seulement $S=100$ composantes non nulles.
+Cette transformation correspond à une projection de l'image sur une base d'ondelettes :
 
-\begin{minted}{python}
-import numpy as np
-
-# Paramètres du problème
-n = 5000          # Dimension du signal
-S = 100           # Nombre de composantes non nulles (sparsity level)
-
-# Nombre de mesures nécessaire (théorème de Candès et al.)
-m = int(np.ceil(S * np.log(n)))
-print(f'Dimension du signal : {n}')
-print(f'Nombre de mesures : {m}')
-print(f'Taux de compression : {n/m:.2f}')
-print(f'Niveau de parcimonie : {S} ({S/n*100:.1f}\% de non-zéros)')
-\end{minted}
-
-\subsubsection{Génération de la matrice de mesure}
-La matrice $A$ doit satisfaire la propriété d'isométrie restreinte (RIP). En pratique, une matrice gaussienne aléatoire convient.
-
-\begin{minted}{python}
-# Pour la reproductibilité des résultats
-np.random.seed(1)
-
-# Génération de la matrice de mesure (gaussienne i.i.d.)
-A = np.random.normal(size=(m, n))
-print(f'Forme de A : {A.shape}')
-
-# Calcul de la norme opérateur pour le pas de gradient
-norm_A = np.linalg.norm(A, ord=2)
-print(f'Norme opérateur de A : {norm_A:.4f}')
-\end{minted}
-Le choix d’une matrice de mesure aléatoire de type gaussien est motivé par ses excellentes propriétés théoriques. En effet, ce type de matrice satisfait la propriété d’isométrie restreinte avec une forte probabilité, à condition que le nombre de mesures soit suffisant. Cette propriété garantit que les distances entre signaux parcimonieux sont approximativement préservées après projection.
-
-\subsubsection{Création du signal parcimonieux}
-Nous générons un signal avec exactement $S$ composantes non nulles.
-
-\begin{minted}{python}
-# Création d'un signal S-parcimonieux
-x_true = np.zeros(n)
-
-# Sélection aléatoire des positions des composantes non nulles
-indices_non_nuls = np.random.permutation(n)[:S]
-valeurs_non_nulles = np.random.normal(size=S)
-
-x_true[indices_non_nuls] = valeurs_non_nulles
-x_true = x_true / np.linalg.norm(x_true)  # Normalisation
-
-print(f'Nombre de composantes non nulles : {np.sum(x_true != 0)}')
-print(f'Norme L1 du signal : {np.linalg.norm(x_true, 1):.4f}')
-print(f'Norme L2 du signal : {np.linalg.norm(x_true, 2):.4f}')
-\end{minted}
-La normalisation du signal permet de travailler dans un cadre numérique stable et facilite l’interprétation des métriques de reconstruction. Elle permet également de comparer les performances pour différentes configurations sans être influencé par l’échelle du signal.
-
-\subsubsection{Simulation des mesures acquises}
-\begin{minted}{python}
-# Génération des mesures (acquisition compressée)
-y = np.dot(A, x_true)
-print(f'Forme du vecteur de mesures y : {y.shape}')
-
-# Vérification de la cohérence énergétique
-energie_signal = np.linalg.norm(x_true)**2
-energie_mesures = np.linalg.norm(y)**2 / norm_A**2
-print(f'Énergie du signal : {energie_signal:.4f}')
-print(f'Énergie estimée à partir des mesures : {energie_mesures:.4f}')
-\end{minted}
-
-\subsection{Définition des fonctions objectif}
-La séparation du problème en plusieurs fonctions objectif est particulièrement adaptée aux méthodes d’optimisation proximales. Elle permet de traiter séparément les termes différentiables et non différentiables, tout en conservant une structure algorithmique simple et efficace.
-
-\subsubsection{Fonction de régularisation L1}
-La norme L1 favorise la parcimonie de la solution.
-
-\begin{minted}{python}
-from pyunlocbox import functions
-
-# Paramètre de régularisation
-tau = 1.0
-
-# Définition de la fonction L1
-f1 = functions.norm_l1(lambda_=tau)
-
-print("Fonction L1 définie avec tau =", tau)
-print("Évaluation sur un vecteur test :", 
-      f1._eval(np.array([1, -2, 0, 3])))
-\end{minted}
-
-\subsubsection{Fonction de fidélité L2}
-Plusieurs méthodes pour définir le terme de fidélité aux données.
-
-\subsubsection{Méthode 1 : Matrice explicite}
-
-\begin{minted}{python}
-# Méthode directe avec matrice A
-f2 = functions.norm_l2(y=y, A=A)
-\end{minted}
-
-\subsubsection{Méthode 2 : Opérateurs fonctionnels}
-
-\begin{minted}{python}
-# Méthode avec opérateurs fonctionnels (utile pour les grandes matrices)
-f3 = functions.norm_l2(y=y)
-f3.A = lambda x: np.dot(A, x)      # Opérateur forward
-f3.At = lambda x: np.dot(A.T, x)   # Opérateur adjoint
-\end{minted}
-
-\subsubsection{Méthode 3 : Définition manuelle}
-
-\begin{minted}{python}
-# Définition complètement manuelle
-f4 = functions.func()
-f4._eval = lambda x: np.linalg.norm(np.dot(A, x) - y)**2
-f4._grad = lambda x: 2.0 * np.dot(A.T, np.dot(A, x) - y)
-
-# Test d'équivalence
-x_test = np.random.normal(size=n)
-print(f"f2(x_test) = {f2._eval(x_test):.6f}")
-print(f"f3(x_test) = {f3._eval(x_test):.6f}")
-print(f"f4(x_test) = {f4._eval(x_test):.6f}")
-\end{minted}
-
-\subsection{Algorithme Forward-Backward}
-L’algorithme forward-backward appartient à la famille des méthodes de descente proximale. Il est particulièrement bien adapté aux problèmes de grande dimension rencontrés en compressed sensing, car il ne nécessite que des opérations matricielles simples et l’évaluation d’opérateurs proximaux explicites.
-L’utilisation de l’accélération de Nesterov (FISTA) permet d’améliorer significativement la vitesse de convergence, en particulier pour des problèmes mal conditionnés ou de grande taille.
-
-\subsection{Principe mathématique}
-L'algorithme forward-backward résout des problèmes de la forme :
 \[
-\min_x f(x) + g(x)
+w_i = \langle x, \psi_i \rangle
 \]
-où $f$ est différentiable et $g$ admet un opérateur proximal simple.
 
-L'itération s'écrit :
+où \(\psi_i\) représente les fonctions de base d'ondelettes.
+
+L'opérateur adjoint \(W^T\) permet la reconstruction de l'image à partir des coefficients :
+
 \[
-x_{k+1} = \text{prox}_{\gamma g}(x_k - \gamma \nabla f(x_k))
+x = W^T w
 \]
-avec $\gamma \in ]0, 2/\beta[$ où $\beta$ est la constante de Lipschitz de $\nabla f$.
 
-\subsection{Calcul du pas optimal}
+Dans le cas d'ondelettes orthogonales, on a la propriété importante :
 
-\begin{minted}{python}
-# Calcul de la constante de Lipschitz
-beta = 2.0 * norm_A**2  # Pour f(x) = ||Ax - y||^2
-print(f"Constante de Lipschitz beta = {beta:.4f}")
+\[
+W^T = W^{-1}
+\]
 
-# Pas optimal pour la convergence
-step = 0.5 / norm_A**2  # gamma = 1/beta
-print(f"Pas d'itération optimal : {step:.6f}")
-\end{minted}
+et donc :
 
-\subsection{Configuration du solveur}
+\[
+W^T W = I
+\]
 
-\begin{minted}{python}
-from pyunlocbox import solvers
+où \(I\) est l'opérateur identité.
 
-# Instanciation de l'algorithme forward-backward
-solver = solvers.forward_backward(
-    step=step,           # Pas d'itération
-    method='FISTA',      # Accélération de Nesterov (optionnel)
-    tol=1e-10,           # Tolérance sur la condition d'arrêt
-)
+Dans le cas général, \(W \in \mathbb{R}^{m \times n}\), avec :
 
-print("Solveur forward-backward configuré")
-print(f"Méthode : {solver.method}")
-print(f"Pas : {solver.step}")
-\end{minted}
+\[
+n = H \times W
+\]
+\[
+m = \text{nombre total de coefficients}
+\]
 
-\section{Résolution du problème}
+La transformation directe correspond à l'application :
 
-\subsection{Lancement de l'optimisation}
+\[
+x \mapsto W x
+\]
 
-\begin{minted}{python}
-# Point initial (vecteur nul)
-x0 = np.zeros(n)
+tandis que la transformation adjointe correspond à :
 
-# Résolution du problème d'optimisation
-ret = solvers.solve(
-    [f1, f2],           # Liste des fonctions objectif
-    x0,                 # Point initial
-    solver,             # Algorithme d'optimisation
-    rtol=1e-4,          # Tolérance relative
-    maxit=300,          # Nombre maximum d'itérations
-    verbosity='LOW'     # Niveau de verbosité
-)
+\[
+w \mapsto W^T w
+\]
 
-# Affichage des résultats
-print("\n" + "="*50)
-print("RÉSULTATS DE L'OPTIMISATION")
-print("="*50)
-print(f"Solution trouvée en {ret['iter']} itérations")
-print(f"Critère d'arrêt : {ret['crit']}")
-print(f"Valeur objective finale : {ret['objective'][-1].sum():.6f}")
-print(f"Temps de calcul : {ret['time']:.2f} secondes")
-\end{minted}
+Le diagramme de la Figure~\ref{fig:wt_creation} montre les différentes étapes de construction de cet opérateur :
 
-\subsubsection{Analyse de la solution}
+\begin{itemize}
+\item la définition de l'espace image \(\mathbb{R}^n\),
+\item la construction de la structure des coefficients,
+\item la définition de l'opérateur direct \(W\),
+\item la définition de l'opérateur adjoint \(W^T\),
+\item la création de l'opérateur linéaire complet.
+\end{itemize}
 
-\begin{minted}{python}
-# Récupération de la solution
-x_recon = ret['sol']
+Les coefficients sont organisés sous forme hiérarchique, permettant une représentation multi-échelle efficace. Pour assurer la reconstruction correcte, deux éléments essentiels sont conservés :
 
-# Calcul des métriques de reconstruction
-mse = np.linalg.norm(x_recon - x_true)**2 / n
-psnr = 10 * np.log10(1.0 / mse) if mse > 0 else float('inf')
-support_error = np.sum((x_recon != 0) != (x_true != 0))
+\begin{itemize}
+\item la structure des coefficients,
+\item les dimensions associées à chaque niveau de décomposition.
+\end{itemize}
 
-print(f"\nANALYSE DE LA RECONSTRUCTION")
-print(f"Erreur quadratique moyenne (MSE) : {mse:.2e}")
-print(f"PSNR : {psnr:.2f} dB")
-print(f"Erreur de support : {support_error} composantes")
-print(f"Rapport de compression effectif : {n/m:.2f}")
-\end{minted}
-Les métriques utilisées permettent d’évaluer différents aspects de la reconstruction. L’erreur quadratique moyenne mesure la fidélité globale du signal reconstruit, tandis que l’erreur de support évalue la capacité de l’algorithme à identifier correctement les positions des composantes non nulles. Ces deux critères sont complémentaires et essentiels pour juger la qualité d’une méthode de compressed sensing.
+Cet opérateur possède plusieurs propriétés importantes :
 
-\subsection{Visualisation des résultats}
+\begin{itemize}
+\item Linéarité :
+\[
+W(ax + by) = aWx + bWy
+\]
 
-\subsubsection{Comparaison signal original/reconstruit}
+\item Structure matricielle implicite :
+\[
+W \in \mathbb{R}^{m \times n}
+\]
 
-\begin{minted}{python}
-import matplotlib.pyplot as plt
+\item Adjoint bien défini :
+\[
+\langle Wx, w \rangle = \langle x, W^T w \rangle
+\]
 
-fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+\item Conservation de l'énergie pour les bases orthogonales :
+\[
+\|Wx\|_2 = \|x\|_2
+\]
+\end{itemize}
 
-# Signal original vs reconstruit (vue globale)
-ax = axes[0, 0]
-ax.plot(x_true, 'b-', alpha=0.6, linewidth=0.5, label='Original')
-ax.plot(x_recon, 'r--', alpha=0.8, linewidth=0.5, label='Reconstruit')
-ax.set_xlabel('Index')
-ax.set_ylabel('Amplitude')
-ax.set_title('Signal original vs reconstruit')
-ax.legend()
-ax.grid(True, alpha=0.3)
+En pratique, l'opérateur n'est pas construit explicitement sous forme matricielle, mais implémenté comme un opérateur linéaire implicite, comme illustré dans l'Annexe~B, afin d'éviter le stockage d'une matrice potentiellement très grande.
 
-# Zoom sur les composantes non nulles
-ax = axes[0, 1]
-non_zero_indices = np.where(x_true != 0)[0]
-zoom_indices = non_zero_indices[:min(50, len(non_zero_indices))]
-ax.stem(zoom_indices, x_true[zoom_indices], 
-        linefmt='b-', markerfmt='bo', basefmt=' ', label='Original')
-ax.stem(zoom_indices, x_recon[zoom_indices], 
-        linefmt='r--', markerfmt='rx', basefmt=' ', label='Reconstruit')
-ax.set_xlabel('Index')
-ax.set_ylabel('Amplitude')
-ax.set_title('Zoom sur les composantes non nulles')
-ax.legend()
-ax.grid(True, alpha=0.3)
+Cette structure permet d'intégrer efficacement la transformation en ondelettes dans des problèmes inverses, tels que :
 
-# Erreur de reconstruction
-ax = axes[1, 0]
-erreur = x_recon - x_true
-ax.plot(erreur, 'g-', linewidth=0.5)
-ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
-ax.set_xlabel('Index')
-ax.set_ylabel('Erreur')
-ax.set_title('Erreur de reconstruction')
-ax.grid(True, alpha=0.3)
+\begin{itemize}
+\item la reconstruction d'images,
+\item le débruitage,
+\item la compression,
+\item les méthodes d'optimisation régularisées.
+\end{itemize}
+La transformation fournit ainsi une représentation compacte et multi-résolution de l'image, facilitant l'analyse et la manipulation des structures à différentes échelles.
 
-# Histogramme des amplitudes
-ax = axes[1, 1]
-ax.hist(x_true, bins=50, alpha=0.5, label='Original', density=True)
-ax.hist(x_recon, bins=50, alpha=0.5, label='Reconstruit', density=True)
-ax.set_xlabel('Amplitude')
-ax.set_ylabel('Densité')
-ax.set_title('Distribution des amplitudes')
-ax.legend()
-ax.grid(True, alpha=0.3)
+\subsection{Reconstruction d'Images en Tomographie par Transformée de Radon}
+La tomographie est une technique d'imagerie qui permet de visualiser l'intérieur d'un objet en trois dimensions sans avoir à le découper physiquement. Elle est largement utilisée en imagerie médicale, notamment dans les scanners à rayons X, mais aussi dans le contrôle non destructif des matériaux et en géophysique. Le principe fondamental de la tomographie repose sur l'acquisition d'un ensemble de projections de l'objet sous différents angles. Une projection peut être vue comme une ombre de l'objet, obtenue en mesurant l'atténuation d'un rayonnement qui traverse cet objet. Lorsque ces projections sont collectées pour de nombreux angles, elles forment un ensemble de données appelé sinogramme. Le défi principal consiste alors à reconstruire l'image originale de l'objet à partir de ce sinogramme.
 
-plt.tight_layout()
-plt.savefig('reconstruction_results.png', dpi=150, bbox_inches='tight')
-plt.show()
-\end{minted}
+La transformée de Radon est l'outil mathématique qui modélise ce processus d'acquisition des projections, et correspond à ce que l'on appelle la projection avant. Concrètement, si l'on considère une image bidimensionnelle représentant une coupe de l'objet, la transformée de Radon calcule, pour chaque angle donné, l'intégrale des valeurs de l'image le long de droites parallèles correspondant aux trajectoires des rayons. Chaque intégrale constitue un point dans la projection associée à cet angle. En répétant ce processus pour un ensemble d'angles, on obtient un sinogramme, dont l'axe horizontal représente la position des rayons sur le détecteur et l'axe vertical représente les angles de projection. D'un point de vue algébrique, cette opération peut être modélisée comme l'application d'un opérateur linéaire A qui transforme un vecteur x représentant l'image en un vecteur y représentant le sinogramme, selon la relation $y = A x$. Une implémentation pratique de cet opérateur sous forme sans matrice, utilisant la transformée de Radon, est présentée en Annexe C.
 
-\subsubsection{Convergence de l'algorithme}
+Pour reconstruire l'image originale à partir du sinogramme, il faut effectuer une opération inverse. Une première approche consiste à utiliser la rétroprojection, appelée aussi backprojection. Cette opération consiste à redistribuer les valeurs du sinogramme dans l'espace de l'image en suivant les mêmes trajectoires que celles empruntées par les rayons lors de l'acquisition. En pratique, chaque projection est projetée en retour sur l'image, et la somme de toutes ces contributions fournit une estimation de l'image originale. Mathématiquement, cette opération correspond à l'application de l'opérateur adjoint $A^T$ au sinogramme, ce qui donne une estimation de l'image selon la relation $x_{estimé} = A^T y$. Il est important de noter que l'opérateur adjoint n'est pas l'inverse exact de l'opérateur de projection, mais seulement son adjoint. Une implémentation de cet opérateur adjoint basée sur la rétroprojection non filtrée est également fournie en Annexe C.
 
-\begin{minted}{python}
-# Analyse de convergence
-objective = np.array(ret['objective'])
+Cependant, la rétroprojection simple produit généralement une image floue. Ce flou apparaît parce que le processus de projection favorise les basses fréquences de l'image, c'est-à-dire les variations lentes d'intensité, tandis que les hautes fréquences, correspondant aux détails fins et aux contours, sont atténuées. Lorsque l'on applique uniquement la rétroprojection simple, ce déséquilibre est amplifié, ce qui donne une image aux contours flous. Pour corriger ce problème, on utilise la rétroprojection filtrée, qui est la méthode standard en tomographie. Cette méthode consiste d'abord à appliquer un filtre aux projections du sinogramme, généralement un filtre passe-haut comme le filtre de Ram-Lak, afin de compenser la perte des hautes fréquences et de restaurer les détails. Ensuite, les projections filtrées sont rétroprojetées pour reconstruire l'image.
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{images/operateur_et_adjoint_CT_reconstruction.png}
+\caption{Opérateur $A$ et son Adjoint $A^T$ pour la Reconstruction CT}
+\end{figure}
+Dans les applications réelles, la taille des images et des sinogrammes est très grande, ce qui rend impossible la construction explicite de la matrice $A$ représentant l'opérateur de Radon, car elle contiendrait des millions de lignes et de colonnes. Pour résoudre ce problème, on utilise une approche dite sans matrice, ou matrix-free. Dans cette approche, on ne construit pas la matrice elle-même, mais on définit uniquement deux fonctions : l'une qui calcule la projection avant d'une image, correspondant à l'application de $A x$, et l'autre qui calcule la rétroprojection d'un sinogramme, correspondant à l'application de $A^T$ y. Ces fonctions agissent comme une boîte noire qui encapsule le comportement de l'opérateur et de son adjoint, permettant de manipuler efficacement des problèmes de très grande taille sans stocker explicitement la matrice. Une implémentation complète de cet opérateur linéaire sous forme de LinearOperator est présentée en Annexe C.
 
-fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+Ainsi, la transformée de Radon modélise le processus d'acquisition des données, la rétroprojection simple correspond à l'opérateur adjoint et produit une image floue, tandis que la rétroprojection filtrée constitue la méthode standard de reconstruction en combinant filtrage et rétroprojection. Enfin, l'approche sans matrice permet de mettre en œuvre ces opérations de manière efficace, même pour des systèmes de très grande dimension, en évitant les limitations liées à la mémoire, comme illustré dans l'implémentation fournie en Annexe C.
 
-# Convergence des objectifs individuels
-ax = axes[0]
-ax.semilogy(objective[:, 0], 'b-', label='Terme L1 (parcimonie)')
-ax.semilogy(objective[:, 1], 'r-', label='Terme L2 (fidélité)')
-ax.semilogy(np.sum(objective, axis=1), 'k-', 
-            linewidth=2, label='Objectif total')
-ax.set_xlabel('Itération')
-ax.set_ylabel('Valeur objective')
-ax.set_title('Convergence des fonctions objectif')
-ax.legend()
-ax.grid(True, alpha=0.3)
+\subsection{La Reconstruction Tomographique par Séparation de Variables (ADMM)}
+La tomographie constitue un outil fondamental en imagerie médicale et dans diverses applications industrielles, permettant de reconstruire des structures internes à partir de mesures de projections acquises sous différents angles. La transformation de ces projections, regroupées sous forme de sinogramme, en une image cohérente représente un problème inverse complexe, particulièrement lorsque les données sont incomplètes, bruitées ou limitées en nombre. Les méthodes analytiques classiques atteignent rapidement leurs limites dans ces conditions, ce qui rend les approches itératives indispensables pour obtenir des reconstructions fiables.
 
-# Taux de décroissance
-ax = axes[1]
-obj_total = np.sum(objective, axis=1)
-rate = np.diff(np.log(obj_total)) / np.diff(range(len(obj_total)))
-ax.plot(rate, 'g-')
-ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
-ax.set_xlabel('Itération')
-ax.set_ylabel('Taux de décroissance logarithmique')
-ax.set_title('Taux de convergence')
-ax.grid(True, alpha=0.3)
+Les méthodes itératives reposent sur un principe conceptuel simple mais efficace : partir d'une estimation initiale de l'image et l'affiner progressivement en comparant les projections simulées avec les mesures expérimentales. L'objectif est de déterminer l'image qui minimise la différence entre ses projections et les données observées tout en respectant certaines contraintes structurelles. Cette démarche s'inscrit naturellement dans un cadre d'optimisation, où l'on cherche à concilier fidélité aux données et régularisation, afin de garantir la stabilité et la qualité de la reconstruction. L'implémentation complète de cet algorithme itératif est présentée en Annexe D, offrant un exemple concret de mise en œuvre dans le contexte tomographique.
 
-plt.tight_layout()
-plt.savefig('convergence_analysis.png', dpi=150, bbox_inches='tight')
-plt.show()
-\end{minted}
+Parmi les approches itératives, la méthode de séparation de variables par directions alternées, connue sous le nom d'ADMM (Alternating Direction Method of Multipliers), constitue une solution particulièrement élégante et efficace. L'algorithme décompose un problème d'optimisation complexe en sous-problèmes plus simples, résolus de manière alternée. Dans le cadre de la reconstruction tomographique, cette séparation permet de traiter distinctement la fidélité aux données et la régularisation par parcimonie dans un domaine transformé, tel que les ondelettes. La mise en œuvre de ces mécanismes, incluant la mise à jour des variables primales et duales ainsi que la gestion de la représentation parcimonieuse, est explicitement détaillée dans l'implémentation fournie en Annexe D.
 
-\subsection{Analyse de sensibilité}
+Le fonctionnement de l'algorithme repose sur trois étapes principales, illustrées dans la Figure~\ref{fig:ADMM_diagram_algorithm}, qui présente le flux complet de reconstruction par ADMM. La première consiste à mettre à jour l'image, en résolvant un système linéaire intégrant à la fois l'opérateur de projection et son adjoint, ainsi que l'opérateur de transformation. Cette étape garantit que l'image reconstruite est cohérente avec les mesures tout en restant proche d'une représentation transformée contrôlée. La deuxième étape consiste en la mise à jour de la représentation parcimonieuse, qui applique un seuillage doux afin de favoriser les coefficients significatifs et de réduire l'effet du bruit. La troisième étape met à jour la variable duale, qui assure la cohérence entre l'image reconstruite et sa représentation parcimonieuse, jouant un rôle crucial dans la stabilité et la convergence de l'algorithme. Toutes ces étapes sont implémentées et illustrées dans l'Annexe D.
 
-\subsubsection{Influence du paramètre $\tau$}
+La parcimonie constitue un a priori majeur en reconstruction d'images. En effet, les images naturelles et médicales possèdent une structure particulière qui permet de représenter l'information de manière concise dans un domaine approprié, tel que celui des ondelettes. L'encouragement de la parcimonie lors de la reconstruction conduit à des images plus nettes, avec des contours préservés, moins bruitées et capables d'être reconstruites de manière fiable même à partir d'un nombre limité de projections. Le choix du paramètre régulant l'équilibre entre fidélité aux données et régularisation parcimonieuse est déterminant pour obtenir des reconstructions à la fois précises et stables.
 
-\begin{minted}{python}
-def reconstruire_avec_tau(tau_value):
-    """Fonction helper pour tester différents tau"""
-    f1_tau = functions.norm_l1(lambda_=tau_value)
-    solver_tau = solvers.forward_backward(step=step)
-    
-    ret_tau = solvers.solve(
-        [f1_tau, f2],
-        x0,
-        solver_tau,
-        rtol=1e-4,
-        maxit=200,
-        verbosity='NONE'
-    )
-    
-    x_tau = ret_tau['sol']
-    mse_tau = np.linalg.norm(x_tau - x_true)**2 / n
-    sparsity_tau = np.sum(np.abs(x_tau) > 1e-4) / n
-    
-    return mse_tau, sparsity_tau, ret_tau['iter']
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/admm_diagram.png}
+\caption{Flux d'exécution de la reconstruction tomographique par ADMM}
+\label{fig:ADMM_diagram_algorithm}
+\end{figure}
 
-# Test de différentes valeurs de tau
-tau_values = np.logspace(-3, 2, 20)
-results = []
+Enfin, la convergence de l'algorithme est évaluée à l'aide de critères basés sur les résidus primal et dual, garantissant que les itérations successives atteignent un état stable et que l'image obtenue respecte à la fois les mesures et la parcimonie attendue. Cette approche itérative robuste et flexible est applicable dans de nombreux domaines, tels que la tomographie médicale (scanners et radiographies), le contrôle non destructif industriel, l'imagerie sismique et la microscopie électronique.
 
-print("Analyse de sensibilité au paramètre tau:")
-print("-" * 50)
-print(f"{'tau':>10} {'MSE':>12} {'Sparsity':>12} {'Iterations':>12}")
-print("-" * 50)
-
-for tau in tau_values:
-    mse_val, sparsity_val, iterations = reconstruire_avec_tau(tau)
-    results.append((tau, mse_val, sparsity_val, iterations))
-    print(f"{tau:10.2e} {mse_val:12.2e} {sparsity_val:12.4f} {iterations:12d}")
-
-results = np.array(results)
-
-# Visualisation
-fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-
-ax = axes[0]
-ax.loglog(results[:, 0], results[:, 1], 'bo-')
-ax.set_xlabel('$\\tau$')
-ax.set_ylabel('MSE')
-ax.set_title('Erreur vs $\\tau$')
-ax.grid(True, alpha=0.3)
-
-ax = axes[1]
-ax.semilogx(results[:, 0], results[:, 2], 'ro-')
-ax.set_xlabel('$\\tau$')
-ax.set_ylabel('Taux de parcimonie')
-ax.set_title('Parcimonie vs $\\tau$')
-ax.grid(True, alpha=0.3)
-
-ax = axes[2]
-ax.semilogx(results[:, 0], results[:, 3], 'go-')
-ax.set_xlabel('$\\tau$')
-ax.set_ylabel('Itérations')
-ax.set_title('Convergence vs $\\tau$')
-ax.grid(True, alpha=0.3)
-
-plt.tight_layout()
-plt.savefig('sensitivity_analysis.png', dpi=150, bbox_inches='tight')
-plt.show()
-\end{minted}
-Les résultats obtenus confirment l’efficacité du compressed sensing pour la reconstruction de signaux parcimonieux à partir d’un nombre réduit de mesures. L’algorithme forward-backward, combiné à une régularisation $\ell_1$, offre un compromis pertinent entre précision de reconstruction, parcimonie et complexité algorithmique.
-Cette étude peut être étendue à des signaux bruités, à d’autres types de matrices de mesure ou encore à des régularisations plus sophistiquées, ouvrant ainsi la voie à de nombreuses applications pratiques.
+\section{Evaluation}
+\section{Discussion}
+\section{Applications}
+\section{Innovation} % NOTRE MODELE

@@ -1,0 +1,584 @@
+\appendix
+% \stepcounter{chapter}
+\annexechapter{Génération de sinogrammes}
+
+\begin{minted}{python}
+from PIL import Image
+import numpy as np
+from skimage.data import shepp_logan_phantom
+from skimage.transform import radon, iradon, resize, iradon_sart, rescale
+from skimage.metrics import peak_signal_noise_ratio as psnr
+from skimage.metrics import structural_similarity as ssim
+\end{minted}
+
+\textbf{Description :}  
+Le code ci-dessous montre deux fonctions principales pour la génération de sinogrammes en tomographie.  
+Un sinogramme est la représentation de projections d'une image 2D selon différents angles, obtenue via la transformée de Radon. Ces sinogrammes sont utilisés pour reconstruire l'image originale, par exemple en tomographie par rayons X.  
+
+\begin{minted}{python}
+    def generate_sinogram(
+        image: np.ndarray,
+        num_angles: int,
+        add_noise: bool = False,
+        noise_level: float = 0.05
+    ):
+        """
+        Génère un sinogramme à partir d'une image en utilisant la transformée de Radon.
+
+        Paramètres :
+        - image : np.ndarray, image 2D à projeter
+        - num_angles : int, nombre de directions de projection (angles uniformes)
+        - add_noise : bool, si True, ajoute du bruit gaussien pour simuler des mesures bruitées
+        - noise_level : float, amplitude relative du bruit ajouté
+
+        Retour :
+        - sinogram : np.ndarray, sinogramme obtenu
+        - theta : np.ndarray, angles utilisés pour la projection
+        """
+        # Crée un vecteur d'angles également espacés de 0 à 180°
+        theta = np.linspace(0., 180., num_angles, endpoint=False)
+
+        # Calcule la transformée de Radon (projections de l'image)
+        sinogram = radon(image, theta=theta, circle=True)
+
+        # Ajoute du bruit si demandé
+        if add_noise:
+            noise = np.random.normal(0, noise_level * np.max(sinogram), sinogram.shape)
+            sinogram = sinogram + noise
+
+        return sinogram, theta
+\end{minted}
+
+\paragraph{Explication :}  
+Cette fonction est utilisée pour générer le sinogramme complet d'une image. Elle est utile pour des simulations de reconstruction classique où toutes les projections sont disponibles. Le paramètre add\_noise permet de simuler des mesures réalistes avec bruit, ce qui est important pour tester la robustesse des algorithmes de reconstruction.
+
+\begin{minted}{python}
+    def generate_undersampled_sinogram(
+        image: np.ndarray,
+        undersampling_factor: float = 0.5
+    ):
+        """
+        Génère un sinogramme sous-échantillonné pour la reconstruction par Compressed Sensing.
+
+        Paramètres :
+        - image : np.ndarray, image 2D à projeter
+        - undersampling_factor : float, fraction des angles à utiliser (0 < factor <= 1)
+
+        Retour :
+        - sinogram : np.ndarray, sinogramme sous-échantillonné
+        - theta_undersampled : np.ndarray, angles sélectionnés pour la projection
+        - selected_indices : np.ndarray, indices des angles sélectionnés
+        """
+        # Ensemble complet d'angles de 0 à 180°
+        full_angles = np.linspace(0., 180., 360, endpoint=False)
+
+        # Sélectionne un sous-ensemble d'angles en fonction du facteur d'undersampling
+        num_angles = int(len(full_angles) * undersampling_factor)
+        selected_indices = np.sort(np.random.choice(len(full_angles), num_angles, replace=False))
+        theta_undersampled = full_angles[selected_indices]
+
+        # Génère le sinogramme uniquement aux angles sélectionnés
+        sinogram = radon(image, theta=theta_undersampled, circle=True)
+
+        return sinogram, theta_undersampled, selected_indices
+\end{minted}
+
+\paragraph{Explication :}  
+Cette fonction est conçue pour simuler un scénario de Compressed Sensing (CS) où toutes les projections ne sont pas disponibles (sparse-view CT). 
+\begin{itemize} 
+    \item[-] undersampling\_factor contrôle combien d'angles sont conservés.  
+    \item[-] Cela permet d'évaluer la performance des algorithmes de reconstruction CS sur des données réalistes avec moins d'informations.
+\end{itemize}
+\paragraph{Exemple d'utilisation pour simulation :}  
+\begin{minted}{python}
+    if __name__ == "__main__":
+        # Crée un fantôme Shepp-Logan (image test standard en tomographie)
+        image = shepp_logan_phantom()
+
+        # Sinogramme complet
+        sinogram_full, theta_full = generate_sinogram(image, num_angles=180)
+
+        # Sinogramme sous-échantillonné (50% des angles)
+        sinogram_cs, theta_cs, selected_indices = generate_undersampled_sinogram(image, undersampling_factor=0.5)
+\end{minted}
+
+\annexechapter{Opérateur de Transformée en Ondelettes}
+\begin{minted}{python}
+from typing import Annotated
+from scipy import sparse
+from scipy.sparse.linalg import LinearOperator
+import pywt  # PyWavelets for wavelet transform
+import time
+
+
+def create_wavelet_operator(
+    image_shape: Annotated[Tuple[int, int], "Height x Width"],
+    wavelet: str ='db1',
+    level: int|None =None
+):
+    """
+    Create wavelet transform operator W and its adjoint W^T
+    """
+
+    height, width = image_shape
+    n_pixels = height * width
+
+    # ---- Create reference coefficient structure ----
+    dummy = np.zeros(image_shape)
+    coeffs = pywt.wavedec2(dummy, wavelet, level=level)
+    coeff_array_ref, coeff_slices = pywt.coeffs_to_array(coeffs)
+
+    coeff_shape = coeff_array_ref.shape
+    n_coeffs = coeff_array_ref.size
+
+    # ---- Forward: W x ----
+    def wavelet_forward(x):
+        img = x.reshape(image_shape)
+        coeffs = pywt.wavedec2(img, wavelet, level=level)
+        coeff_array, _ = pywt.coeffs_to_array(coeffs)
+        return coeff_array.flatten()
+
+    # ---- Adjoint / Inverse: W^T w ----
+    def wavelet_adjoint(w):
+        coeff_array = w.reshape(coeff_shape)
+        coeffs = pywt.array_to_coeffs(
+            coeff_array,
+            coeff_slices,
+            output_format='wavedec2'
+        )
+        img = pywt.waverec2(coeffs, wavelet)
+        return img[:height, :width].flatten()
+
+    Wop = LinearOperator(
+        shape=(n_coeffs, n_pixels),
+        matvec=wavelet_forward,
+        rmatvec=wavelet_adjoint,
+        dtype=np.float64
+    )
+
+    return Wop
+\end{minted}
+
+\annexechapter{Reconstruction d'Images en Tomographie par Transformée de Radon}
+\begin{minted}{python}
+    from scipy.sparse.linalg import LinearOperator
+    from skimage.transform import radon, iradon
+    import numpy as np
+
+    def create_system_matrix(image_shape, theta):
+        """
+        Matrix-free CT system operator A and its adjoint A^T
+        (true Radon transform and unfiltered backprojection)
+        """
+        height, width = image_shape
+        n_pixels = height * width
+        n_rays = height * len(theta)
+
+        def matvec(x):
+            """
+            Forward projection: y = A x
+            """
+            image = x.reshape(image_shape)
+            sinogram = radon(image, theta=theta, circle=True)
+            return sinogram.flatten()
+
+        def rmatvec(y):
+            """
+            Adjoint operator: x = A^T y
+            (unfiltered backprojection)
+            """
+            sino = y.reshape((height, len(theta)))
+            backproj = iradon(
+                sino,
+                theta=theta,
+                filter_name=None,  # CRITICAL
+                circle=True,
+                output_size=height
+            )
+            return backproj.flatten()
+
+        A = LinearOperator(
+            shape=(n_rays, n_pixels),
+            matvec=matvec,
+            rmatvec=rmatvec,
+            dtype=np.float64
+        )
+
+        return A
+\end{minted}
+\section{Explication détaillée du code : opérateur de tomographie (CT scan)}
+
+\subsection{Objectif du code}
+
+Ce code crée un opérateur linéaire qui modélise un système de tomographie (scanner médical) en utilisant la transformée de Radon. Il permet de simuler l'acquisition de données CT (projections) et la rétroprojection non filtrée.
+
+\subsection{Explication ligne par ligne}
+
+\subsubsection{Importations}
+
+\begin{minted}{python}
+from scipy.sparse.linalg import LinearOperator
+from skimage.transform import radon, iradon
+import numpy as np
+\end{minted}
+
+\begin{itemize}
+\item \texttt{LinearOperator} : classe de SciPy pour créer des opérateurs linéaires sans matrice explicite.
+\item \texttt{radon}, \texttt{iradon} : fonctions de scikit-image pour la transformée de Radon directe et inverse.
+\item \texttt{numpy} : manipulation de tableaux.
+\end{itemize}
+
+\subsubsection{Paramètres de la fonction}
+
+\begin{minted}{python}
+def create_system_matrix(image_shape, theta):
+    """
+    Matrix-free CT system operator A and its adjoint A^T
+    (true Radon transform and unfiltered backprojection)
+    """
+    height, width = image_shape
+    n_pixels = height * width
+    n_rays = height * len(theta)
+\end{minted}
+
+\begin{itemize}
+\item \texttt{image\_shape} : dimensions (hauteur, largeur) de l'image à reconstruire.
+\item \texttt{theta} : liste des angles de projection (en degrés) pour lesquels on acquiert des données.
+\item \texttt{n\_pixels} : nombre total de pixels dans l'image.
+\item \texttt{n\_rays} : nombre total de rayons mesurés (hauteur du détecteur $\times$ nombre d'angles).
+\end{itemize}
+
+\subsubsection{Fonction de projection avant ($A$)}
+
+\begin{minted}{python}
+def matvec(x):
+    """
+    Forward projection: y = A x
+    """
+    image = x.reshape(image_shape)
+    sinogram = radon(image, theta=theta, circle=True)
+    return sinogram.flatten()
+\end{minted}
+
+\begin{itemize}
+\item Remet le vecteur \texttt{x} en forme 2D.
+\item Applique la transformée de Radon pour simuler l'acquisition CT.
+\item Retourne le sinogramme aplati en un vecteur 1D.
+\end{itemize}
+
+\textbf{Interprétation physique :} Cette fonction simule le passage des rayons X à travers l'objet. Chaque pixel du sinogramme représente l'atténuation totale le long d'un rayon.
+
+\subsubsection{Fonction de rétroprojection ($A^T$)}
+
+\begin{minted}{python}
+def rmatvec(y):
+    """
+    Adjoint operator: x = A^T y
+    (unfiltered backprojection)
+    """
+    sino = y.reshape((height, len(theta)))
+    backproj = iradon(
+        sino,
+        theta=theta,
+        filter_name=None,  # CRITICAL
+        circle=True,
+        output_size=height
+    )
+    return backproj.flatten()
+\end{minted}
+
+\begin{itemize}
+\item Remet le sinogramme aplati en forme 2D.
+\item Applique la rétroprojection non filtrée via \texttt{iradon} avec \texttt{filter\_name=None}.
+\item Recadre l'image à la taille originale et l'aplatit.
+\end{itemize}
+
+\textbf{Interprétation physique :} La rétroprojection "étale" chaque mesure le long du trajet du rayon correspondant. C'est l'opération mathématiquement adjointe à la projection avant.
+
+\subsubsection{Création de l'opérateur linéaire}
+
+\begin{minted}{python}
+A = LinearOperator(
+    shape=(n_rays, n_pixels),
+    matvec=matvec,
+    rmatvec=rmatvec,
+    dtype=np.float64
+)
+
+return A
+\end{minted}
+
+\subsection{Utilisation typique}
+
+\begin{minted}{python}
+# Définir la géométrie d'acquisition
+image_size = 256
+angles = np.linspace(0, 180, 180)  # 180 projections sur 180°
+
+# Créer l'opérateur CT
+A = create_system_matrix((image_size, image_size), angles)
+
+# Simuler l'acquisition à partir d'une image fantôme
+phantom = np.zeros((256, 256))
+# ... remplir le fantôme ...
+projections = A @ phantom.flatten()  # Équivalent à A * phantom
+
+# Reconstruire par rétroprojection (non filtrée)
+reconstruction = A.H @ projections    # Équivalent à A^T * projections
+\end{minted}
+
+\subsection{Applications}
+
+\begin{enumerate}
+\item Simulation d'acquisitions CT pour générer des données synthétiques.
+\item Reconstruction itérative (ART, SIRT, méthodes de gradient).
+\item Résolution de problèmes inverses avec régularisation (TV, ondelettes, etc.).
+\item Compressed sensing en tomographie.
+\end{enumerate}
+
+\subsection{Notes importantes}
+
+\begin{itemize}
+\item L'opérateur est "matrix-free" : aucune matrice n'est stockée explicitement.
+\item Mémoire utilisée : $O(n\_pixels)$ au lieu de $O(n\_pixels \times n\_rays)$.
+\item L'opérateur adjoint $A^T$ est différent de l'inverse $A^{-1}$.
+\item Pour une reconstruction réelle, appliquer un filtre (ramp) ou utiliser des méthodes itératives.
+\end{itemize}
+
+
+\annexechapter{La Reconstruction Tomographique par Séparation de Variables (ADMM)}
+\begin{minted}{python}
+    from tqdm import tqdm
+    import numpy as np
+    from scipy.sparse.linalg import cg, LinearOperator
+
+
+    def cs_reconstruction_admm(
+        sinogram, theta, image_shape,
+        rho=1.0, lambda_l1=0.01, max_iter=100
+    ):
+
+        height, width = image_shape
+        n_pixels = height * width
+
+        A = create_system_matrix(image_shape, theta)
+        Wop = create_wavelet_operator(image_shape, wavelet="bior4.4")
+
+
+        # Initialize
+        x = np.zeros(n_pixels)
+        z = np.zeros(Wop.shape[0])
+        u = np.zeros_like(z)
+
+        for k in tqdm(range(max_iter)):
+
+            # ---- x-update ----
+            def lhs(v):
+                return (
+                    A.rmatvec(A.matvec(v)) +
+                    rho * Wop.rmatvec(Wop.matvec(v))
+                )
+
+            rhs = (
+                A.rmatvec(sinogram.flatten()) +
+                rho * Wop.rmatvec(z - u)
+            )
+
+            x, _ = cg(
+                LinearOperator((n_pixels, n_pixels), matvec=lhs),
+                rhs, x0=x, maxiter=50
+            )
+
+            # ---- z-update (soft thresholding) ----
+            Wx = Wop.matvec(x)
+            v = Wx + u
+            z_old = z.copy()
+            z = np.sign(v) * np.maximum(np.abs(v) - lambda_l1 / rho, 0)
+
+            # ---- u-update ----
+            u = u + Wx - z
+
+            # ---- convergence check ----
+            r_norm = np.linalg.norm(Wx - z)
+            s_norm = rho * np.linalg.norm(z - z_old)
+
+            if r_norm < 1e-4 and s_norm < 1e-4:
+                print(f"ADMM converged at iteration {k}")
+                break
+
+        return x.reshape(image_shape)
+\section{Reconstruction CT par Compressed Sensing avec ADMM}
+
+\subsection{Objectif du code}
+
+Ce code reconstruit une image CT à partir d'un sinogramme incomplet ou bruité en utilisant la régularisation par ondelettes (compressed sensing) avec l'algorithme ADMM (Alternating Direction Method of Multipliers).
+
+\subsection{Contexte mathématique}
+
+On cherche à résoudre : 
+\[
+\min_x \frac{1}{2}\|Ax - y\|_2^2 + \lambda \|Wx\|_1
+\]
+où :
+\begin{itemize}
+\item $A$ est l'opérateur de projection CT
+\item $y$ est le sinogramme mesuré
+\item $W$ est la transformée en ondelettes
+\item $\lambda$ contrôle la force de la régularisation parcimonieuse
+\end{itemize}
+
+\subsection{Explication ligne par ligne}
+
+\subsubsection{Paramètres de la fonction}
+
+\begin{minted}{python}
+def cs_reconstruction_admm(
+    sinogram, theta, image_shape,
+    rho=1.0, lambda_l1=0.01, max_iter=100
+):
+\end{minted}
+
+\begin{itemize}
+\item \texttt{sinogram} : données CT acquises (projections)
+\item \texttt{theta} : angles de projection utilisés
+\item \texttt{image\_shape} : dimensions de l'image à reconstruire
+\item \texttt{rho} : paramètre de pénalité ADMM
+\item \texttt{lambda\_l1} : poids de la régularisation L1
+\item \texttt{max\_iter} : nombre maximal d'itérations
+\end{itemize}
+
+\subsubsection{Initialisation des opérateurs}
+
+\begin{minted}{python}
+A = create_system_matrix(image_shape, theta)
+Wop = create_wavelet_operator(image_shape, wavelet="bior4.4")
+\end{minted}
+
+\begin{itemize}
+\item $A$ : opérateur de projection CT
+\item $Wop$ : opérateur de transformée en ondelettes biorthogonales 4.4
+\end{itemize}
+
+\subsubsection{Initialisation des variables ADMM}
+
+\begin{minted}{python}
+x = np.zeros(n_pixels)           # Image à reconstruire
+z = np.zeros(Wop.shape[0])       # Variable auxiliaire (coefficients d'ondelettes)
+u = np.zeros_like(z)             # Multiplicateur de Lagrange (dual)
+\end{minted}
+
+ADMM décompose le problème en sous-problèmes plus simples avec trois variables :
+\begin{itemize}
+\item $x$ : image dans l'espace des pixels
+\item $z$ : coefficients d'ondelettes (parcimonieux)
+\item $u$ : variable duale qui force $Wx \approx z$
+\end{itemize}
+
+\subsubsection{Boucle principale ADMM}
+
+\begin{minted}{python}
+for k in tqdm(range(max_iter)):
+\end{minted}
+
+\paragraph{Mise à jour de x (sous-problème quadratique)}
+
+\begin{minted}{python}
+def lhs(v):
+    return (
+        A.rmatvec(A.matvec(v)) +
+        rho * Wop.rmatvec(Wop.matvec(v))
+    )
+
+rhs = (
+    A.rmatvec(sinogram.flatten()) +
+    rho * Wop.rmatvec(z - u)
+)
+
+x, _ = cg(
+    LinearOperator((n_pixels, n_pixels), matvec=lhs),
+    rhs, x0=x, maxiter=50
+)
+\end{minted}
+
+On résout : $(A^TA + \rho W^TW)x = A^Ty + \rho W^T(z - u)$
+
+\begin{itemize}
+\item \texttt{lhs(v)} : application de $(A^TA + \rho W^TW)$
+\item \texttt{rhs} : membre droit
+\item Algorithme du gradient conjugué (CG), 50 itérations max par itération ADMM
+\end{itemize}
+
+\paragraph{Mise à jour de z (seuillage doux)}
+
+\begin{minted}{python}
+Wx = Wop.matvec(x)
+v = Wx + u
+z_old = z.copy()
+z = np.sign(v) * np.maximum(np.abs(v) - lambda_l1 / rho, 0)
+\end{minted}
+
+Opération de \textbf{proximal operator} pour la norme L1 :
+\begin{itemize}
+\item Calcule les coefficients d'ondelettes $Wx$
+\item Applique le seuillage doux avec seuil $\lambda/\rho$
+\item Rend les coefficients parcimonieux
+\end{itemize}
+
+\paragraph{Mise à jour de u (variable duale)}
+
+\begin{minted}{python}
+u = u + Wx - z
+\end{minted}
+
+Met à jour le multiplicateur de Lagrange.
+
+\paragraph{Vérification de convergence}
+
+\begin{minted}{python}
+r_norm = np.linalg.norm(Wx - z)           # Résidu primal
+s_norm = rho * np.linalg.norm(z - z_old)  # Résidu dual
+
+if r_norm < 1e-4 and s_norm < 1e-4:
+    print(f"ADMM converged at iteration {k}")
+    break
+\end{minted}
+
+Critères classiques d'arrêt :
+\begin{itemize}
+\item Résidu primal : $\|Wx - z\|$
+\item Résidu dual : $\rho \|z - z_\text{old}\|$
+\end{itemize}
+
+\subsection{Utilisation typique}
+
+\begin{minted}{python}
+# Données CT (peu de projections)
+angles = np.linspace(0, 180, 30)
+sinogram = radon(phantom, theta=angles, circle=True)
+
+# Reconstruction CS
+reconstructed = cs_reconstruction_admm(
+    sinogram, angles, (256, 256),
+    rho=1.0, lambda_l1=0.01, max_iter=50
+)
+
+# Visualisation
+plt.imshow(reconstructed, cmap='gray')
+\end{minted}
+
+\subsection{Avantages}
+
+\begin{enumerate}
+\item Compressed sensing : reconstruction avec peu de projections
+\item Régularisation parcimonieuse : exploite la parcimonie en ondelettes
+\item ADMM : décomposition en sous-problèmes simples
+\item Matrix-free : adaptée aux grandes images sans mémoire excessive
+\end{enumerate}
+
+\subsection{Paramètres clés à ajuster}
+
+\begin{itemize}
+\item \texttt{rho} : équilibre fidélité/régularisation (0.1 à 10)
+\item \texttt{lambda\_l1} : force de la régularisation L1
+\item \texttt{max\_iter} : nombre d'itérations ADMM (50–200 selon la difficulté)
+\end{itemize}

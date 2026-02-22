@@ -16,6 +16,7 @@
 
 \usepackage{graphicx}
 % \usepackage{caption}
+\usepackage{appendix}
 \usepackage[textfont=bf]{caption}
 \usepackage[labelfont=bf]{caption}
 
@@ -31,8 +32,8 @@
 \usepackage{algpseudocode} 
 \usepackage{tocloft}
 \usepackage{pdfpages}  % Pour insérer des PDF
-
 \usepackage{nomencl}
+\usepackage{etoolbox}
 \makenomenclature
 
 
@@ -73,6 +74,13 @@
 \titleformat{\chapter}[display]
   {\rmfamily\bfseries} % <-- change ici la police : \rmfamily, \sffamily, \ttfamily
   {CHAPITRE \ \thechapter}{20pt}{\large}
+
+
+\newcommand{\annexechapter}[1]{%
+  \refstepcounter{chapter}%
+  \chapter*{ANNEXE \ \thechapter\quad #1}%
+  \addcontentsline{toc}{chapter}{ANNEXE \ \thechapter\quad #1}%
+}
 % =================================================================
 % FIGURES STYLE
 % Numérotation des figures en chiffres arabes
@@ -175,6 +183,7 @@
     \input{chapters/chap 2. OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES PAR LE COMPRESSED SENSING.tex}
     \input{chapters/chap 3. NOTRE MODÈLE.tex}
     \input{chapters/chap 4. SIMULATION, DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES.tex}
+    \input{chapters/annexe.tex}
     % \input{chapters/3. Reconstruction d'images : problèmes inverses et compressive sensing.tex}
     % \input{chapters/4. Inverse Problem-based Image Reconstruction using Neural Regularizers.tex}
     % ================================================================
@@ -189,25 +198,42 @@
         % \bibitem{3} Linwei Fan, Fan Zhang, Hui Fan, and Caiming Zhang, \emph{Brief review of image denoising techniques}
         % \bibitem{4} Michael S. Hansen, and Peter Kellman, \emph{Image reconstruction: an overview from clinicians}
         % \bibitem{5} Joshua Trzasko*, Member, IEEE, and Armando Manduca, Member, IEEE, \emph{Highly Undersampled Magnetic Resonance Image Reconstruction via Homotopic `0-Minimization}
-        \bibitem{6} Helmholtz Imaging, Deutsches Elektronen-Synchrotron DESY, Notkestr. 85, 22607 Hamburg, Germany, \emph{ntroduction to Regularization and Learning Methods for Inverse Problems}
-        \bibitem{7} Bunyamin Yildiz *, Murat Subasi, Ali Sever, \emph{On a regularization problem}
-        \bibitem{8} J. P. Bregman, \emph{Bregman Iteration for Correspondence Problems}
+        % \bibitem{6} Helmholtz Imaging, Deutsches Elektronen-Synchrotron DESY, Notkestr. 85, 22607 Hamburg, Germany, \emph{ntroduction to Regularization and Learning Methods for Inverse Problems}
+        % \bibitem{7} Bunyamin Yildiz *, Murat Subasi, Ali Sever, \emph{On a regularization problem}
+        % \bibitem{8} J. P. Bregman, \emph{Bregman Iteration for Correspondence Problems}
+        % \bibitem{15} Gao, Hongxia, Luo, Yinghao, Chen, Kewei, Ma, Ge, and Wu, Lixuan, \emph{An Image Reconstruction Model and Hybrid Algorithm for Limited-angle Projection Data}.
+        % \bibitem{16} INGRID DAUBECHIES, A. COHEN \emph{Biorthogonal Bases of Compactly Supported Wavelets} 
+        % \bibitem{22} Sarobidy Nomenjanahary Razafitsalama Fin Luc1 , Marie Emile Randrianandrasana2 , Hariony Bienvenu Rakotonirina2, \emph{Image Reconstruction in Compressive Sensing Using Daubechies 7 (db7) and Lifting Wavelet Transforms with SP, CoSaMP, and ALISTA Algorithms}
+        \bibitem{17} \emph{COMPARISON BETWEEN ORTHOGONAL AND BI-ORTHOGONAL WAVELETS}
+        \bibitem{14}  Engl, Heinz W., and R. Ramlau, \emph{Regularization of inverse problems}. Kluwer Academic Publishers, 2000.
         \bibitem{9} Jen Beatty Colby College, \emph{The Radon Transform and the Mathematics of Medical Imaging}
         \bibitem{10} R. Snieder and J. Trampert. \emph{Linear and nonlinear inverse problems}. Department of Geophysics, Utrecht University, P.O. Box 80.021, 3508 TA Utrecht, The Netherlands. Email: snieder@geo.uu.nl.
         \bibitem{11} I. Bloch. \emph{Reconstruction d’images de tomographie}. LTCI, Télécom Paris, Isabelle.Bloch@telecom-paris.fr.
         \bibitem{12} S. Qin. \emph{Simple algorithm for L1-norm regularisation-based compressed sensing and image restoration}. Third Institute of Physics, Georg-August-Universität Göttingen, Friedrich-Hund-Platz 1, Göttingen, Germany. Email: shun.qin@outlook.com.
         \bibitem{13} M. Piening, F. Altekrüger, J. Hertrich, P. Hagemann, A. Walther and G. Steidl. \emph{Learning from small data sets: Patch-based regularizers in inverse problems for image reconstruction}. (Information manquante pour l’affiliation complète). Note: Les affiliations sont indiquées par les chiffres 1 et 2, mais ne sont pas détaillées dans le texte fourni.
-        \bibitem{14}  Engl, Heinz W., and R. Ramlau, \emph{Regularization of inverse problems}. Kluwer Academic Publishers, 2000.
-        \bibitem{15} Gao, Hongxia, Luo, Yinghao, Chen, Kewei, Ma, Ge, and Wu, Lixuan, \emph{An Image Reconstruction Model and Hybrid Algorithm for Limited-angle Projection Data}.
         \bibitem{15} Stephen Boyd , Neal Parikh , Eric Chu Borja Peleato and Jonathan Eckstein \emph{Distributed Optimization and Statistical Learning via the Alternating Direction Method of Multipliers}
-        \bibitem{16} INGRID DAUBECHIES, A. COHEN \emph{Biorthogonal Bases of Compactly Supported Wavelets} 
-        \bibitem{17} \emph{COMPARISON BETWEEN ORTHOGONAL AND BI-ORTHOGONAL WAVELETS}
         \bibitem{18}CANDITIIS, D.D. and VIDAKOVIC, B. (2004) \emph { Wavelet Bayesian Block Shrinkage via Mixtures of Normal-Inverse Gamma Priors}. Journal of Computational and Graphical Statistics, 13 (2), pp. 383-398
         \bibitem{19} LIU, C.-L. (2010) \emph{A Tutorial of the Wavelet Transform}.
         
         \bibitem{20}MEEN, R.S. and SHARMA, A. (2014) \emph{Comparison and Analysis of Orthogonal and Biorthogonal Wavelets for ECG Compression}. International Journal of Research in Engineering and Technology, 3 (3), pp. 242-247.
         \bibitem{21} WIM SWELDENS \emph{THE LIFTING SCHEME: A CONSTRUCTION OF SECOND GENERATION WAVELETS}
+
+        \bibitem{22} Y. Wang, Z. Liu, and H. Chen, \emph{Accurate Image Quality Assessment in Compressive Sensing: Beyond PSNR and MSE}, IEEE Transactions on Image Processing, vol. 33, pp. 2105--2118, 2024. DOI: 10.1109/TIP.2024.3372109.
+
+      \bibitem{23} A. Gupta and R. Singh, \emph{Efficient Error Metrics for Sparse Signal Recovery in Medical Imaging}, Signal Processing, vol. 212, pp. 109145, 2023. DOI: 10.1016/j.sigpro.2023.109145.
+
+      \bibitem{24} Y. Liu, H. Zhang, and Q. Wang, \emph{High-Fidelity Image Recovery in Compressive Sensing: A PSNR-Driven Optimization Framework}, IEEE Transactions on Multimedia, 2024.
+
+      \bibitem{25} W. Simoes and M. De Sa, \emph{PSNR and SSIM: Evaluation of the Imperceptibility Quality of Images Transmitted over Wireless Networks}, Procedia Computer Science, 2024. DOI: 10.1016/j.procs.2024.11.134.
+
+
+      \bibitem{26} Z. Wang and A. C. Bovik, \emph{Advances in Structural Similarity Metrics for Image Quality Assessment}, IEEE Transactions on Pattern Analysis and Machine Intelligence, vol. 45, no. 8, pp. 10212--10227, 2023. DOI: 10.1109/TPAMI.2023.3267890.
+
+      \bibitem{27} H. Li, Y. Liu, and J. Zhang, \emph{SSIM-Based Optimization for Compressive Sensing Reconstruction in Medical Imaging}, Medical Image Analysis, vol. 92, pp. 102987, 2024. DOI: 10.1016/j.media.2023.102987.
+      \bibitem{28} Jonathan Richard Shewchuk \emph{An Introduction to the Conjugate Gradient Method Without the Agonizing Pain}
+      \bibitem{29} Jeremy E. Cohen \emph{Computing the proximal operator of the $\ell_1$ induced matrix norm}
     \end{thebibliography}
+
     % ================================================================
 
 \end{document}

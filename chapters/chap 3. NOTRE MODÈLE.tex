@@ -1,4 +1,15 @@
 \chapter{NOTRE MODÈLE}
+% Avant de présenter notre modèle, il est essentiel d'introduire les concepts théoriques et méthodologiques qui constituent son fondement. Ce chapitre expose ainsi les principes du compressed sensing, la formulation des problèmes inverses en tomodensitométrie, les techniques de régularisation par parcimonie, ainsi que les outils d'optimisation et les transformées en ondelettes utilisés dans notre approche. Dans ce cadre, nous proposons un modèle dédié à la reconstruction d'images en tomodensitométrie dans un contexte de données limitées. Ce modèle s'appuie sur le principe de parcimonie afin de permettre une reconstruction fidèle à partir d'un nombre réduit de mesures. Le problème est formulé comme un problème inverse mal posé, traité à l'aide d'une approche variationnelle intégrant une régularisation basée sur les transformées en ondelettes. Sa résolution repose sur l'algorithme ADMM, reconnu pour son efficacité dans ce type de problèmes d'optimisation. Enfin, des indicateurs quantitatifs sont introduits afin d'évaluer la qualité des reconstructions et de valider les performances du modèle proposé.
+\section{Introduction du chapitre}
+
+Avant d'introduire formellement le modèle de reconstruction proposé, il est nécessaire d'établir le cadre théorique et méthodologique qui en constitue le fondement. La reconstruction d'images en tomodensitométrie à faible dose s'inscrit en effet dans le cadre des problèmes inverses mal posés, où la réduction du nombre de mesures compromet la stabilité et l'unicité de la solution. Dans ce contexte, le paradigme du \textit{compressed sensing} fournit un cadre théorique rigoureux permettant d'exploiter la parcimonie intrinsèque des images afin de rendre le problème bien conditionné et de permettre une reconstruction fiable à partir de données limitées.
+
+Ce chapitre présente ainsi les principes fondamentaux du \textit{compressed sensing}, la formulation mathématique du problème inverse en tomodensitométrie, ainsi que les approches de régularisation parcimonieuse fondées sur les représentations multi-échelles. Une attention particulière est portée aux transformées en ondelettes biorthogonales, dont les propriétés de localisation et de représentation efficace des singularités les rendent particulièrement adaptées aux images tomographiques. Nous présentons également le cadre variationnel retenu, dans lequel le problème de reconstruction est formulé comme un problème d'optimisation convexe combinant un terme de fidélité aux données et un terme de régularisation favorisant la parcimonie.
+
+La résolution de ce problème est réalisée à l'aide de l'algorithme ADMM (\textit{Alternating Direction Method of Multipliers}), dont la structure permet de découpler efficacement les différentes composantes du problème tout en garantissant la stabilité et l'efficacité numérique du processus de reconstruction. Enfin, ce chapitre introduit les métriques quantitatives utilisées pour l'évaluation des performances du modèle, notamment la MSE, le PSNR et le SSIM, qui permettront d'analyser de manière objective la qualité et la fidélité structurelle des images reconstruites.
+
+L'ensemble de ces éléments conduit à la définition d'un modèle de reconstruction parcimonieux adapté au contexte de tomodensitométrie à faible dose, constituant le socle théorique et algorithmique des développements présentés dans la suite de ce manuscrit.
+
 % ---- TODO -----
 % \section{Limites de la méthode analytique}
 % ============================================================
@@ -227,7 +238,7 @@ seront abordés dans les sections suivantes.
 % ============================================================================================
 \subsection{Formulation du problème}
 
-Dans le cadre de la tomographie par rayons X (CT), la reconstruction d’image à partir d’un nombre limité de projections conduit à un problème inverse sous-déterminé. Le cadre du \emph{Compressed Sensing} (CS) permet de résoudre ce problème en exploitant la parcimonie intrinsèque des images CT dans un domaine approprié, typiquement le domaine du gradient.
+Dans le cadre de la tomographie par rayons X (CT), la reconstruction d'image à partir d'un nombre limité de projections conduit à un problème inverse sous-déterminé. Le cadre du \emph{Compressed Sensing} (CS) permet de résoudre ce problème en exploitant la parcimonie intrinsèque des images CT dans un domaine approprié, typiquement le domaine du gradient.
 
 \begin{definition}[Image et représentation parcimonieuse]
 Considérons une image $f$, vue comme un vecteur colonne de dimension $n \times 1$ dans $\mathbb{R}^n$, dont les éléments individuels $f_j$, pour $j = 1, 2, \ldots, n$, représentent les $n$ valeurs de pixels de l'image. On développe le vecteur $f$ dans une base orthonormée $\Psi$ comme suit :
@@ -239,7 +250,7 @@ où $\Psi$ est la matrice $n \times n$ $[\boldsymbol{\psi}_1, \ldots, \boldsymbo
 Si la majorité des composantes du vecteur $\mathbf{x}$ sont nulles ou quasi nulles, on dira que $f$ est \textbf{parcimonieuse} dans le domaine $\Psi$, et que $\mathbf{x}$ constitue sa \textbf{représentation parcimonieuse}.
 \end{definition}
 
-Dans le cas des images CT, la parcimonie ne s’exprime généralement pas directement dans le domaine spatial, mais plutôt dans le domaine du gradient. Les images CT sont en effet caractérisées par des régions quasi homogènes séparées par des discontinuités nettes, ce qui rend leur gradient parcimonieux.
+Dans le cas des images CT, la parcimonie ne s'exprime généralement pas directement dans le domaine spatial, mais plutôt dans le domaine du gradient. Les images CT sont en effet caractérisées par des régions quasi homogènes séparées par des discontinuités nettes, ce qui rend leur gradient parcimonieux.
 
 Considérons l'exemple du fantôme de Shepp--Logan représenté à la \Cref{fig:shepp-logan} et de son équivalent en gradient à la \Cref{fig:shepp-logan-gradient}. On note l'intensité d'un pixel d'une image bidimensionnelle par $f_{h,w}$, où $h = 1,2,\ldots,H$ et $w = 1,2,\ldots,W$ ; $H$ et $W$ désignent respectivement la hauteur et la largeur de l'image 2D, et $W \times H = n$.
 
@@ -257,7 +268,7 @@ Si les valeurs des pixels sont notées $f_{h,w}$, le module du gradient discret 
 \end{equation}
 \end{definition}
 
-La \emph{variation totale} (Total Variation, TV) de l’image est alors définie comme la somme du module du gradient sur l’ensemble des pixels :
+La \emph{variation totale} (Total Variation, TV) de l'image est alors définie comme la somme du module du gradient sur l'ensemble des pixels :
 \[
 \mathrm{TV}(f) = \sum_{h,w} \left| \nabla f_{h,w} \right|.
 \]
@@ -282,10 +293,10 @@ En imagerie CT réaliste, les données de projection à faisceau parallèle, ég
 \begin{equation}
 \mathbf{g} = \Phi \mathbf{f},
 \end{equation}
-où $\mathbf{g} \in \mathbb{R}^m$ est le vecteur des mesures de projection, et $\Phi \in \mathbb{R}^{m \times n}$ est la matrice système décrivant la géométrie d’acquisition CT.
+où $\mathbf{g} \in \mathbb{R}^m$ est le vecteur des mesures de projection, et $\Phi \in \mathbb{R}^{m \times n}$ est la matrice système décrivant la géométrie d'acquisition CT.
 \end{proposition}
 
-En introduisant la représentation parcimonieuse de l’image, le modèle devient :
+En introduisant la représentation parcimonieuse de l'image, le modèle devient :
 \begin{equation}
 \mathbf{g} = \Phi \mathbf{f} = \Phi \Psi \mathbf{x} = \Phi' \mathbf{x},
 \label{eq:4}
@@ -295,7 +306,7 @@ où $\Phi' = \Phi \Psi$.
 Lorsque le nombre de projections est limité, on a $m \ll n$, ce qui rend le système sous-déterminé.
 
 \begin{proposition}[Reconstruction CT par Compressed Sensing]
-La reconstruction de l’image consiste alors à résoudre le problème d’optimisation suivant :
+La reconstruction de l'image consiste alors à résoudre le problème d'optimisation suivant :
 \begin{equation}
 \mathbf{x}
 =
@@ -309,12 +320,12 @@ La reconstruction de l’image consiste alors à résoudre le problème d’opti
 où $\varepsilon$ modélise le bruit présent dans les mesures.
 \end{proposition}
 
-Dans le cas particulier du CT, cette formulation est équivalente à une minimisation de la variation totale de l’image sous contrainte de fidélité aux données.
+Dans le cas particulier du CT, cette formulation est équivalente à une minimisation de la variation totale de l'image sous contrainte de fidélité aux données.
 
-\subsection{ADMM (Alternating Direction Method of Multipliers)}
+\section{ADMM (Alternating Direction Method of Multipliers)}
 Cette section expose brièvement deux algorithmes d'optimisation précurseurs de ADMM, fournissant ainsi le contexte théorique nécessaire à sa compréhension.
 
-\subsubsection{Ascension Duale.}
+\subsection{Ascension Duale.}
 Considérons le problème d'optimisation convexe sous contrainte d'égalité
 \begin{equation}
     \begin{aligned}
@@ -351,7 +362,7 @@ La méthode d'ascension duale peut être utilisée même dans certains cas où \
 
 Si \( \alpha^k \) est choisi de manière appropriée et que plusieurs autres hypothèses sont vérifiées, alors \( x^k \) converge vers un point optimal et \( y^k \) converge vers un point dual optimal. Cependant, ces hypothèses ne sont pas vérifiées dans de nombreuses applications, donc l'ascension duale ne peut souvent pas être utilisée. Par exemple, si \( f \) est une fonction affine non nulle d'une composante quelconque de \( x \), alors la mise à jour de \( x \) échoue, car \( L \) n'est pas bornée inférieurement en \( x \) pour la plupart des \( y \).
 
-\subsubsection{Décomposition Duale.}
+\subsection{Décomposition Duale.}
 L'avantage majeur de la méthode d'ascension duale est qu'elle peut conduire à un algorithme décentralisé dans certains cas. Supposons, par exemple, que l'objectif \( f \) est séparable (par rapport à une partition ou un éclatement de la variable en sous-vecteurs), ce qui signifie que
 
 \[f(x) = \sum_{i=1}^N f_i(x_i),\]
@@ -379,7 +390,7 @@ L'étape de minimisation en \( x \) \eqref{eq:x_minimisation} est effectuée ind
 
 Dans le cas général, chaque itération de la méthode de décomposition duale nécessite une opération de diffusion et une opération de collecte. Dans l'étape de mise à jour duale \eqref{eq:dual_update}, les contributions du résidu de la contrainte d'égalité \( A_i x_i^{k+1} \) sont collectées (rassemblées) afin de calculer le résidu \( Ax^{k+1} - b \). Une fois que la variable duale (globale) \( y^{k+1} \) est calculée, elle doit être distribuée (diffusée) aux processeurs qui effectuent les \( N \) étapes individuelles de minimisation de \( x_i \) \eqref{eq:x_minimisation}.
 
-\subsubsection{Lagrangiens Augmentés et la Méthode des Multiplicateurs.}
+\subsection{Lagrangiens Augmentés et Méthode des Multiplicateurs}
 Les méthodes de Lagrangien augmenté ont été développées en partie pour apporter de la robustesse à la méthode d'ascension duale, et en particulier, pour obtenir une convergence sans hypothèses comme la stricte convexité ou le caractère fini de \( f \). Le Lagrangien augmenté pour \eqref{eq:optimisation_convexe} est
 
 \begin{equation}
@@ -426,7 +437,7 @@ Nous voyons qu'en utilisant \( \rho \) comme taille de pas dans la mise à jour 
 
 Les propriétés de convergence grandement améliorées de la méthode des multiplicateurs par rapport à l'ascension duale ont un coût. Lorsque \( f \) est séparable, le Lagrangien augmenté \( L_\rho \) n'est pas séparable, donc l'étape de minimisation en \( x \) \eqref{eq:methodes_multiplicateurs1} ne peut pas être effectuée séparément en parallèle pour chaque \( x_i \). Cela signifie que la méthode de base des multiplicateurs ne peut pas être utilisée pour la décomposition. Nous verrons comment résoudre ce problème ensuite.
 
-\subsubsection{ADMM algorithme}
+\subsection{ Etapes sur l'algorithme ADMM}
 L'ADMM est un algorithme conçu pour fusionner la décomposabilité de l'ascension duale avec les propriétés de convergence supérieures de la méthode des multiplicateurs. L'algorithme résout des problèmes de la forme
 
 
@@ -511,7 +522,7 @@ la somme cumulée des résidus.\vspace{5pt}\\
 Nous appelons la première forme de l'ADMM ci-dessus, donnée par (\eqref{eq:x_update}-\eqref{eq:y_update}), la forme non mise à l'échelle, et la seconde forme (\eqref{eq:x_update_scaled}-\eqref{eq:u_update_scaled}) la forme mise à l'échelle, car elle est exprimée en fonction d'une version mise à l'échelle de la variable duale. Les deux sont clairement équivalentes, mais les formules dans la forme mise à l'échelle de l'ADMM sont souvent plus courtes que dans la forme non mise à l'échelle, donc nous utiliserons la forme mise à l'échelle dans la suite. Nous utiliserons la forme non mise à l'échelle lorsque nous souhaitons souligner le rôle de la variable duale ou donner une interprétation qui repose sur la variable duale (non mise à l'échelle).
 
 % ===================================================================
-\subsection{Transformées en Ondelettes Biorthogonales}
+\section{Transformées en Ondelettes Biorthogonales}
 
 L'analyse et le traitement du signal constituent un pilier fondamental des sciences et technologies modernes. De la compression d'images médicales à la reconnaissance de formes en passant par la transmission de données numériques, les outils mathématiques permettant de représenter, transformer et interpréter les signaux sont au cœur d'innombrables innovations.
 
@@ -524,7 +535,7 @@ Les ondelettes sont utiles dans diverses applications telles que la sismologie, 
 Dans de nombreux cas, la transformée en ondelettes joue un rôle important. Différentes familles d'ondelettes sont disponibles, telles que les ondelettes orthogonales, biorthogonales et biorthogonales inverses, l'ondelette de Daubechies, l'ondelette de Haar, les Symlets, les Coifflets et l'ondelette de Meyer discrète. Les familles d'ondelettes orthogonales et biorthogonales démontrent une propriété de phase linéaire utile dans la reconstruction des données.
 
 
-\subsubsection{Fondements Théoriques des Ondelettes}
+\subsection{Fondements Théoriques des Ondelettes}
 Avant de comparer leurs performances, posons les fondations mathématiques sur lesquelles repose l'édifice des ondelettes \cite{17}.
 % \subsubsection{ Concepts Fondamentaux}
 
@@ -543,28 +554,10 @@ Avant de comparer leurs performances, posons les fondations mathématiques sur l
 En fait, la condition linéaire et quadratique n'est pas suffisante pour la production d'un système orthogonal. La fonction \(\psi (x)\) fournit le système orthogonal. Cela signifie que les \(\psi_{j,k}\) comprennent la base orthonormale lorsqu'ils satisfont à la condition ci-dessous :
 
 \begin{equation}
-    \int_{-\infty}^{\infty}\theta (x)\theta (x - k)dx = \delta_{0,k} \quad (1)
+    \int_{-\infty}^{\infty}\theta (x)\theta (x - k)dx = \delta_{0,k}
     \label{eq:orthogonality_condition}
 \end{equation}
-
 Cette condition donne la condition équivalente pour l'orthogonalité.
-
-% \subsubsection{Transformée de Fourier}
-
-% La transformée de Fourier est mathématiquement représentée par :
-
-% \[F(\omega) = \int_{-\infty}^{\infty}f(t)\exp (-j\omega t)dt \quad (2)\]
-
-% La conversion du signal du domaine temporel au domaine fréquentiel se fait à l'aide de la transformée de Fourier en considérant l'axe temporel complet.
-
-% En fait, les transformées de Fourier indiquent des informations sur le signal. Elles montrent les détails concernant la composante de fréquence qui apparaît ou est présente dans le signal. Elles ne donnent pas de détails sur la valeur exacte de la fréquence présente à cet instant précis.
-
-% \subsubsection{Transformée de Fourier à Court Terme (STFT)}
-
-% La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
-
-% \[S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)\]
-
 \paragraph{Transformation en Ondelettes : } Une ondelette est l'une des fonctions mathématiques utiles pour diviser un signal temporel continu ou une fonction en différentes composantes d'échelle. Fondamentalement, les ondelettes sont des oscillations qui ont une certaine valeur d'amplitude. Elles commencent à zéro, puis augmentent, et diminuent à nouveau pour revenir à 0. Cela ressemble aux brèves oscillations qui se produisent sur un sismographe.
 
 \begin{figure}[H]
@@ -767,30 +760,161 @@ Une ondelette biorthogonale est plus avancée qu'une ondelette orthogonale. Cepe
 
 La différence entre les ondelettes orthogonales et biorthogonales est qu'une ondelette orthogonale fournit une matrice orthogonale avec transformation unitaire, tandis qu'une ondelette biorthogonale donne une matrice inversible, c'est-à-dire une matrice inverse avec reconstruction parfaite. Dans le cas d'un filtre d'ondelette biorthogonal, le filtre passe-bas (LPF) et le filtre passe-haut (HPF) ont des longueurs différentes. Le filtre passe-bas démontre la symétrie, tandis que le filtre passe-haut est asymétrique ou symétrique.
 
-% \subsubsection{Conclusion}
-% Depuis plusieurs décennies, la transformation en ondelettes s'est imposée comme un outil mathématique fondamental dans de nombreux domaines scientifiques et technologiques. Les aspects théoriques et l'analyse des ondelettes trouvent des applications dans la modélisation mathématique, les réseaux de neurones artificiels, le traitement numérique du signal, ainsi que le traitement d'images et les méthodes numériques. Le terme orthogonal relève de la partie mathématique qui couvre un large domaine du traitement numérique du signal et du traitement d'images. Une ondelette orthogonale génère une ondelette dont la nature est orthogonale. Cela signifie qu'une transformée en ondelettes inverse ou transposée n'est rien d'autre que l'adjoint d'une transformée en ondelettes. Si cette condition échoue en raison d'un manque d'orthogonalité, cela peut conduire à des ondelettes biorthogonales. Des fonctions d'échelle uniques et des ondelettes uniques sont générées, mais avec un banc de filtres d'ondelettes orthogonal. L'ondelette biorthogonale associée à la transformation en ondelettes est inversible. Si elle est inversible, elle n'a pas besoin d'être orthogonale. Dans le cas de la conception d'ondelettes orthogonales, l'ondelette biorthogonale permet une liberté maximale. Elle supporte également la construction de fonctions d'ondelettes symétriques. Dans les ondelettes biorthogonales, comme leur nom l'indique, deux facteurs ou fonctions d'échelle sont responsables de la génération de diverses multi-résolutions basées sur différentes ondelettes. Pour la reconstruction d'images et de signaux, nous avons besoin de cette ondelette. En présence d'ondelettes biorthogonales, nous obtenons de meilleurs résultats. Dans le travail actuel, nous avons analysé les performances des filtres d'ondelettes orthogonaux et biorthogonaux pour le traitement d'images. Nous testons l'image et observons les coefficients de filtre et la qualité d'image pour l'ondelette orthogonale et biorthogonale. Sur la base de l'analyse des performances, il est conclu que les ondelettes biorthogonales sont supérieures aux ondelettes orthogonales.
-
-% ===================================================================
-
-% ===================================================================
 \subsection{Indicateurs permettant d'évaluer la qualité de la reconstruction}
-\subsubsection{Structural Similarity Index (SSIM)}
-\subsubsection{Peak Signal-to-Noise Ratio (PSNR)}
-\subsection{Reconstruction d'image en Compressed Sensing par ondelettes biorthogonales 4.4 et ADMM}
-\begin{definition}[Métriques de similarité d'image]
-Soient $f_r$ et $f_o$ les vecteurs représentant respectivement l'image reconstruite et l'image originale, composées de $N$ pixels. On définit les métriques suivantes :
+
+Dans le domaine du traitement d'images et de la compression de données, il est crucial de pouvoir mesurer objectivement la qualité d'une image reconstruite (ou décompressée) par rapport à son original. Ces mesures permettent de quantifier la fidélité de la reconstruction et l'information perdue (la distorsion) lors du processus. Cette section détaille trois métriques fondamentales, dont les définitions sont présentées dans le document source (image jointe).
+
+\subsubsection{Mean Squared Error (Erreur Quadratique Moyenne)}
+
+L'Erreur Quadratique Moyenne, ou Mean Squared Error (MSE), est la métrique la plus simple et la plus courante pour évaluer la différence entre deux images. Elle quantifie l'énergie de l'erreur pixel par pixel.
+
+Comme indiqué dans le document [\cite{22}, \cite{23}], sa définition mathématique est la suivante :
+
+\[
+MSE = \frac{1}{P \times Q} \sum_{i=0}^{P-1} \sum_{j=0}^{Q-1} (I_{ij} - \hat{T}_{ij})^2
+\]
+
+Où :
 \begin{itemize}
-    \item \textbf{Erreur quadratique moyenne (RMSE)} :
-    $\displaystyle \mathrm{RMSE} = \sqrt{\frac{\sum_{i=1}^{N} \left( f_{r_i} - f_{o_i} \right)^2}{N}}$
-    \item \textbf{Indice universel de qualité (UQI)} :
-    $\displaystyle \mathrm{UQI} =
-    \frac{2\,\mathrm{Cov}\{f_r,f_o\}}{D(f_r)+D(f_o)}
-    \cdot
-    \frac{2\,\bar{f}_r\,\bar{f}_o}{\bar{f}_r^{\,2}+\bar{f}_o^{\,2}}$
-    \item \textbf{Coefficient de corrélation (CC)} :
-    $\displaystyle \mathrm{CC} =
-    \frac{2\,\mathrm{Cov}\{f_r,f_o\}}
-    {\sqrt{D(f_r)\cdot D(f_o)}}$
+\item[-] \(MSE\) : désigne l'Erreur Quadratique Moyenne.
+\item[-] \(P\) : désigne le nombre de lignes (hauteur) de l'image.
+\item[-] \(Q\) : désigne le nombre de colonnes (largeur) de l'image.
+\item[-] \(I_{ij}\) : désigne la valeur du pixel à la position \((i,j)\) dans l'image originale.
+\item[-] \(\hat{T}_{ij}\) : désigne la valeur du pixel à la position \((i,j)\) dans l'image reconstruite (ou décompressée).
 \end{itemize}
-avec $\bar{f}_o = \frac{1}{N}\sum_{i=1}^{N} f_{o_i}$, $\bar{f}_r = \frac{1}{N}\sum_{i=1}^{N} f_{r_i}$, $D(f) = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{i}-\bar{f}\right)^2$,\\ et \\$\mathrm{Cov}\{f_r,f_o\} = \frac{1}{N-1}\sum_{i=1}^{N} \left(f_{r_i}-\bar{f}_r\right) \left(f_{o_i}-\bar{f}_o\right)$.
-\end{definition}
+
+\paragraph{Interprétation :}
+\begin{itemize}
+    \item[-] Le calcul consiste à faire la différence entre chaque pixel de l'original et de la reconstruction, à élever cette différence au carré (pour éviter les compensations entre erreurs positives et négatives, et pour pénaliser plus lourdement les grandes erreurs), puis à en faire la moyenne sur toute l'image.
+    \item[-] Une valeur de MSE = 0 signifie que les deux images sont identiques (reconstruction parfaite).
+    \item[-] Plus la valeur de la MSE est élevée, plus la différence entre l'original et la reconstruction est grande, indiquant une perte de qualité significative.
+\end{itemize}
+\subsubsection{Peak Signal-to-Noise Ratio (Rapport Signal sur Bruit de Crête)}
+
+Le Rapport Signal sur Bruit de Crête, ou Peak Signal-to-Noise Ratio (PSNR), est une métrique dérivée de la MSE. Elle est très populaire car elle exprime la qualité en décibels (dB), une échelle souvent plus intuitive pour les ingénieurs. Le PSNR met en relation la puissance maximale possible d'un signal (l'image) avec la puissance du bruit (l'erreur) qui dégrade sa qualité.
+
+La formule donnée dans le document [\cite{24}, \cite{25}] est la suivante :
+
+\[
+PSNR = 10 \log_{10} \left( \frac{65025}{MSE} \right)
+\]
+
+Où :
+\begin{itemize}
+\item[-] \(PSNR\) : désigne le Rapport Signal sur Bruit de Crête.
+\item[-] \(MSE\) : désigne l'Erreur Quadratique Moyenne calculée en (3).
+\end{itemize}
+
+Détail important : La valeur 65025 dans la formule est spécifique aux images en niveaux de gris codées sur 8 bits. Dans ce codage, la valeur maximale qu'un pixel peut prendre est \(2^8 - 1 = 255\). Le terme 65025 est simplement le carré de cette valeur maximale (\(255^2\)). Plus généralement, la formule s'écrit \( PSNR = 10 \log_{10} \left( \frac{MAX^2}{MSE} \right) \), où MAX est la valeur dynamique maximale des pixels.
+
+\paragraph{Interprétation :}
+\begin{itemize}
+    \item Le PSNR est inversement proportionnel à la MSE. Une MSE faible donnera un PSNR élevé, et vice-versa.
+    \item Une reconstruction parfaite (MSE = 0) donne un PSNR théoriquement infini.
+    \item En pratique, pour une image 8 bits :
+    \begin{itemize}
+        \item Un PSNR > 40 dB est généralement considéré comme une excellente qualité (très proche de l'original).
+        \item Un PSNR entre 30 et 40 dB est souvent jugé comme une bonne qualité (les pertes sont visibles mais acceptables).
+        \item Un PSNR < 20 dB indique une très mauvaise qualité.
+    \end{itemize}
+\end{itemize}
+
+\subsubsection{Structural Similarity Index (Indice de Similarité Structurelle)}
+
+Bien que très utilisées, la MSE et le PSNR sont des métriques purement numériques basées sur les différences de valeurs de pixels. Elles ne correspondent pas toujours à la perception visuelle humaine. L'Indice de Similarité Structurelle, ou Structural Similarity Index (SSIM), a été développé pour pallier ce problème en se concentrant sur la perception de l'information structurelle d'une scène.
+
+Le document [\cite{26}, \cite{27}] en fournit la définition :
+
+\[
+SSIM(x,y) = \frac{(2\mu_x\mu_y + C_1)(2\sigma_{xy} + C_2)}{(\mu_x^2 + \mu_y^2 + C_1)(\sigma_x^2 + \sigma_y^2 + C_2)}
+\]
+
+Où, pour une fenêtre de l'image \(x\) (original) et \(y\) (reconstruit) :
+\begin{itemize}
+    \item[-] \(\mu_x, \mu_y\) : sont les moyennes des intensités des pixels dans les fenêtres \(x\) et \(y\). Elles estiment la luminance.
+    \item[-] \(\sigma_x^2, \sigma_y^2\) : sont les variances des intensités. Elles estiment le contraste.
+    \item[-] \(\sigma_{xy}\) : est la covariance entre \(x\) et \(y\). Elle mesure la corrélation ou la similarité structurelle (comment les motifs varient ensemble).
+    \item[-] \(C_1, C_2\) : sont deux constantes servant à stabiliser la division lorsque les dénominateurs sont faibles.
+\end{itemize}
+
+\paragraph{Interprétation :}
+\begin{itemize}
+    \item[-] Le SSIM est calculé localement sur différentes fenêtres de l'image, puis la moyenne de ces valeurs donne un score global.
+    \item[-] La valeur du SSIM est comprise entre -1 et 1.
+    \item[-] Une valeur de 1 indique une similarité parfaite (les deux images sont identiques).
+    \item[-] Plus la valeur est proche de 1, meilleure est la qualité perçue. Une valeur de 0,97 ou 0,98 indique une très haute similarité structurelle, correspondant mieux à la perception humaine qu'un simple calcul d'erreur quadratique.
+\end{itemize}
+
+\subsection{Résolution du problème inverse CT par régularisation parcimonieuse : une approche ADMM associée aux ondelettes biorthogonales 4.4}
+La reconstruction tomographique à partir de données incomplètes ou bruitées constitue un problème inverse mal posé. Pour y remédier, une approche classique consiste à introduire un a priori sur la solution dans un cadre variationnel. Nous détaillons ici la stratégie d'optimisation retenue, fondée sur une régularisation favorisant la parcimonie des coefficients d'ondelettes.
+
+\subsubsection{Formulation variationnelle du problème de reconstruction CT régularisée}
+Le problème de reconstruction d'image $x \in \mathbb{R}^n$ à partir de mesures sinographiques $y \in \mathbb{R}^m$ peut s'écrire sous la forme du problème d'optimisation suivant :
+\begin{equation}
+\label{eq:problem_initial}
+\min_{x} \frac{1}{2}\left\| \mathcal{A}\mathbf{x} - \mathbf{y} \right\|_{2}^{2} + \lambda \left\|Wx\right\|_{1},
+\end{equation}
+où:
+\begin{itemize}
+    \item \(\mathcal{A} : \mathbb{R}^n \to \mathbb{R}^m\) est l'opérateur de projection modélisant l'acquisition CT (transformée de Radon discrète ou matrice système) ;
+    \item \(\mathbf{y} \in \mathbb{R}^m\) représente les données mesurées (sinogramme) ;
+    \item \(\lambda > 0\) est le paramètre de régularisation contrôlant le compromis entre la fidélité aux données et le terme a priori ;
+    \item \(W : \mathbb{R}^n \to \mathbb{R}^n\) désigne la transformée en ondelettes biorthogonales \texttt{bior4.4} (définie par les filtres d'analyse) ;
+    \item \(\|\cdot\|_1\) est la norme \(\ell_1\) qui, appliquée aux coefficients d'ondelettes \(Wx\), promeut la parcimonie.
+\end{itemize}
+
+La minimisation directe du problème \eqref{eq:problem_initial} est rendue complexe par la présence de la norme \(\ell_1\), un terme non-différentiable. Cette caractéristique exclut l'utilisation de méthodes d'optimisation simples basées uniquement sur le gradient et empêche l'obtention d'une solution sous forme analytique explicite. Il est donc nécessaire de recourir à des algorithmes itératifs plus sophistiqués, capables de traiter efficacement ce type de fonction objectif composite.
+
+\subsubsection{Séparation de variables et algorithme ADMM}
+Pour surmonter la difficulté liée à la non-différentiabilité, nous introduisons l'algorithme du Multiplicateur à Direction Alternée (ADMM). La première étape consiste à reformuler le problème en séparant les termes quadratique et non-différentiable via l'introduction d'une variable auxiliaire \(z\). En posant \(z = Wx\), le problème \eqref{eq:problem_initial} devient un problème d'optimisation sous contrainte d'égalité :
+\[
+\min_{x,z} \frac{1}{2}\left\| \mathcal{A}\mathbf{x} - \mathbf{y} \right\|_{2}^{2} + \lambda \left\|z\right\|_{1} \quad \text{tel que} \quad Wx - z = 0.
+\]
+Cette formulation est au cœur de l'ADMM : elle découple la difficulté du problème initial. La variable \(x\) n'intervient désormais que dans le terme d'attache aux données (quadratique), tandis que la variable \(z\) supporte seule le terme de régularisation non-différentiable (\(\ell_1\)).
+
+\subsubsection{Lagrangien augmenté et mises à jour itératives}
+L'algorithme ADMM résout le problème contraint en minimisant le Lagrangien augmenté associé. Introduisons la variable duale mise à l'échelle \(u\) et le paramètre de pénalité \(\rho > 0\). Le Lagrangien augmenté s'écrit :
+\[
+L_\rho(x, z, u) = \frac{1}{2}\left\| \mathcal{A}\mathbf{x} - \mathbf{y} \right\|_{2}^{2} + \lambda \left\|z\right\|_{1} + \frac{\rho}{2}\left\| Wx - z + u \right\|_{2}^{2}.
+\]
+Le terme quadratique supplémentaire, pondéré par \(\rho\), pénalise l'écart à la contrainte \(Wx = z\) et rend le sous-problème en \(x\) strictement convexe, facilitant ainsi sa résolution. Le paramètre \(\rho\) joue un rôle crucial dans la vitesse de convergence de l'algorithme en contrôlant le pas de la mise à jour duale. L'optimisation se fait alors de manière itérative et alternée sur les blocs de variables \(x\), \(z\), et \(u\).
+
+\paragraph{Mise à jour de \(x\) (sous-problème quadratique)}
+À l'itération \(k\), les variables \(z^k\) et \(u^k\) étant fixées, la mise à jour de \(x\) consiste à résoudre le problème de minimisation quadratique suivant :
+\[
+x^{k+1} = \arg\min_{x} \frac{1}{2}\left\| \mathcal{A}\mathbf{x} - \mathbf{y} \right\|_{2}^{2} + \frac{\rho}{2}\left\| Wx - z^{k} + u^{k} \right\|_{2}^{2}.
+\]
+Ce problème admet une solution unique obtenue en annulant le gradient. En développant les deux normes quadratiques et en calculant le gradient par rapport à \(x\), on obtient le système linéaire suivant :
+\[
+\left(A^T A + \rho W^T W\right)x = A^T y + \rho W^T \left(z^k - u^k\right),
+\]
+où \(A\) est la représentation matricielle de l'opérateur \(\mathcal{A}\). La matrice \(A^T A\) est symétrique semi-définie positive, typiquement mal conditionnée en tomographie. L'ajout du terme \(\rho W^T W\), où \(W^T W\) est définie positive (car la transformée en ondelettes est bi-orthogonale et surjective), améliore le conditionnement du système, le rendant définie positif et bien posé. La résolution de ce système linéaire à chaque itération est effectuée de manière efficace par l'algorithme du gradient conjugué \cite{28}, en exploitant la structure particulière des opérateurs.
+
+\paragraph{Mise à jour de \(z\) (seuillage doux)}
+La variable \(z\) est ensuite mise à jour en fixant \(x^{k+1}\) et \(u^{k}\). Le problème à résoudre est :
+\[
+z^{k+1} = \arg\min_{z} \lambda \left\|z\right\|_{1} + \frac{\rho}{2}\left\| z - \left(Wx^{k+1} + u^{k}\right) \right\|_{2}^{2}.
+\]
+Cette formulation correspond exactement à l'opérateur proximal \cite{29} de la norme \(\ell_1\), dont la solution est donnée par l'opérateur de seuillage doux (soft-thresholding) :
+\[
+z^{k+1} = \mathcal{S}_{\lambda / \rho}\left(Wx^{k+1} + u^{k}\right),
+\]
+où \(\mathcal{S}_{\tau}(t) = \operatorname{sign}(t) \max\{0, |t| - \tau\}\) est appliqué composante par composante. Cette étape est fondamentale pour imposer la parcimonie : les coefficients d'ondelettes de faible amplitude (inférieurs au seuil \(\tau = \lambda/\rho\)) sont mis à zéro, tandis que les coefficients significatifs sont réduits. La parcimonie est donc explicitement appliquée dans le domaine des ondelettes via la variable \(z\).
+
+\paragraph{Mise à jour de la variable duale \(u\)}
+Enfin, la variable duale (mise à l'échelle) est actualisée pour tenir compte de la violation de la contrainte \(Wx - z = 0\) :
+\[
+u^{k+1} = u^{k} + \left(Wx^{k+1} - z^{k+1}\right).
+\]
+Cette mise à jour, caractéristique de l'approche de type "dual ascent", ajuste la pénalité linéaire. Lorsque la contrainte est satisfaite (\(Wx^{k+1} \approx z^{k+1}\)), la variation de \(u\) devient négligeable, signalant la convergence de l'algorithme. Dans le cas contraire, la variable duale intègre l'erreur de contrainte, ce qui influence les itérations suivantes de \(x\) et \(z\) pour forcer leur accord.
+
+\paragraph{Conclusion}\text{}\vspace{5pt}\\
+Ce chapitre a posé les fondements théoriques et algorithmiques du modèle de reconstruction proposé pour la tomodensitométrie à faible dose. La réduction du nombre de mesures transforme le problème de reconstruction en un problème inverse mal posé, caractérisé par une non-unicité de la solution et une sensibilité accrue au bruit. Dans ce contexte, le cadre du \textit{compressed sensing} fournit une approche rigoureuse en exploitant la parcimonie des images dans un domaine de représentation approprié, permettant ainsi de restreindre l'espace des solutions admissibles et de stabiliser le processus de reconstruction.
+
+Sur cette base, le problème a été formulé sous la forme d'un problème variationnel combinant un terme de fidélité aux données, dérivé du modèle d'acquisition tomographique, et un terme de régularisation favorisant la parcimonie des coefficients dans une base d'ondelettes biorthogonales \texttt{bior4.4}. Ce choix se justifie par la capacité de ces ondelettes à fournir une représentation multi-échelles efficace des images, tout en préservant les structures géométriques et les discontinuités, caractéristiques essentielles des images tomographiques. La régularisation par norme $\ell_1$ constitue, dans ce cadre, un compromis optimal entre expressivité du modèle et tractabilité numérique.
+
+La résolution du problème d'optimisation associé a été réalisée à l'aide de l'algorithme ADMM (\textit{Alternating Direction Method of Multipliers}), dont la structure permet de découpler le terme de fidélité et le terme de régularisation. Cette décomposition conduit à une succession de sous-problèmes convexes, admettant des solutions efficaces et bien conditionnées : une étape quadratique pour la mise à jour de la variable image, une étape proximale correspondant à un opérateur de seuillage doux imposant la parcimonie, et une mise à jour duale assurant la cohérence des contraintes. Cette stratégie garantit à la fois la robustesse, la stabilité et l'efficacité computationnelle du schéma de reconstruction.
+
+Par ailleurs, un cadre d'évaluation rigoureux a été défini à l'aide de métriques quantitatives complémentaires, notamment la MSE, le PSNR et le SSIM, permettant d'évaluer respectivement la précision numérique, la qualité énergétique et la fidélité structurelle des images reconstruites. Ces indicateurs offrent une caractérisation objective et multidimensionnelle des performances du modèle.
+
+En définitive, ce chapitre a permis d'établir une formulation mathématique cohérente et un schéma algorithmique efficace pour la reconstruction d'images tomographiques à faible dose, fondés sur la combinaison d'une régularisation parcimonieuse en ondelettes biorthogonales et d'un algorithme d'optimisation de type ADMM. Ce cadre constitue une base solide pour l'étude expérimentale présentée dans le chapitre suivant, qui visera à valider empiriquement les propriétés du modèle et à analyser son comportement dans des conditions réalistes d'acquisition à faible dose.
