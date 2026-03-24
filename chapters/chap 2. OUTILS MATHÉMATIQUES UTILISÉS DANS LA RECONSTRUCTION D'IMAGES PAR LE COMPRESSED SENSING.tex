@@ -1,31 +1,8 @@
 \chapter{OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES CT PAR LE COMPRESSED SENSING}
+\label{chapitre2} 
+L'imagerie par tomodensitométrie (CT) repose sur un problème inverse fondamental : reconstruire une carte des coefficients d'atténuation à partir de mesures de projections angulaires. Mathématiquement, ce problème trouve sa formulation naturelle dans la transformée de Radon, qui associe à chaque orientation de mesure l'intégrale de ligne de la fonction d'atténuation. Le théorème de la coupe centrale établit ensuite un lien essentiel entre ces projections et le domaine fréquentiel via la transformée de Fourier, ouvrant la voie aux méthodes analytiques de reconstruction. La rétroprojection filtrée (FBP), qui combine filtrage fréquentiel et rétroprojection spatiale, constitue l'aboutissement pratique de cette approche et demeure la référence clinique pour sa rapidité d'exécution. Ces outils mathématiques classiques — transformée de Fourier, convolution, transformée de Radon — forment ainsi le socle théorique indispensable à toute reconstruction tomographique.
 
-Un sujet très précis et intéressant ! La reconstruction d'images à partir de projections est un aspect crucial de l'imagerie médicale, en particulier dans des modalités telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP).
-Le scanner de tomodensitométrie (CT) diagnostique, voir la \Cref{fig :tomography_device}, est un véritable
-chef-d'œuvre de la technologie moderne et constitue un exemple positif de l'influence des forces
-du marché libre dans la stimulation de l'innovation. Tous les principaux fabricants de scanners
-CT disposent d'équipes solides de recherche et développement, qui suivent et contribuent aux
-travaux de recherche en science de l'imagerie en plus de leurs activités internes.
-
-Les dispositifs CT peuvent être considérés comme la réalisation d'une caméra gigapixel en usage
-clinique courant. Alors qu'un scanner CT diagnostique moderne typique fournit des volumes
-composés de centaines d'images de coupes de taille $512 \times 512$ avec une résolution
-submillimétrique, les scanners micro-CT peuvent produire des volumes atteignant
-$2000$ voxels.
-
-Dans le cas de l'imagerie cardiaque par CT, une application qui a largement stimulé les avancées
-technologiques, les images volumiques peuvent être acquises avec une résolution temporelle
-pouvant descendre jusqu'à 100 millisecondes. La vitesse et la résolution de l'imagerie CT en font
-un outil indispensable pour l'imagerie cardiaque et l'évaluation des accidents vasculaires
-cérébraux.
-
-Elle est utilisée de manière routinière pour le diagnostic de diverses pathologies médicales
-affectant l'ensemble des organes internes, et son utilisation est même envisagée comme outil de
-dépistage du cancer du poumon. Les recherches actuelles visent globalement à améliorer
-l'utilité clinique sans augmenter la dose d'irradiation de l'examen, ou à maintenir cette utilité
-tout en réduisant l'exposition du patient aux rayonnements ionisants.
-
-Les méthodes analytiques directes sont l'approche historique et mathématiquement élégante des problèmes inverses linéaires \cite{14}, particulièrement en tomographie. Leur positionnement répond à un impératif de rapidité de calcul dans des applications où le temps de reconstruction est critique (imagerie médicale clinique, contrôle non destructif industriel).
+Les contraintes cliniques contemporaines, notamment la réduction de la dose d'irradiation, imposent cependant de repenser ces méthodes. Dans un contexte de données sous-échantillonnées, les approches analytiques traditionnelles produisent des artefacts sévères et une dégradation de la qualité image. Le Compressed Sensing offre alors un cadre théorique alternatif puissant, exploitant la parcimonie des images médicales dans des domaines transformés pour résoudre le problème inverse sous-déterminé. La régularisation par variation totale, en particulier, favorise les solutions présentant des régions homogènes et des contours préservés. Ce chapitre développe l'ensemble des outils mathématiques nécessaires à la compréhension de ces méthodes, depuis les fondements classiques jusqu'aux formulations modernes d'optimisation, en mettant l'accent sur leur articulation cohérente dans le contexte de la reconstruction CT.
 
 \section{Classification des approches de reconstruction}
 Le paysage algorithmique de la tomographie se divise principalement en trois familles, distinguées par leur traitement de l'opérateur de projection.
@@ -47,17 +24,17 @@ ou que la dose d'irradiation est réduite.
 \subsubsection{Fondements de la tomographie assistée par ordinateur (CT)}
 Imaginons qu'on ait un objet opaque constitué de différents matériaux, et que l'on souhaite savoir comment ces matériaux sont répartis à l'intérieur sans l'endommager (par exemple, l'objet peut être un malade à l'intérieur du corps duquel on aimerait voir). L'une des méthodes est le scanner  : on lance de fins faisceaux de rayons X à travers l'objet dans toutes les directions et on mesure quelle proportion de chaque faisceau a été absorbée.
 
-La tomographie est un procédé permettant de créer l'image d'un objet en deux ou trois dimensions à partir de multiples "coupes" unidimensionnelles (Voir \Cref{fig :tomography_device}). Dans un scanner CT, ces coupes sont définies par des faisceaux de rayons $\mathbf{X}$ parallèles projetés à travers l'objet. En changeant l'orientation de la source et du détecteur (l'angle \(\theta\)), on obtient des informations sur la densité interne sous différents angles.\\
+La tomographie est un procédé permettant de créer l'image d'un objet en deux ou trois dimensions à partir de multiples \textit{coupes} unidimensionnelles (Voir \Cref{fig :tomography_device}). Dans un scanner CT, ces coupes sont définies par des faisceaux de rayons $\mathbf{X}$ parallèles projetés à travers l'objet. En changeant l'orientation de la source et du détecteur (l'angle \(\theta\)), on obtient des informations sur la densité interne sous différents angles.\\
 Le fonctionnement repose sur la mesure de l'intensité des rayons $\mathbf{X}$ :
-\begin{itemize}
-    \item[-] \textbf{Perte d'énergie}  : Lorsqu'un rayon $\mathbf{X}$ traverse un objet, il perd une partie de son énergie, ce qui réduit son intensité
-    \item[-] \textbf{Coefficient d'atténuation}  : Cette perte dépend de la densité du milieu. Les objets denses (comme l'os) provoquent une variation d'intensité plus importante que les tissus moins denses. Cette caractéristique est appelée le coefficient d'atténuation. L'atténuation mesurée pour chaque faisceau, c'est-à-dire la différence entre l'intensité incidente et l'intensité détectée, correspond à une intégrale de ligne de la structure interne de l'objet. Cette relation entre l'objet et l'ensemble de ses intégrales de ligne est formalisée par la transformée de Radon. La reconstruction de l'image originale repose alors sur l'inversion de cette transformée, qui constitue le fondement théorique de la tomographie assistée par ordinateur
-    \item[-] \textbf{Mesures}  : Le scanner enregistre l'intensité initiale émise ($I_{0}$) et l'intensité finale reçue ($I_{1}$) pour chaque faisceau afin de déduire la densité globale rencontrée sur le trajet
+\begin{itemize}[label=-]
+    \item \textbf{Perte d'énergie}  : Lorsqu'un rayon $\mathbf{X}$ traverse un objet, il perd une partie de son énergie, ce qui réduit son intensité
+    \item \textbf{Coefficient d'atténuation}  : Cette perte dépend de la densité du milieu. Les objets denses (comme l'os) provoquent une variation d'intensité plus importante que les tissus moins denses. Cette caractéristique est appelée le coefficient d'atténuation. L'atténuation mesurée pour chaque faisceau, c'est-à-dire la différence entre l'intensité incidente et l'intensité détectée, correspond à une intégrale de ligne de la structure interne de l'objet. Cette relation entre l'objet et l'ensemble de ses intégrales de ligne est formalisée par la transformée de Radon. La reconstruction de l'image originale repose alors sur l'inversion de cette transformée, qui constitue le fondement théorique de la tomographie assistée par ordinateur
+    \item \textbf{Mesures}  : Le scanner enregistre l'intensité initiale émise ($I_{0}$) et l'intensité finale reçue ($I_{1}$) pour chaque faisceau afin de déduire la densité globale rencontrée sur le trajet
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/ct_device.png}
+    \includegraphics[height=4cm, keepaspectratio]{./images/ct_device.png}
     \caption{Principe de fonctionnement d'un appareil de tomodensitométrie}
     \label{fig :tomography_device}
 \end{figure}
@@ -79,26 +56,30 @@ la distribution de Dirac. Cette expression formalise le fait que chaque projecti
 à une intégrale de la fonction d'atténuation le long d'une droite.
 
 \subsubsection{Loi de Beer--Lambert et modélisation de l'atténuation des rayons X dans l'objet}
-L'objet initial, considéré comme plan, est donné par une fonction d'atténuation qui, à chaque point du plan de coordonnées $(x, y)$, va associer un nombre $A(x, y)$ correspondant à la proportion des rayons qui sont absorbés par le matériau en ce point  : en un point d'un os, $A$ sera grand, et en un point de l'air, il sera faible.\vspace{10pt}\\
+L'objet initial, considéré comme plan, est donné par une fonction d'atténuation qui, à chaque point du plan de coordonnées $(x, y)$, va associer un nombre $A(x, y)$ correspondant à la proportion des rayons qui sont absorbés par le matériau en ce point  : en un point d'un os, $A$ sera grand, et en un point de l'air, il sera faible.
+
 % \subsubsection{Loi de Beer--Lambert et modélisation de l'atténuation}
 En supposant dans un premier temps que la fonction d'atténuation de notre objet est constante égale à $a$, pour tout rayon lumineux traversant notre objet, pour tout couple de points d'abscisses $x$ et $x+l$ sur ce rayon, les abscisses étant croissantes dans le sens du rayon, le rapport d'intensités lumineuses $\cfrac{I(x+l)}{I(x)}$ ne dépend que de $a$ et de la longueur $l$ traversée et pas du point $x$ (position).
 
 En omettant provisoirement la dépendance par rapport à $a$ et en notant alors $p(l)$ ce rapport $\cfrac{I(x+l)}{I(x)}$ qui correspond à la proportion de photons non
 absorbés sur une longueur $l$ à partir d'un point $x$, on voit que $p$ vérifie la propriété 
-\[
+\begin{equation}
     p(l_1+l_2) = p(l_1)p(l_2)
-\] \vspace{10pt}\\
+\end{equation} 
+
 En Effet, la proportion de photons non absorbés sur une longueur $l_2$ à partir d'un point $x+l_1$ est $\cfrac{I(x+l_1+l_2)}{I(x+l_1)}=p(l_2)$. Donc $p(l_1)p(l_2)=\cfrac{I(x+l_1)}{I(x)} \times \cfrac{I(x+l_1+l_2)}{I(x+l_1)}=p(l_1+l_2)$. Ceci traduit juste le fait simple suivant  : les proportions de photons non
 absorbés se multiplient lors de traversées successives de milieux absorbants. La bonne définition de l'atténuation est précisément : 
 \begin{equation}
     p(l)=e^{-a\, l}
     \label{eq:init_loi_beer_lambert_attenuation}
-\end{equation}\vspace{10pt}\\
+\end{equation}
+
 Autrement dit, pour tout $x$ et $x+l$ sur un axe  : 
 \begin{equation}
     I(x+l)=I(x)e^{-a\, l}
     \label{eq:init_loi_beer_lambert}
-\end{equation}\vspace{10pt}\\
+\end{equation}
+
 Notons que si le phénomène physique d'atténuation est spécifique de la tomographie à rayons X, les méthodes de reconstruction sont en revanche plus générales et sont appliquées également dans d'autres systèmes d'imagerie, dans lesquelles des équations analogues expriment une fonction à reconstruire en fonction de projections. C'est le cas par exemple de la TEP utilisée en médecine nucléaire.
 
 \subsubsection{Reconstruction d'images en tomodensitométrie : inversion de Fourier, rétroprojection et FBP}
@@ -106,17 +87,19 @@ Notons que si le phénomène physique d'atténuation est spécifique de la tomog
 transformée de Radon, plusieurs méthodes analytiques ont été proposées pour résoudre le
 problème inverse de la reconstruction tomographique.
 La reconstruction d'images en tomodensitométrie à partir des projections aux rayons X repose
-classiquement sur trois grandes approches analytiques.\vspace{5pt} \\
+classiquement sur trois grandes approches analytiques 
+
 La première est l'inversion directe de Fourier, fondée sur le théorème de la coupe de Fourier, selon lequel chaque projection acquise à
 un angle donné correspond à une droite dans l'espace fréquentiel bidimensionnel de l'objet.
 En théorie, l'acquisition d'un nombre suffisant de projections permet de remplir cet espace
 fréquentiel et d'obtenir l'image par transformation de Fourier inverse. Toutefois, la nécessité
 de rééchantillonner des données organisées sur une grille polaire vers une grille cartésienne
-rend cette méthode complexe et peu utilisée en pratique. \vspace{5pt} \\
+rend cette méthode complexe et peu utilisée en pratique. 
+
 La seconde approche consiste à appliquer une rétroprojection directe des projections, ce qui conduit à une image floue,
 équivalente à la convolution de l'image originale avec un noyau de type
-$1/\sqrt{x^2+y^2}$. La restauration de l'image nécessite alors une déconvolution bidimensionnelle,
-opération coûteuse en temps de calcul. \vspace{5pt} \\ 
+$1/\sqrt{x^2+y^2}$. Ce noyau décrit la contribution décroissante des points de l'image avec la distance et est responsable du flou caractéristique observé après rétroprojection directe. Pour obtenir une image nette, il est donc nécessaire d'appliquer un filtrage approprié ou une déconvolution bidimensionnelle, comme le fait la méthode de rétroprojection filtrée (Filtered Back Projection, FBP), qui compense l'effet de ce noyau et permet de restaurer la résolution originale de l'image. 
+
 La troisième méthode, la FBP, constitue l'approche la plus répandue en pratique. Elle repose sur le
 filtrage préalable de chaque projection unidimensionnelle par un filtre rampe dans le domaine
 fréquentiel, avant la rétroprojection. Ce traitement permet de compenser le flou inhérent à la
@@ -160,7 +143,8 @@ Dans ce contexte, la reconstruction tomographique peut être formulée comme un
 à reconstruire un modèle à partir de mesures indirectes issues d'un processus physique
 connu. Le \textit{problème direct} décrit la formation des données de projection à partir
 de l'image inconnue, tandis que le \textit{problème inverse} vise à retrouver cette image à
-partir des mesures acquises.\vspace{5pt}\\
+partir des mesures acquises
+
 En tomodensitométrie discrète, la relation entre l'image à reconstruire et les données
 de projection peut s'écrire sous la forme d'un système linéaire :
 \begin{equation}
@@ -175,7 +159,7 @@ seraient complètes et exemptes de bruit. En pratique, ces conditions ne sont ja
 Le problème inverse est alors généralement \textit{mal posé au sens de Hadamard}, en raison
 d'un manque d'unicité et surtout d'un fort manque de stabilité : de faibles perturbations du
 bruit peuvent engendrer de grandes erreurs dans l'image reconstruite. Les méthodes itératives
-abordent ce problème en recherchant une solution régularisée, obtenue par la minimisation
+abordent ce problème en recherchant une solution régularisée (i.e une approximation stable d'un problème inverse), obtenue par la minimisation
 d'une fonction de coût combinant un terme d'adéquation aux données et un terme de
 régularisation incorporant des connaissances \emph{a priori} sur l'image.
 
@@ -257,17 +241,18 @@ La transformée de Fourier joue un rôle fondamental dans la reconstruction d'im
     Soit \( f \) une fonction absolument intégrable sur \( \mathbb{R} \).
     La transformée de Fourier de \( f \), notée \( \mathcal{F}f \), est définie
     pour tout nombre réel \( \xi \) par
-    \[
+    \begin{equation}
     (\mathcal{F}f)(\xi)
     = \int_{-\infty}^{\infty} f(x)\, e^{-2\pi i \xi x}\, dx.
-    \]
+    \end{equation}
 \end{definition}
 La transformée de Fourier est fréquemment utilisée en analyse du signal et permet de transformer une fonction du temps en une fonction de la fréquence ; la variable $x$ représente le temps en secondes et la variable \( \xi \) représente la fréquence de la fonction en hertz. En fait, les transformées de Fourier indiquent des informations sur le signal. Elles montrent les détails concernant la composante de fréquence qui apparaît ou est présente
 dans le signal. Elles ne donnent pas de détails sur la valeur exacte de la fréquence présente
-à cet instant précis.\\
+à cet instant précis.
+
 
 Il existe une définition alternative faisant intervenir la fréquence angulaire $w=2\pi \xi$, ce qui conduit à l'expression suivante.
-\[(\mathcal{F}f)(w) = \int_{-\infty}^{\infty} f(x)\, e^{-i w x}\, dx\]
+\begin{equation}(\mathcal{F}f)(w) = \int_{-\infty}^{\infty} f(x)\, e^{-i w x}\, dx\end{equation}
 Comme pour la transformée de Radon, nous allons énumérer plusieurs propriétés de la transformée de Fourier.
 \begin{proposition}
     Pour des constantes réelles $\alpha$ et $\beta$, et des fonctions absolument intégrables $f$ et $g$, on a:
@@ -291,9 +276,9 @@ Ceci nous conduit immédiatement au théorème suivant.
 \begin{proposition}[Théorème d'inversion de Fourier]
 Soit $f$ une fonction absolument integrale sur $\mathbb{R}$.
 Le théorème d'inversion de Fourier affirme que, pour tout \( x \),
-\[
+\begin{equation}
 (\mathcal{F}^{-1} \circ \mathcal{F})f(x)=f(x)
-\]
+\end{equation}
 \end{proposition}
 Jusqu'à présent, nous n'avons abordé la transformée de Fourier que dans une dimension. Il existe des définitions correspondantes en dimensions supérieures, mais, pour nos besoins, nous n'utiliserons que les analogues en deux dimensions.
 
@@ -314,65 +299,48 @@ De manière similaire, nous définissons la transformée de Fourier inverse sur 
 Soit \( g \) une fonction absolument intégrable définie sur \( \mathbb{R}^2 \).
 La transformée de Fourier bidimensionnelle inverse de \( g \), évaluée en \((x,y)\)
 et notée \( \mathcal{F}_2^{-1} g(x,y) \), est donnée par
-\[
+\begin{equation}
 (\mathcal{F}_2^{-1} g)(x,y) = \cfrac{1}{4\pi^2}\int_{-\infty}^{\infty} \int_{-\infty}^{\infty} 
 g(X,Y)\, e^{i (xX + yY)} \, dX\, dY.
-\]
+\end{equation}
 \end{definition}
 
-% ================== TODO ==================
-% \subsection{ Filtre de Wiener}
-% 1. Filtre de Wiener
-% ✅ Oui, tout à fait applicable
-% Le filtre de Wiener est un filtre linéaire adaptatif.
+% \subsection{Transformée de Fourier à Court Terme (STFT)}
 
-% Il peut être appliqué :
-%    - sur chaque projection (variable s)
-%    - ou localement sur le sinogramme
+% La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
 
-% Intérêt :
-%    - réduction du bruit additif (souvent gaussien)
-%    - compromis bruit / flou optimal au sens MSE
+% \begin{equation}
+%     S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)
+%     \label{eq:stft}
+% \end{equation}
 
-% ⚠️ Limites :
-%    - nécessite une estimation du bruit et du spectre du signal
-%    - un mauvais modèle dégrade la reconstruction
+\begin{definition}La Transformée de Fourier à Court Terme (STFT) est une méthode d'analyse temps-fréquence permettant d'étudier l'évolution des composantes fréquentielles d'un signal au cours du temps. Contrairement à la transformée de Fourier classique, la STFT utilise une fenêtre glissante qui permet d'extraire une portion locale du signal afin d'analyser son contenu fréquentiel à un instant donné.
 
-% 📌 Très utilisé comme prétraitement des sinogrammes en CT à faible dose.
-
-% \subsection{ Curvelets}
-% 4. Curvelets
-% ✅ Oui, très pertinent
-% Les curvelets sont théoriquement bien adaptées :
-%    - excellente représentation des singularités le long de courbes
-
-% Les lignes du sinogramme correspondent à :
-%    - des courbes liées aux bords de l'objet
-
-% 📌 Très utilisé dans :
-%    - CT basse dose
-%    - Les méthodes variationnelles et itératives
-% =================================================
-\subsection{Transformée de Fourier à Court Terme (STFT)}
-
-La STFT est plus avantageuse que la transformée de Fourier dans le sens où elle introduit la fenêtre glissante. En fait, la fenêtre sert à extraire une petite partie du signal donné. Mathématiquement, elle est représentée par :
+Mathématiquement, la STFT d'un signal $f(t)$ est définie par :
 
 \begin{equation}
-    S f(u,\xi) = \int_{-\infty}^{\infty}f(t)\omega (t - u)exp(-j\xi t)dt \quad (3)
-    \label{eq:stft}
+S_f(u,\xi) = \int_{-\infty}^{\infty} f(t)\,\omega(t-u)\,e^{-j\xi t}\,dt
+\label{eq:stft}
 \end{equation}
+\end{definition}
+où :
+\begin{itemize}
+    \item $f(t)$ représente le signal à analyser,
+    \item $\omega(t-u)$ est la fonction fenêtre centrée au temps $u$,
+    \item $\xi$ est la variable fréquentielle,
+    \item $S_f(u,\xi)$ correspond à la représentation temps-fréquence du signal.
+\end{itemize}
 
 
-
-\section{Convolution}
+\section{Produit de convolution}
 La convolution joue un rôle clé dans la reconstruction d'image par rétroprojection filtrée (FBP), car elle intervient directement dans l'étape de filtrage des projections. Avant la rétroprojection, chaque projection mesurée est convoluée avec un filtre adapté afin de compenser le flou intrinsèque introduit par la rétroprojection simple. Cette opération permet de renforcer les hautes fréquences et d'améliorer la résolution de l'image reconstruite.
 
 \textbf{Définition 8.1.}
 Pour deux fonctions intégrables $f$ et $g$ définies sur $\mathbb{R}$,
-nous définissons la convolution de $f$ et $g$, notée $f \star g$, par
-\[
+nous définissons le produit de convolution de $f$ et $g$, notée $f \star g$, par
+\begin{equation}
 (f \star g)(x) = \int_{-\infty}^{\infty} f(t)\,g(x - t)\,dt,
-\]
+\end{equation}
 où $x \in \mathbb{R}$.
 
 Nous pouvons facilement étendre cette définition à l'espace
@@ -383,28 +351,28 @@ Les définitions explicites sont données ci-dessous.
 
 \begin{definition}
     Pour des fonctions polaires intégrables $f(t,\theta)$ et $g(t,\theta)$,
-    nous définissons la convolution de $f$ et $g$ par
-    \[
+    nous définissons le produit convolution de $f$ et $g$ par
+    \begin{equation}
         (f \star g)(t,\theta)
         =
         \int_{-\infty}^{\infty}
         f(s,\theta)\,g(t - s,\theta)\,ds.
-    \]
+    \end{equation}
 \end{definition}
 
 Pour des fonctions intégrables $F$ et $G$ sur $\mathbb{R}^2$,
-nous définissons la convolution de $F$ et $G$ par
-\[
+nous définissons le produit de convolution de $F$ et $G$ par
+\begin{equation}
     (F \star G)(x,y)
     =
     \int_{-\infty}^{\infty}
     \int_{-\infty}^{\infty}
     F(s,t)\,G(x - s, y - t)\,ds\,dt.
-\]
+\end{equation}
 
 La convolution est une méthode mathématique permettant de moyenner
 une fonction $f$ à l'aide du déplacement d'une autre fonction $g$.
-Dans la convolution $f \star g$, la fonction $g$ est translatée à travers
+Dans le produit de convolution $f \star g$, la fonction $g$ est translatée à travers
 la fonction $f$, et la fonction résultante dépend de la zone de recouvrement
 au cours de cette translation.
 En un certain sens, on peut voir $g$ comme un filtre utilisé pour effectuer
@@ -428,9 +396,11 @@ fournies par la fonction originale.
 % =================================================
 \section{Transformée de Radon}
 % =================================================
-L'hypothèse fondamentale est que le détecteur mesure l'atténuation intégrée le long d'un rayon. 
+Les principes décrits précédemment (chapitre \ref{chapitre1}) trouvent leur fondement dans une modélisation mathématique précise du processus d'acquisition des projections. En tomodensitométrie, chaque mesure effectuée par les détecteurs correspond à l'intégrale de l'atténuation des rayons X le long du trajet parcouru par le faisceau à travers l'objet. Autrement dit, les données mesurées ne sont pas directement des valeurs de l'image recherchée, mais des intégrales de cette image le long de droites orientées selon différents angles. Ce principe correspond exactement à l'opération décrite par la transformée de Radon, qui associe à une fonction représentant la distribution des coefficients d'atténuation un ensemble de projections dépendant de la position et de l'orientation du faisceau.
+
+Ainsi, la reconstruction tomographique consiste mathématiquement à résoudre le problème inverse de la transformée de Radon : retrouver la fonction originale à partir de l'ensemble de ses projections. Cette formulation permet d'établir un cadre théorique rigoureux pour le développement des algorithmes de reconstruction, tels que la rétroprojection filtrée ou les méthodes itératives. La section suivante présente donc la définition mathématique de la transformée de Radon et les propriétés fondamentales qui permettent de comprendre les méthodes de reconstruction utilisées en tomodensitométrie.
 \begin{definition}
-    Pour un faisceau de rayons $\mathbf{X}$ d'énergie $\mathbf{E}$ donnée et un taux de propagation des photons $\mathbf{N}(x)$, l'intensité du faisceau $\mathbf{I}(x)$ à une distance $x$ de l'origine est définie comme \[\mathbf{I}(x) = \mathbf{N}(x) \mathbf{E}\]
+    Pour un faisceau de rayons $\mathbf{X}$ d'énergie $\mathbf{E}$ donnée et un taux de propagation des photons $\mathbf{N}(x)$, l'intensité du faisceau $\mathbf{I}(x)$ à une distance $x$ de l'origine est définie comme \begin{equation}\mathbf{I}(x) = \mathbf{N}(x) \mathbf{E}\end{equation}
 \end{definition}
 
 \begin{definition}
@@ -449,17 +419,20 @@ l'intensité \(I(x)\) est donnée par
     \label{eq:loi_beer_lambert}
 \end{equation}
 \end{definition}
-En l'état, cette équation ne nous est pas particulièrement utile. Elle exprime le coefficient d'atténuation en un point donné en fonction de l'intensité en ce point, alors que nous ne connaissons la valeur de l'intensité qu'en des points situés à l'extérieur de l'objet. Ce que nous cherchons réellement est une relation entre le coefficient d'atténuation à l'intérieur de l'objet et la variation de l'intensité du faisceau. Pour cela, nous allons manipuler légèrement l'équation \eqref{eq:loi_beer_lambert}.\\
+En l'état, cette équation ne nous est pas particulièrement utile. Elle exprime le coefficient d'atténuation en un point donné en fonction de l'intensité en ce point, alors que nous ne connaissons la valeur de l'intensité qu'en des points situés à l'extérieur de l'objet. Ce que nous cherchons réellement est une relation entre le coefficient d'atténuation à l'intérieur de l'objet et la variation de l'intensité du faisceau. Pour cela, nous allons manipuler légèrement l'équation \eqref{eq:loi_beer_lambert}.
+
 En passant à  la dérivée de la loi de Beer-Lambert, nous obtenons la relation suivante :
-\[
+\begin{equation}
+% \begin{equation}
     \frac{dI}{dx} = -\mathbf{A}(x)I(x)
-\]
+% \end{equation}
+\end{equation}
 Soit $I(x_0)=I_0$ la valeur initiale de l'intensité du faisceau et $I(x_1)=I_1$ la valeur finale de l'intensité du faisceau. En utilisant cette relation, nous obtenons la relation suivante :
 
-\[
+\begin{equation}
     -\int_{x_0}^{x_1} \mathbf{A}(x)dx = \int_{x_0}^{x_1}\cfrac{dI}{I(x)}=ln(\frac{I_1}{I_0})
-\]
-ou encore \vspace{10pt}
+\end{equation}
+ou encore 
 \begin{equation}
     \int_{x_0}^{x_1} \mathbf{A}(x)dx = ln(\frac{I_0}{I_1})
     \label{eq:radon_transformation}
@@ -470,33 +443,48 @@ $ln(\frac{I_0}{I_1})$ désigne les données de projection, communément appelée
 \noindent
 Nous sommes maintenant prêts à introduire des outils mathématiques — en particulier la transformée de Radon — qui joueront un rôle central dans la détermination du coefficient d'atténuation dans l'équation \eqref{eq:loi_beer_lambert}.
 
-L'écriture sous forme normale d'une équation de droite joue un rôle clé dans la transformée de Radon, car elle permet une paramétrisation naturelle et complète de toutes les droites du plan, ce qui est essentiel pour la définition mathématique et le calcul pratique de cette transformation.\\ 
+L'écriture sous forme normale d'une équation de droite joue un rôle clé dans la transformée de Radon, car elle permet une paramétrisation naturelle et complète de toutes les droites du plan, ce qui est essentiel pour la définition mathématique et le calcul pratique de cette transformation.
+
 Cette équation sous forme normale fournit :
 \begin{itemize}
-    \item[(i)] Une paramétrisation unique et continue de toutes les droites du plan. La forme normale (ou forme normale de Hesse) de l'équation de la droite s'écrit : $$x\,\cos(\theta)+y\,\sin(\theta)=\rho$$ où $\rho$ est la distance par rapport à l'origine et $\theta$ est l'angle par rapport à l'axe des abscisses.
+    \item[(i)] Une paramétrisation unique et continue de toutes les droites du plan. La forme normale (ou forme normale de Hesse) de l'équation de la droite s'écrit : 
+    \begin{equation}x\,\cos(\theta)+y\,\sin(\theta)=\rho \end{equation}
+    où $\rho$ est la distance par rapport à l'origine et $\theta$ est l'angle par rapport à l'axe des abscisses.
     \item[(ii)] Une interprétation géométrique claire de $\rho$ et $\theta$. Chaque droite du plan correspond  à un unique couple ($\rho,\theta$). Cette paramétrisation évite les redondances et garantit qu'on parcourt toutes les droites une et une seule fois (à une convention près).
     \item[(iii)] Une mesure naturelle sur l'espace des droites, utilisée dans les formules d'inversion.
     \item[(iv)] Un formalisme adapté au théorème de coupe, reliant transformée de Radon et transformée de Fourier 2D. 
     \item[(v)] Une mesure naturelle sur l'espace des droites, utilisée dans les formules d'inversion.
-\end{itemize}\vspace{10pt}
+\end{itemize}
 \subsection{\small Construction de l'orientation et de la distance}
 Nous connaissons tous l'idée qu'une droite \( l \) dans \( \mathbb{R}^2 \) peut être représentée par l'équation 
-\[
+\begin{equation}
 ax + by = c
-\]
-où \( a, b, c \in \mathbb{R} \) et \( a^2 + b^2 \neq 0 \).\\ On peut alors écrire cette équation d'une droite sous la forme \[w_1x + w_2y = t\]
+\end{equation}
+
+où \( a, b, c \in \mathbb{R} \) et \( a^2 + b^2 \neq 0 \).
+ On peut alors écrire cette équation d'une droite sous la forme 
+\begin{equation}
+w_1x + w_2y = t
+\end{equation}
 où $\mathbf{w}:=(w_1, w_2) = (\cfrac{a}{\sqrt{a^2 + b^2}}, \cfrac{b}{\sqrt{a^2 + b^2}})$ et $t=\cfrac{c}{\sqrt{a^2 + b^2}}$, que nous pouvons voir comme un point situé sur le
-cercle unitaire, pour \[\left(\cfrac{a}{\sqrt{a^2 + b^2}}\right)^{2} + \left(\cfrac{b}{\sqrt{a^2 + b^2}}\right)^{2} = 1\]
-Cela implique que $\mathbf{w} := (\cos(\theta), \sin(\theta)) \text{ est un vecteur normal unitaire }$, $\theta \in [0, 2\pi)$ représente l'orientation, et $t$ est exactement la distance à l'origine. On a \[x\cos(\theta) + y\sin(\theta) = t\]
+cercle unitaire, pour \begin{equation}\left(\cfrac{a}{\sqrt{a^2 + b^2}}\right)^{2} + \left(\cfrac{b}{\sqrt{a^2 + b^2}}\right)^{2} = 1\end{equation}
+Cela implique que $\mathbf{w} := (\cos(\theta), \sin(\theta)) \text{ est un vecteur normal unitaire }$, $\theta \in [0, 2\pi)$ représente l'orientation, et $t$ est exactement la distance à l'origine. On a 
+\begin{equation}
+    x\cos(\theta) + y\sin(\theta) = t
+\end{equation}
 Notez que dans les équations ci-dessus, $t$ et $\theta$ sont fixes et déterminent une droite spécifique \( l \) dans le plan. On peut donc dire que $t$ et $\theta$ paramètrent une droite \( l_{t,\theta} \) et que $\mathbf{z}$ détermine des points spécifiques sur cette droite \( l \). Ou encore
-\[l_{t,\theta} = \{ \mathbf{z} \in \mathbb{R}^2 : \langle z, (\cos \theta, \sin \theta) \rangle = t \}.\]
+\begin{equation}
+    l_{t,\theta} = \{ \mathbf{z} \in \mathbb{R}^2 : \langle z, (\cos \theta, \sin \theta) \rangle = t \}.
+\end{equation}
+où $\langle . \rangle$ est le produit scalaire.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/l_t_theta.png}
+    \includegraphics[height=4cm, keepaspectratio]{./images/l_t_theta.png}
     \caption{paramètrisation d'une droite \( l_{t,\theta} \) par \( t \) et \( \theta \)}
     \label{fig:l_t_theta}
 \end{figure}
-On voit  que $(t\, \cos(\theta), t\, \sin(\theta))$ est un point situé sur la droite \( l_{t,\theta} \) (\Cref{fig:l_t_theta}) et $(-\sin(\theta), \cos(\theta))$ est un vecteur perpendiculaire au vecteur unitaire $\mathbf{w}$.\\ En géométrie affine élémentaire, une ligne est un point plus une direction. Par conséquent, nous pouvons décrire un point particulier $(x, y)$ sur $l_{t, \theta}$ en termes de nombre réel s comme suit :
+On voit  que $(t\, \cos(\theta), t\, \sin(\theta))$ est un point situé sur la droite \( l_{t,\theta} \) (\Cref{fig:l_t_theta}) et $(-\sin(\theta), \cos(\theta))$ est un vecteur perpendiculaire au vecteur unitaire $\mathbf{w}$.
+ En géométrie affine élémentaire, une ligne est un point plus une direction. Par conséquent, nous pouvons décrire un point particulier $(x, y)$ sur $l_{t, \theta}$ en termes de nombre réel s comme suit :
 \begin{equation}
     l_{t, \theta} = \{(t\, \cos(\theta) - s\,\sin(\theta), t\,\sin(\theta) + s\,\cos(\theta)); s\in \mathbb{R}\}
     \label{set:l_t_theta}
@@ -505,9 +493,9 @@ On voit  que $(t\, \cos(\theta), t\, \sin(\theta))$ est un point situé sur la d
 Soit \( f(t,\theta) \) une fonction définie sur \( \mathbb{R}^2 \) à support compact.
 La transformée de Radon de \( f \), notée \( \mathcal{R}f \), est définie pour
 \( t \in \mathbb{R} \) et \( \theta \in (0, 2\pi] \) par
-\[
+\begin{equation}
 \mathcal{R}f(t,\theta) = \int_{-\infty}^{\infty} f(x(s),y(x))\mathrm{d}s
-\]
+\end{equation}
 \end{definition}
 
 La transformée de Radon permet de déterminer la densité totale d'une fonction $f$ le long d'une droite donnée $l$. Cette droite $l$ est définie par un angle $\theta$  par rapport à l'axe 
@@ -518,6 +506,7 @@ $x$ et une distance $t$ par rapport à l'origine. Comme illustré à la \Cref{fi
     \caption{Transformée de Radon pour $\theta_1$ et $\theta_2$.}
     \label{fig:radon}
 \end{figure}
+La figure illustre l'interprétation géométrique de la transformée de Radon d'une fonction $f(x,y)$ : pour un angle donné $\theta$, on considère une famille de droites parallèles dont la normale est $(\cos\theta,\sin\theta)$ et, pour chaque position $t$, on calcule l'intégrale de $f$ le long de la droite définie par $x\cos\theta + y\sin\theta = t$, ce qui donne la projection $Rf(t,\theta)$ ; en répétant ce processus pour différents angles $\theta_1$ et $\theta_2$, on obtient plusieurs profils de projections permettant de caractériser la structure de l'objet.\\
 L'intégrale $\mathcal{R}f(t,\theta)$ représente le membre gauche de l'équation \eqref{eq:radon_transformation}. Rappelons que, dans cette équation, $\mathbf{A}(x)$ est inconnue et que $\ln(\frac{I_1}{I_0})$ correspond à une information mesurée.
 Autrement dit, $\ln(\frac{I_1}{I_0})$ est la transformée de Radon, et la transformée de Radon représente donc des données connues issues de la mesure.
 
@@ -533,69 +522,74 @@ $\mathbf{A}(x)$). Pour ce faire, il sera utile de rappeler plusieurs propriété
         % \item[(v)] Relation avec la convolution : \(\mathcal{R}(f * g) = \mathcal{R}f * \mathcal{R}g\)
     \end{itemize}
 \end{proposition}
-Nous définissons en outre le domaine naturel de la transformée de Radon comme l'ensemble des fonctions $f$ sur $\mathbb{R}^2$ telles que \[\int_{-\infty}^{\infty} |f(x(s), y(s))|\mathrm{d}s < \infty\]
-
+Nous définissons en outre le domaine naturel de la transformée de Radon comme l'ensemble des fonctions $f$ sur $\mathbb{R}^2$ telles que 
+\begin{equation}
+\int_{-\infty}^{\infty} |f(x(s), y(s))|\mathrm{d}s < \infty
+\end{equation}
 \subsection{Théorème de la Coupe Centrale}
-Le théorème de la coupe centrale, également appelé théorème de projection-transforme de Fourier ou théorème de Fourier-Slice, est un résultat fondamental en traitement d'image et en tomographie. Il établit un lien profond entre la transformée de Radon (utilisée pour décrire les projections d'un objet) et la transformée de Fourier (utilisée pour analyser les fréquences spatiales). Ce théorème constitue la pierre angulaire mathématique de la plupart des méthodes de reconstruction tomographique moderne.
+Le théorème de la coupe centrale, également appelé théorème de projection-transformée de Fourier ou théorème de Fourier-Slice, est un résultat fondamental en traitement d'image et en tomographie. Il établit un lien profond entre la transformée de Radon (utilisée pour décrire les projections d'un objet) et la transformée de Fourier (utilisée pour analyser les fréquences spatiales). Ce théorème constitue la pierre angulaire mathématique de la plupart des méthodes de reconstruction tomographique moderne.
 
 \begin{proposition}
     Soit \( g \) une fonction absolument integrale sur \( \mathbb{R}^2 \).
-    Le théorème de la coupe centrale affirme que, pour tout $S \in \mathbb{R}$ et $\theta \in [0,2\pi]$, on a : \[\mathcal{F}_2 g(S\cos(\theta), S\sin(\theta)) = \mathcal{F}(\mathcal{R}g)(S, \theta)\]
+    Le théorème de la coupe centrale affirme que, pour tout $S \in \mathbb{R}$ et $\theta \in [0,2\pi]$, on a : 
+    \begin{equation}
+        \mathcal{F}_2 g(S\cos(\theta), S\sin(\theta)) = \mathcal{F}(\mathcal{R}g)(S, \theta)
+    \end{equation}
 \end{proposition}
 \textbf{Preuve}: En utilisant la définition de la transformée de Fourier bidimensionnelle \eqref{eq:fourier_2d} on obtient 
-\[
+\begin{equation}
     \mathcal{F}_{2}g(S\,\cos(\theta), S\,\sin(\theta)) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} g(x, y)\, e^{-iS (x\,\cos(\theta) + y\,\sin(\theta))}\, dx\, dy
-\]
+\end{equation}
 Nous effectuons maintenant un changement de variables conformément au système
 de coordonnées que nous avons défini à la \textit{Construction de l'orientation et de la distance}.
 Rappelons que, lors de la paramétrisation de la droite $\ell_{t,\theta}$,
 nous avons montré que, pour $s\in\mathbb{R}$, on peut écrire :
-\[
+\begin{equation}
 x(s)=t\cos\theta - s\sin\theta, 
 \qquad
 y(s)=t\sin\theta + s\cos\theta,
 \qquad
 t = x\cos\theta + y\sin\theta.
-\]
+\end{equation}
 
 En examinant le déterminant du Jacobien associé à $x(s)$ et $y(s)$, on obtient :
-\[
+\begin{equation}
 \det
 \begin{pmatrix}
-\dfrac{\partial x}{\partial t} & \dfrac{\partial x}{\partial s} \\[6pt]
+\dfrac{\partial x}{\partial t} & \dfrac{\partial x}{\partial s} \\
 \dfrac{\partial y}{\partial t} & \dfrac{\partial y}{\partial s}
 \end{pmatrix}
 = 1.
-\]
+\end{equation}
 
 Nous en déduisons que
-\[
+\begin{equation}
 ds\,dt = dx\,dy.
-\]
+\end{equation}
 et donc
-\[
+\begin{equation}
 \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} g(x, y)\, e^{-iS (x\,\cos(\theta) + y\,\sin(\theta))}\, dx\, dy = \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}
 g(t\cos\theta - s\sin\theta,\; t\sin\theta + s\cos\theta)\,
 e^{-iSt}\,ds\,dt.
-\]
+\end{equation}
 
 Comme $e^{-iSt}$ ne dépend pas de la variable $s$, nous pouvons réarranger
 l'intégrale précédente de la manière suivante :
-\[
+\begin{equation}
 \int_{-\infty}^{\infty}
 \left(
 \int_{-\infty}^{\infty}
 g(t\cos\theta - s\sin\theta,\; t\sin\theta + s\cos\theta)\,ds
 \right)
 e^{-iSt}\,dt.
-\]
+\end{equation}
 
 L'intégrale intérieure est exactement la transformée de Radon de $f$,
 évaluée en $(t,\theta)$, ce qui implique que l'expression précédente devient :
-\[
+\begin{equation}
 \int_{-\infty}^{\infty}
 (Rg(t,\theta))\,e^{-iSt}\,dt.
-\]
+\end{equation}
 
 Cette dernière intégrale n'est autre que la transformée de Fourier de
 $Rg(S,\theta)$, ce qui conclut la démonstration.
@@ -620,10 +614,9 @@ données du sinogramme et de les « déflouter » pour les ramener dans le plan.
 \begin{definition}
 Soit $h = h(t,\theta)$. On définit la \emph{rétroprojection},
 notée $\mathcal{B}h$, en un point $(x,y)$ par :
-\[
+\begin{equation}
 \mathcal{B}h(x,y) = \frac{1}{\pi}\int_{0}^{\pi} h(x\cos\theta + y\sin\theta,\theta)\,d\theta.
-\]
-
+\end{equation}
 En appliquant cette formule de rétroprojection à la transformée de Radon, on
 obtient :
 \begin{equation}
@@ -650,7 +643,7 @@ représentation plus lisse de l'objet.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/fbp.png}
+    \includegraphics[height=4cm, keepaspectratio]{./images/fbp.png}
     \caption{Retroprojection d'un carré dans 5, 25, 100 et 1000 directions}
     \label{fig:FBP}
 \end{figure}
@@ -685,27 +678,27 @@ f(x,y) = \mathcal{F}_2^{-1}\,\mathcal{F}_2 f(x,y)
 
 Nous allons maintenant effectuer un changement de variables des coordonnées
 cartésiennes $(X,Y)$ vers les coordonnées polaires $(S,\theta)$, définies par
-\[
+\begin{equation}
 X = S\cos\theta,
 \qquad
 Y = S\sin\theta,
-\]
+\end{equation}
 où $S \in \mathbb{R}$ et $\theta \in [0,\pi]$.
 Ce changement de variables conduit au déterminant jacobien suivant :
-\[\det
+\begin{equation}\det
 \begin{pmatrix}
-    \dfrac{\partial X}{\partial s} & \dfrac{\partial X}{\partial \theta} \\[6pt]
+    \dfrac{\partial X}{\partial s} & \dfrac{\partial X}{\partial \theta} \\
     \dfrac{\partial Y}{\partial s} & \dfrac{\partial Y}{\partial \theta}
 \end{pmatrix}
 =|S|
-\]
+\end{equation}
 Ce qui nous dit que $dX\,dY = |S|\,dS\,d\theta$. En incorporant ce nouveau changement de variables, l'équation \eqref{eq:fourier_2d_inverse} devient :
-\[
+\begin{equation}
 f(x,y) = \frac{1}{4\pi^{2}} \int_{0}^{\pi} \int_{-\infty}^{\infty}
 \mathcal{F}_{2}f(S\cos\theta, S\sin\theta)\,
 e^{iS(x\cos\theta + y\sin\theta)}\,|S|\,dS\,d\theta.
-\]
-Et en utilisant le théorème de la tranche centrale, nous voyons que l'équation ci-dessus est en fait égale à
+\end{equation}
+Et en utilisant le théorème de la coupe centrale, nous voyons que l'équation ci-dessus est en fait égale à
 \begin{equation}
     f(x,y) = \frac{1}{4\pi^{2}} \int_{0}^{\pi} \int_{-\infty}^{\infty}
     \mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\,
@@ -713,7 +706,7 @@ Et en utilisant le théorème de la tranche centrale, nous voyons que l'équatio
     \label{eq:fourier_radon}
 \end{equation}
 Prenons maintenant un regard plus attentif sur l'intégrale intérieure de l'équation \eqref{eq:fourier_radon} et en utilisant la définition de la Transformée de Fourier inverse, on a :
-\[
+\begin{equation}
     \begin{array}{rcl}
         \int_{-\infty}^{\infty}
         \mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\,
@@ -724,21 +717,21 @@ Prenons maintenant un regard plus attentif sur l'intégrale intérieure de l'éq
         \mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\,
         e^{iS(x\cos\theta + y\sin\theta)}\,|S|\,dS
         \right)\\
+
         &=&
         2\pi\,\mathcal{F}^{-1}
         \Bigl(
         |S|\,\mathcal{F}\bigl(\mathcal{R}f\bigr)(S,\theta)
         \Bigr)
-        \bigl(x\cos\theta + y\sin\theta,\theta\bigr)\\
+        \bigl(x\cos\theta + y\sin\theta,\theta\bigr)
     \end{array}
-\]
-
-
-Autrement dit, l'intégrale intérieure de l'équation (7.4) est égale à $2\pi$ fois l'inverse de la transformée de Fourier de
+    \label{eq:tcc_inverse_fourier}
+\end{equation}
+Autrement dit, l'intégrale intérieure de l'équation \eqref{eq:tcc_inverse_fourier} est égale à $2\pi$ fois l'inverse de la transformée de Fourier de
 $|S|\,\mathcal{F}\bigl(\mathcal{R}f\bigr)(S,\theta)$
 au point $(x\cos\theta + y\sin\theta,\theta)$.
-Nous pouvons alors voir que l'équation (7.4) est en fait égale à
-\[
+Nous pouvons alors voir que l'équation \eqref{eq:tcc_inverse_fourier} est en fait égale à
+\begin{equation}
 \frac{1}{2\pi} \int_{0}^{\pi}
 \mathcal{F}^{-1}
 \Bigl(
@@ -746,22 +739,22 @@ Nous pouvons alors voir que l'équation (7.4) est en fait égale à
 \Bigr)
 \bigl(x\cos\theta + y\sin\theta,\theta\bigr)
 \,d\theta.
-\]
+\end{equation}
 
 Finalement, nous constatons que l'intégrale ci-dessus est égale à $\tfrac{1}{2}$ de la rétroprojection donnée dans la définition \eqref{eq:FBP} pour
 $\mathcal{F}^{-1}\bigl[|S|\,\mathcal{F}(\mathcal{R}f)(S,\theta)\bigr]$.
 Nous simplifions donc l'équation précédente pour obtenir
-\[
+\begin{equation}
 \frac{1}{2}\,
 \mathcal{B}
 \Bigl\{
 \mathcal{F}^{-1}
 \bigl[|S|\,\mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\bigr]
 \Bigr\}(x,y).
-\]
+\end{equation}
 
 Ce qui nous conduit à la conclusion souhaitée :
-\[
+\begin{equation}
 f(x,y)
 =
 \frac{1}{2}\,
@@ -770,20 +763,23 @@ f(x,y)
 \mathcal{F}^{-1}
 \bigl[|S|\,\mathcal{F}\bigl(\mathcal{R}f(S,\theta)\bigr)\bigr]
 \Bigr\}(x,y).
-\]
-\hfill $\square$\\
+\end{equation}
+\hfill $\square$
+
 Le facteur important dans cette formule est le multiplicateur $|S|$ qui apparaît entre la transformée de Fourier et son inverse. Sans ce facteur, ces deux termes s'annuleraient mutuellement et nous nous retrouverions avec la formule standard de rétroprojection pour la transformée de Radon que nous avons rencontrée précédemment et qui, comme nous l'avons vu, ne nous donne pas directement $f(x, y)$. Nous appelons ce $|S|$ supplémentaire un \textbf{filtre} de la transformée de Radon, ce qui nous donne le nom de la formule de \textbf{rétroprojection filtrée}.
 \begin{proposition}
     Soit $f$ et $g$ deux fonctions intégrables définies sur $\mathbb{R}$, alors
-    \[(\mathcal{B}g\star f)(X, Y) = \mathcal{B}(g\star \mathcal{R}f)(X, Y)\]
+    \begin{equation}
+        (\mathcal{B}g\star f)(X, Y) = \mathcal{B}(g\star \mathcal{R}f)(X, Y)
+    \end{equation}
 \end{proposition}
 Considérons maintenant la relation \eqref{eq:FBP_filter} et 
 supposons qu'il existe une fonction, notée $\varphi(t)$, dont la transformée de Fourier
 soit égale à notre facteur de filtrage $|S|$. Autrement dit, supposons qu'il existe une
 fonction $\varphi(t)$ telle que
-\[
-\mathcal{F}\varphi(S) = |S|.
-\]
+\begin{equation}
+    \mathcal{F}\varphi(S) = |S|.
+\end{equation}
 Plus simplement, supposons que nous connaissions une fonction dont la transformée de
 Fourier est égale à la fonction valeur absolue. Nous pourrions alors réécrire la
 rétroprojection sous la forme suivante :
@@ -799,7 +795,7 @@ rétroprojection sous la forme suivante :
 \end{equation}
 
 Cependant, le membre de droite de l'équation \eqref{eq:FBP_varphi} contient un produit de transforméesde Fourier, que nous savons être égal à la convolution des fonctions transformées
-\[
+\begin{equation}
     f(x,y)
     =
     \frac{1}{2}\,\mathcal{B}
@@ -809,7 +805,7 @@ Cependant, le membre de droite de l'équation \eqref{eq:FBP_varphi} contient un 
     \mathcal{F}(\varphi \star \mathcal{R}f)(S,\theta)
     \bigr]
     \right\}(x,y).
-\]
+\end{equation}
 
 Mais ceci n'est rien d'autre que la transformée de Fourier inverse de la transformée
 de Fourier, ce qui nous ramène à la fonction de départ. Cela nous conduit à la formule
@@ -824,12 +820,12 @@ L'équation \eqref{eq:FBP_varphi_simple} est bien plus élégante que notre form
 
 Malheureusement, il n'existe pas de fonction $\varphi$ dont la transformée de Fourier
 soit exactement égale à la valeur absolue. Considérons la fonction $\mathcal{F}\varphi$ :
-\[
+\begin{equation}
 \mathcal{F}\varphi(\omega)
 =
 \int_{-\infty}^{\infty}
 \varphi(x)\,e^{-i\omega x}\,dx.
-\]
+\end{equation}
 
 Nous pouvons constater que, lorsque $\omega \to \infty$,
 $\mathcal{F}\varphi(\omega) \to 0$ (remarquons l'exponentielle négative).
@@ -862,9 +858,9 @@ que nous devons porter notre attention sur les \emph{fonctions à bande limitée
 Le facteur de filtrage $|S|$ sert à amplifier le terme $\mathcal{F}(\mathcal{R}f)$ dans la formule de rétroprojection filtrée originale \eqref{eq:FBP_filter}. En pratique, $\mathcal{F}(\mathcal{R}f)$ est très sensible aux hautes fréquences.
 
 En concentrant notre attention sur les basses fréquences à l'aide d'une fonction à bande limitée $\varphi$, nous sommes en mesure d'éviter ce problème. Notre objectif est de remplacer $S$ par ce que l'on appelle un \emph{filtre passe-bas} (noté $S'$), qui prend en compte les effets des basses fréquences tout en atténuant les hautes fréquences. Cette fonction $S'$ doit avoir un support compact et être de la forme
-\[
+\begin{equation}
 S' = \mathcal{F}\varphi
-\]
+\end{equation}
 (sur un intervalle compact).
 
 Le coût de l'utilisation de $S'(\omega)$ est que nous ne disposons plus de l'égalité présentée dans l'équation \eqref{eq:FBP_varphi_simple}. En revanche, nous obtenons :
@@ -874,46 +870,45 @@ Le coût de l'utilisation de $S'(\omega)$ est que nous ne disposons plus de l'é
 \end{equation}
 
 De manière générale, la plupart des filtres passe-bas sont de la forme
-\[
-S'(\omega) = |\omega| \cdot F(\omega) \cdot \Pi_L(\omega),
-\]
+\begin{equation}
+S'(\omega) = |\omega| \cdot F(\omega) \cdot \Pi_L(\omega)
+\end{equation}
 où $L > 0$ définit la région sur laquelle le filtrage est effectué. Différentes fonctions $F$ déterminent les caractéristiques précises du filtre, et $\Pi_L(\omega)$ est définie comme suit :
-\[
+\begin{equation}
     \Pi_L(\omega) =
     \begin{cases}
         1 & \text{si } |\omega| \leq L, \\
         0 & \text{si } |\omega| > L.
     \end{cases}
-\]
+\end{equation}
 
 Nous introduisons maintenant deux filtres couramment utilisés en imagerie numérique et en traitement du signal : le filtre \emph{Ram-Lak} et le filtre \emph{Hann}.
 
 \subsection*{Filtre Ram-Lak}
 
 Le filtre Ram-Lak est défini par :
-\[
+\begin{equation}
 S'(\omega) = |\omega| \cdot \Pi_L(\omega) =
 \begin{cases}
 |\omega| & \text{si } |\omega| \leq L, \\
 0 & \text{si } |\omega| > L.
 \end{cases}
-\]
-
+\end{equation}
 Le filtre Ram-Lak constitue la base de nombreux autres filtres utilisés en analyse du signal, car il remplace simplement la fonction $F(\omega)$ par la fonction constante égale à 1. D'autres filtres, tels que le filtre Hann, consistent généralement en des produits de fonctions sinus ou cosinus destinées à éliminer le bruit indésirable.
 
 \subsection*{Filtre Hann}
 
 Le filtre Hann est donné par :
-\[
+\begin{equation}
 S'(\omega) = |\omega| \cdot \frac{1}{2}
 \left( 1 + \cos\!\left( \frac{2\pi \omega}{L} \right) \right)
 \cdot \Pi_L(\omega).
-\]
+\end{equation}
 
 Le filtre Hann utilise la fonction de Hann
-\[
+\begin{equation}
 \frac{1}{2}\left( 1 + \cos\!\left( \frac{2\pi \omega}{L} \right) \right)
-\]
+\end{equation}
 comme fonction $F(\omega)$,
 % et son efficacité est illustrée dans le sinogramme et la rétroprojection de la transformée de Radon de Johann, présentés à la Figure~5.
 % ====== TODO ======
@@ -927,22 +922,22 @@ Une fonction discrète est une fonction définie uniquement sur un ensemble dén
 
 Supposons que nous prenions des mesures à \(P\) angles différents \(\theta\) et que pour chaque angle nous ayons \(2M + 1\) faisceaux espacés d'une distance \(d\). Alors nous pouvons définir des valeurs particulières \(\theta_k\) et \(t_j\) comme
 
-\[
+\begin{equation}
 \theta_k = \left\{ \frac{k \pi}{P} : 0 \le k \le P - 1 \right\},
-\]
+\end{equation}
 
-\[
+\begin{equation}
 t_j = \{ jd : -M \le j \le M \}.
-\]
+\end{equation}
 
 Ce qui nous permet de définir une ligne particulière comme \(l_{t_j, \theta_k}\). Nous définissons donc la transformée de Radon discrète comme suit :
 
 \begin{definition}
 Pour une fonction absolument intégrable \(f\) et \(0 \le k \le P\) et \(-M \le j \le M\), \((P, M > 0)\), nous définissons la transformée de Radon discrète de \(f\), notée \(\mathcal{R}_D f\), comme
 
-\[
+\begin{equation}
 \mathcal{R}_D f_{j,k} = \mathcal{R} f(t_j, \theta_k).
-\]
+\end{equation}
 
 \end{definition}
 Pour mettre en œuvre la formule de rétroprojection filtrée \eqref{eq:FBP_varphi_approx}, nous devons également définir la convolution de deux fonctions discrètes.
@@ -950,16 +945,16 @@ Pour mettre en œuvre la formule de rétroprojection filtrée \eqref{eq:FBP_varp
 \begin{definition}
 Pour deux fonctions discrètes \(N\)-périodiques \(f\) et \(g\), nous définissons la \textbf{convolution discrète} de \(f\) et \(g\), notée \(f \star g\), comme
 
-\[
+\begin{equation}
 (f \star g)_m = \sum_{j=0}^{N-1} f_j \cdot g_{(m-j)}, \quad \text{pour } m \in \mathbb{Z}.
-\]
+\end{equation}
 Évidemment, nous aurons également besoin de la transformée de Fourier discrète.
 \end{definition}
 
 \begin{definition}[Transformée de Fourier discrète]
 Étant donnée une fonction discrète $N$-périodique $f$, nous définissons la \textbf{transformée de Fourier discrète} de $f$, notée $\mathcal{F}_D f$, par
 \begin{equation}
-(\mathcal{F}_D f)_j = \sum_{k=0}^{N-1} f_k e^{i 2 \pi k j / N}, \quad \text{pour } j = 0, 1, \dots, (N-1).
+(\mathcal{F}_D f)_j = \sum_{k=0}^{N-1} f_k e^{-i 2 \pi k j / N}, \quad \text{pour } j = 0, 1, \dots, (N-1).
 \end{equation}
 Il convient de noter que la $N$-périodicité de $f$ nous permet de remplacer les bornes de la sommation par tout ensemble d'entiers de longueur $(N-1)$. Avec cette définition, il n'est pas surprenant que nous définissions la transformée de Fourier discrète inverse de la manière suivante.
 \end{definition}
@@ -993,9 +988,9 @@ Nous sommes maintenant prêts à aborder la discrétisation de la formule de ré
 \end{definition}
 
 Rappelons notre forme finale pour la formule filtrée de rétroprojection en équation \eqref{eq:FBP_varphi_approx} :
-$$
+\begin{equation}
 f(x,y) \approx \frac{1}{2} \mathcal{B} (\mathcal{F}^{-1} S' \star \mathcal{R} f)(x,y).
-$$
+\end{equation}
 
 Pour former la version discrète de cette équation, nous voyons que nous devons appliquer la formule suivante:
 \begin{equation}
@@ -1017,7 +1012,7 @@ Pour une fonction de pondération donnée $W$ et une fonction discrète $N$-pér
 
 Maintenant que nous avons couvert toutes les parties de l'équation \eqref{eq:FBP_varphi_simple} dans un cadre discret et traité le problème de l'interpolation, nous pouvons proposer un algorithme de reconstruction discret pour résoudre le coefficient d'atténuation à partir d'un ensemble de données discret.  
 
-Nous interpolons ici la fonction $\left(\mathcal{F}_D^{-1}\mathcal{S}'\right) \ast \mathcal{R}_D f(jd,k\pi/N)$ (c'est-à-dire que nous remplissons les trous après le filtrage de la transformée de Radon). Définissons cette fonction interpolée comme $\mathcal{I}$. Cela conduit à la formule de reconstruction suivante :
+Nous interpolons ici la fonction $\left(\mathcal{F}_D^{-1}\mathcal{S}'\right) \ast \mathcal{R}_D f(jd,k\pi/N)$ (c'est-à-dire que nous remplissons les trous après le filtrage de la transformée de Radon). \\Définissons cette fonction interpolée comme $\mathcal{I}$. \\Cela conduit à la formule de reconstruction suivante :
 
 \begin{equation}
 \begin{aligned}
@@ -1029,180 +1024,81 @@ f(x_m,y_n) &\approx \frac{1}{2} \mathcal{B}_D \left( \left( \mathcal{F}_D^{-1}\m
 
 L'équation précédente tient compte de la nature discrète de nos données réelles et traite les problèmes (comme le manque de données) qui surviennent lorsque l'on dispose d'un nombre fini de mesures.
 
-
-% \section{Formulation linéaire -- Synthèse}
-% D'accord, nous allons expliquer pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \(g = Af\)} utilisée en pratique en tomographie.
-% \subsection{Rétroprojection filtrée continue}
-% On a la formule continue pour la reconstruction filtrée :
-% \[
-% f(x,y) = \frac{1}{2} \int_0^\pi \Big( (\mathcal{F}^{-1} S') \star \mathcal{R} f \Big)(x\cos\theta + y\sin\theta, \theta) \, d\theta
-% \]
-
-% Ici :
-% \begin{itemize}
-%     \item $f(x,y)$ : coefficient d'atténuation à reconstruire,
-%     \item $\mathcal{R} f(t,\theta)$ : transformée de Radon (projection à l'angle $\theta$),
-%     \item $\mathcal{F}^{-1} S'$ : filtre appliqué sur chaque projection,
-%     \item $\star$ : convolution dans $t$.
-% \end{itemize}
-
-% C'est une \textbf{formule intégrale continue}, dépendante de coordonnées polaires.\vspace{5pt}\\
-% Cette expression met en évidence la structure mathématique exacte de la reconstruction tomographique idéale. Toutefois, elle repose sur des intégrales et des fonctions continues qui ne peuvent pas être manipulées directement en pratique. Pour une implémentation numérique, il est indispensable de passer à une représentation discrète. Cette transition constitue le cœur des méthodes de reconstruction utilisées en imagerie médicale.
-
-% \subsection{Discrétisation des coordonnées et des angles}
-
-% Pour passer au discret :
-% \begin{enumerate}
-%     \item On ne mesure que $P$ angles : $\theta_k = k\pi/P$, $k = 0,\dots,P-1$,
-%     \item On ne mesure que $2M+1$ faisceaux par angle, espacés de $d$ : $t_j = j d, j=-M,\dots,M$,
-%     \item On obtient donc la \textbf{transformée de Radon discrète} :
-%     \[
-%     \mathcal{R}_D f_{j,k} = \mathcal{R} f(t_j, \theta_k).
-%     \]
-% \end{enumerate}\vspace{5pt}
-% Cette étape traduit les contraintes physiques des systèmes d'acquisition réels, qui ne fournissent qu'un nombre fini de mesures. L'échantillonnage en angle et en position transforme ainsi le problème continu en un ensemble de données numériques exploitables. La qualité de la reconstruction dépend directement de la finesse de cette discrétisation. Elle conditionne notamment la résolution spatiale et les artefacts.
-
-% \subsection{Convolution et filtrage discrets}
-
-% On applique ensuite le filtre sur chaque projection :
-% \[
-% h_{j,k} = (\mathcal{F}_D^{-1} \mathcal{S}' \ast \mathcal{R}_D f)_{j,k}
-% \]
-
-% Ici, $\ast$ est la \textbf{convolution discrète} dans $t$ :
-% \[
-% (f \ast g)_m = \sum_{n=0}^{N-1} f_n \, g_{(m-n)}.
-% \]\vspace{5pt}
-% Le filtrage est une étape cruciale de la méthode FBP, car il corrige le flou introduit par la rétroprojection simple. La convolution discrète permet d'implémenter efficacement ce filtrage sur des données échantillonnées. Elle renforce les hautes fréquences nécessaires à une bonne résolution spatiale. Sans cette étape, la reconstruction serait fortement dégradée.
-
-% \subsection{Discrétisation de la rétroprojection}
-
-% La rétroprojection discrète est :
-% \[
-% f(x_m,y_n) \approx \frac{1}{2N} \sum_{k=0}^{N-1} h\Big( x_m \cos \frac{k\pi}{N} + y_n \sin \frac{k\pi}{N}, \frac{k\pi}{N} \Big).
-% \]
-
-% Comme les coordonnées cartésiennes $(x_m, y_n)$ ne tombent pas exactement sur les positions $t_j$, on \textbf{interpole} :
-% \[
-% h\big(x_m\cos\theta_k + y_n \sin\theta_k, \theta_k\big) \approx \sum_j h_{j,k} \, W\left(\frac{x_m \cos\theta_k + y_n \sin\theta_k - t_j}{d}\right),
-% \]
-% où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).  
-% Cela transforme chaque $f(x_m, y_n)$ en \textbf{combinaison linéaire des mesures $h_{j,k}$}.\vspace{5pt}\\
-% La rétroprojection redistribue l'information des projections filtrées sur la grille de l'image reconstruite. Cette étape assure la cohérence géométrique entre les données mesurées et l'espace image. L'interpolation est indispensable pour relier les coordonnées polaires aux pixels cartésiens. Elle introduit également une approximation contrôlée du modèle continu.
-
-
-% \subsection{Passage à la forme matricielle linéaire}
-
-% Si on note :
-% \begin{itemize}
-%     \item $f$ le vecteur de tous les $f(x_m, y_n)$ sur la grille,
-%     \item $g$ le vecteur de toutes les mesures projetées filtrées $h_{j,k}$,
-%     \item $A$ la matrice représentant la \textbf{rétroprojection + interpolation},
-% \end{itemize}
-
-% alors :
-% \[
-% f_i = \sum_j A_{ij} \, g_j
-% \]
-
-% Chaque coefficient $A_{ij}$ représente le poids avec lequel la projection $g_j$ contribue au pixel $f_i$.  
-
-% On obtient donc :
-% \[
-% \boxed{g = Af} \quad \text{ou souvent } f = A g \text{ selon la notation.}
-% \]
-
-% En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un simple \textbf{produit matriciel}.\vspace{5pt}\\
-% Cette écriture matricielle unifie l'ensemble du processus de reconstruction dans un cadre linéaire. Elle permet d'analyser la FBP avec les outils de l'algèbre linéaire et de l'optimisation. De nombreuses méthodes itératives modernes reposent sur cette formulation. Elle constitue ainsi un pont entre les approches analytiques et numériques.
-
-% \subsection{Synthèse}
-
-% Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes principales :
-% \begin{enumerate}
-%     \item \textbf{Échantillonnage discret} des angles et des faisceaux → $\mathcal{R}_D f$,
-%     \item \textbf{Filtrage discret} via convolution et transformée de Fourier discrète,
-%     \item \textbf{Rétroprojection discrète} et interpolation sur la grille cartésienne,
-%     \item \textbf{Écriture linéaire} : chaque pixel reconstruit est une combinaison linéaire des mesures → matrice $A$.
-% \end{enumerate}
-
-% Ainsi, \textbf{toute la formule intégrale est transformée en somme discrète}, et la linéarité de la convolution et de la rétroprojection permet de la représenter par $A$.\vspace{5pt}\\
-% Cette synthèse met en évidence la cohérence du passage du modèle physique continu vers une implémentation numérique concrète. La méthode FBP apparaît alors comme une succession d'opérations linéaires bien structurées. Cette vision est essentielle pour comprendre ses limites et ses extensions. Elle prépare naturellement l'introduction de méthodes de reconstruction plus avancées.
 \section{Formulation linéaire -- Synthèse}
 
-Ce chapitre explique pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \( g = Af \)} utilisée en pratique en tomographie. Cette transition est essentielle pour relier la théorie mathématique aux algorithmes numériques implémentés dans les systèmes réels. Elle constitue également le point d’entrée vers les méthodes itératives modernes.\vspace{7pt}\\
-D'accord, nous allons expliquer pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \(g = Af\)} utilisée en pratique en tomographie.
+Cette section explique pas à pas comment passer de la formulation intégrale continue de la rétroprojection filtrée à la \textbf{formulation linéaire discrète \( g = Af \)} utilisée en pratique en tomographie. Cette transition est essentielle pour relier la théorie mathématique aux algorithmes numériques implémentés dans les systèmes réels. Elle constitue également le point d'entrée vers les méthodes itératives modernes.
 
 \subsection{Rétroprojection filtrée continue}
-Cette section présente l’expression analytique idéale de la reconstruction tomographique. Elle met en évidence le rôle central de la transformée de Radon, du filtrage et de l’intégration angulaire. Bien que mathématiquement élégante, cette formulation reste purement continue et ne peut pas être appliquée directement en pratique.\vspace{7pt}\\
-On a la formule continue pour la reconstruction filtrée :
-\[
-f(x,y) = \frac{1}{2} \int_0^\pi \Big( (\mathcal{F}^{-1} S') \star \mathcal{R} f \Big)(x\cos\theta + y\sin\theta, \theta) \, d\theta
-\]
+Cette sous-section présente l'expression analytique idéale de la reconstruction tomographique. Elle met en évidence le rôle central de la transformée de Radon, du filtrage et de l'intégration angulaire. Bien que mathématiquement élégante, cette formulation reste purement continue et ne peut pas être appliquée directement en pratique.
 
-Ici :
-\begin{itemize}
-    \item $f(x,y)$ : coefficient d'atténuation à reconstruire,
-    \item $\mathcal{R} f(t,\theta)$ : transformée de Radon (projection à l'angle $\theta$),
-    \item $\mathcal{F}^{-1} S'$ : filtre appliqué sur chaque projection,
-    \item $\star$ : convolution dans $t$.
-\end{itemize}
+On a la formule continue pour la reconstruction filtrée :
+\begin{equation}
+f(x,y) = \frac{1}{2} \int_0^\pi \Big( (\mathcal{F}^{-1} S') \star \mathcal{R} f \Big)(x\cos\theta + y\sin\theta, \theta) \, d\theta
+\end{equation}
+
+Dans cette expression, $f(x,y)$ représente le coefficient d'atténuation à reconstruire. La quantité $\mathcal{R}f(t,\theta)$ correspond à la transformée de Radon, c'est-à-dire la projection de l'objet pour un angle $\theta$. Le terme $\mathcal{F}^{-1}S'$ désigne le filtre appliqué à chaque projection, tandis que le symbole $\star$ représente l'opération produit de convolution par rapport à la variable $t$.
 
 C'est une \textbf{formule intégrale continue}, dépendante de coordonnées polaires.
 \subsection{Discrétisation des coordonnées et des angles}
-La discrétisation permet d’adapter le modèle continu aux contraintes physiques des systèmes d’acquisition. Elle transforme les intégrales et variables continues en un ensemble fini de mesures exploitables numériquement. Cette étape conditionne directement la qualité et la résolution de la reconstruction finale. \vspace{7pt}\\
+La discrétisation permet d'adapter le modèle continu aux contraintes physiques des systèmes d'acquisition. Elle transforme les intégrales et variables continues en un ensemble fini de mesures exploitables numériquement. Cette étape conditionne directement la qualité et la résolution de la reconstruction finale. 
+
 Pour passer au discret :
 \begin{enumerate}
     \item On ne mesure que $P$ angles : $\theta_k = k\pi/P$, $k = 0,\dots,P-1$,
     \item On ne mesure que $2M+1$ faisceaux par angle, espacés de $d$ : $t_j = j d, j=-M,\dots,M$,
     \item On obtient donc la \textbf{transformée de Radon discrète} :
-    \[
+    \begin{equation}
     \mathcal{R}_D f_{j,k} = \mathcal{R} f(t_j, \theta_k).
-    \]
+    \end{equation}
 \end{enumerate}
 
 \subsection{Convolution et filtrage discrets}
-Le filtrage est une étape cruciale de la méthode FBP, car il compense le flou introduit par la rétroprojection simple. Il repose sur l’opération de convolution, qui permet de renforcer les hautes fréquences nécessaires à une bonne résolution spatiale. Sans ce filtrage, la reconstruction serait fortement dégradée.\vspace{7pt}\\
+Le filtrage est une étape cruciale de la méthode FBP, car il compense le flou introduit par la rétroprojection simple. Il repose sur l'opération de convolution, qui permet de renforcer les hautes fréquences nécessaires à une bonne résolution spatiale. Sans ce filtrage, la reconstruction serait fortement dégradée.
+
 On applique ensuite le filtre sur chaque projection :
-\[
+\begin{equation}
 h_{j,k} = (\mathcal{F}_D^{-1} \mathcal{S}' \ast \mathcal{R}_D f)_{j,k}
-\]
+\end{equation}
 
 Ici, $\ast$ est la \textbf{convolution discrète} dans $t$ :
-\[
+\begin{equation}
 (f \ast g)_m = \sum_{n=0}^{N-1} f_n \, g_{(m-n)}.
-\]
+\end{equation}
 
 \subsection{Discrétisation de la rétroprojection}
 
-La rétroprojection assure la redistribution des projections filtrées sur la grille de l’image reconstruite. Elle garantit la cohérence géométrique entre l’espace des mesures et l’espace image. Cette étape nécessite une interpolation, introduisant une approximation contrôlée du modèle continu.\vspace{7pt}\\
+La rétroprojection assure la redistribution des projections filtrées sur la grille de l'image reconstruite. Elle garantit la cohérence géométrique entre l'espace des mesures et l'espace image. Cette étape nécessite une interpolation, introduisant une approximation contrôlée du modèle continu.
+
 La rétroprojection discrète est :
-\[
+\begin{equation}
 f(x_m,y_n) \approx \frac{1}{2N} \sum_{k=0}^{N-1} h\Big( x_m \cos \frac{k\pi}{N} + y_n \sin \frac{k\pi}{N}, \frac{k\pi}{N} \Big).
-\]
+\end{equation}
 Comme les coordonnées cartésiennes $(x_m, y_n)$ ne tombent pas exactement sur les positions $t_j$, on \textbf{interpole} :
-\[
+\begin{equation}
 h\big(x_m\cos\theta_k + y_n \sin\theta_k, \theta_k\big) \approx \sum_j h_{j,k} \, W\left(\frac{x_m \cos\theta_k + y_n \sin\theta_k - t_j}{d}\right),
-\]
-où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).\vspace{7pt}\\
+\end{equation}
+où $W$ est la fonction de pondération de l'interpolation (linéaire, spline, etc.).
+
 Cela transforme chaque $f(x_m, y_n)$ en \textbf{combinaison linéaire des mesures $h_{j,k}$}.
 \subsection{Passage à la forme matricielle linéaire}
-La formulation matricielle permet de rassembler toutes les opérations précédentes dans un cadre linéaire unique. Elle constitue un lien direct entre la théorie continue et les algorithmes numériques. Cette écriture est essentielle pour l’analyse et l’extension vers des méthodes itératives.\vspace{7pt}\\
+La formulation matricielle permet de rassembler toutes les opérations précédentes dans un cadre linéaire unique. Elle constitue un lien direct entre la théorie continue et les algorithmes numériques. Cette écriture est essentielle pour l'analyse et l'extension vers des méthodes itératives.
+
 Si on note :
 \begin{itemize}
     \item $f$ le vecteur de tous les $f(x_m, y_n)$ sur la grille,
     \item $g$ le vecteur de toutes les mesures projetées filtrées $h_{j,k}$,
-    \item $A$ la matrice représentant la \textbf{rétroprojection + interpolation},
+    \item $A$ la matrice représentant la \textbf{rétroprojection} et \textbf{l'interpolation},
 \end{itemize}
 
 alors :
-\[
+\begin{equation}
 f_i = \sum_j A_{ij} \, g_j
-\]
+\end{equation}
 
 On obtient :
-\[
-\boxed{g = Af} \quad \text{(ou } f = Ag \text{ selon la convention)}
-\]
+\begin{equation}
+g = Af \quad \text{(ou } f = Ag \text{ selon la convention)}
+\end{equation}
 
 En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un produit matriciel.
 
@@ -1211,13 +1107,14 @@ Dans le cadre discret, le vecteur de données de projection à faisceau parallè
 \begin{equation}
 g_i = \sum_{j=1}^{N} \varphi_{i,j} \cdot f_j, \quad \text{où } i = 1, 2, \cdots, M.
 \end{equation}
-Le coefficient de pondération $\varphi_{i,j}$ de la matrice système $\Phi$ est égal à la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.
+Le coefficient de pondération $\varphi_{i,j}$ de la matrice système $\Phi$ est égal à la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel (Voir Figure \ref{fig:phi}).
 \end{definition}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle.png}
-    \caption{Calcul du coefficient de poids $\varphi_{i,j}$ de la matrice système $\Phi$ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}
+    \includegraphics[height=4cm, keepaspectratio]{./images/projection à faisceau parallèle.png}
+    % \caption{Calcul du coefficient de poids $\varphi_{i,j}$ de la matrice système $\Phi$ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}
+    \caption{Coefficient $\phi_{i,j}$ calculé à partir de l'intersection du rayon $i$ avec le pixel $j$.}
     \label{fig:phi}
 \end{figure}
 
@@ -1225,14 +1122,20 @@ Le calcul direct de chaque $\varphi_{i,j}$ est coûteux. Pour accélérer la rec
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{./images/projection à faisceau parallèle-2.png}
-    \caption{Mesures des rayons-\textbf{X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha$, $90-\alpha$, $90+\alpha$ et $180-\alpha$. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}
+    \includegraphics[height=4cm, keepaspectratio]{./images/projection à faisceau parallèle-2.png}
+    % \caption{Mesures des rayons-\textbf{X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha$, $90-\alpha$, $90+\alpha$ et $180-\alpha$. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}
+    \caption{Mesures des rayons X pour différents angles de rotation et propriétés de symétrie associées.}
     \label{fig:mesure-rayons-X}
 \end{figure}
-
+La figure illustre la géométrie des mesures en tomographie par rayons X pour différentes orientations du système d'acquisition. L'objet, placé au centre du repère cartésien $(x,y)$, est traversé par des faisceaux de rayons X correspondant à plusieurs directions d'observation. Pour un angle de rotation $\alpha$, les segments notés $a_i$, $b_i$, $c_i$ et $d_i$ représentent les rayons interceptant l'objet et les mesures d'atténuation associées. Les indications angulaires telles que $90^\circ+\alpha$ et $180^\circ-\alpha$ mettent en évidence les propriétés de symétrie des projections, traduisant la relation fondamentale de la transformée de Radon
+\begin{equation}
+Rf(t,\theta)=Rf(-t,\theta+\pi),
+\end{equation}
+ce qui montre que les projections obtenues pour des angles séparés de $\pi$ contiennent une information redondante. Cette propriété justifie que l'acquisition des données soit généralement limitée à l'intervalle angulaire $\theta \in [0,\pi]$ dans les problèmes de reconstruction tomographique.
 
 \subsection{Synthèse}
-Cette synthèse met en évidence la cohérence globale du passage du modèle continu vers une implémentation discrète. Elle permet de comprendre la FBP comme une succession structurée d’opérations linéaires. Cette vision prépare naturellement l’introduction de méthodes de reconstruction plus avancées.\vspace{7pt}\\
+Cette synthèse met en évidence la cohérence globale du passage du modèle continu vers une implémentation discrète. Elle permet de comprendre la FBP comme une succession structurée d'opérations linéaires. Cette vision prépare naturellement l'introduction de méthodes de reconstruction plus avancées.
+
 Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes principales :
 \begin{enumerate}
     \item \textbf{Échantillonnage discret} des angles et des faisceaux,
@@ -1242,12 +1145,17 @@ Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes princi
 \end{enumerate}
 
 \subsubsection*{Conclusion}
-Ce chapitre a présenté les principaux outils mathématiques qui fondent la reconstruction d'images tomographiques, en mettant en évidence la transition fondamentale entre les méthodes analytiques classiques et les approches modernes basées sur le \textit{Compressed Sensing}.\vspace{7pt}\\
-Les méthodes analytiques, historiquement les premières, reposent sur une formulation mathématique élégante et directe du problème inverse. La transformée de Radon en constitue la pierre angulaire, en modélisant le lien entre l'objet et ses projections. Son inversion, fondée sur le théorème de la coupe centrale et mise en œuvre dans l'algorithme de rétroprojection filtrée (FBP), permet une reconstruction rapide. Ces méthodes, dont la FBP demeure un standard clinique, supposent toutefois des données abondantes, complètes et faiblement bruitées.\vspace{7pt}\\
-Cependant, les exigences actuelles de réduction de dose et de temps d'acquisition conduisent à des scénarios sous-échantillonnés, dans lesquels les méthodes analytiques atteignent leurs limites, se traduisant par des artefacts et une forte sensibilité au bruit. C'est dans ce contexte que les méthodes itératives et le cadre du \textit{Compressed Sensing} prennent tout leur sens. En formulant la reconstruction comme un problème inverse régularisé, elles exploitent des connaissances a priori sur l'image, telles que sa parcimonie dans un domaine approprié (ondelettes, gradient), afin de stabiliser l'inversion et d'obtenir des reconstructions de qualité à partir de données limitées. La variation totale (TV) constitue un exemple de régularisation particulièrement adapté, permettant de préserver les contours tout en réduisant le bruit.\vspace{7pt}\\
-La transformée de Fourier et l'opération de convolution jouent un rôle transversal essentiel, aussi bien dans l'implémentation du filtrage pour la FBP que dans l'analyse fréquentielle des données. Par ailleurs, la discrétisation des opérateurs mathématiques et la formulation matricielle linéaire du problème, sous la forme
+
+Ce chapitre a présenté les principaux outils mathématiques qui sous-tendent la reconstruction d'images tomographiques, en mettant en évidence l'évolution des méthodes analytiques classiques vers les approches modernes fondées sur le \textit{Compressed Sensing}.
+
+Les méthodes analytiques, historiquement les premières, reposent sur une formulation mathématique directe du problème inverse. La transformée de Radon en constitue l'élément central en modélisant la relation entre l'objet et ses projections. Son inversion, reposant sur le théorème de la coupe centrale et mise en œuvre notamment dans l'algorithme de rétroprojection filtrée (FBP), permet une reconstruction rapide. Toutefois, ces méthodes supposent généralement des données complètes, abondantes et peu bruitées.
+
+Dans les contextes actuels d'imagerie médicale, marqués par la nécessité de réduire la dose d'irradiation et le temps d'acquisition, les données disponibles sont souvent sous-échantillonnées. Dans ces conditions, les méthodes analytiques peuvent produire des artefacts et deviennent sensibles au bruit. Les approches itératives, associées au cadre du \textit{Compressed Sensing}, offrent alors une alternative plus robuste. En formulant la reconstruction comme un problème inverse régularisé, elles exploitent des connaissances a priori sur l'image, telles que sa parcimonie dans certains domaines de représentation (ondelettes, gradient). La régularisation par variation totale (TV) constitue un exemple particulièrement efficace pour préserver les contours tout en limitant le bruit.
+
+Par ailleurs, la transformée de Fourier et l'opération de convolution jouent un rôle fondamental, notamment dans l'implémentation du filtrage pour la FBP et dans l'analyse fréquentielle des données. La discrétisation des opérateurs et la formulation matricielle du problème,
 \[
-g = H f,
+g = Hf,
 \]
-permettent d'établir un lien direct entre la théorie continue et son implémentation numérique, ouvrant ainsi la voie aux algorithmes d'optimisation itératifs.\vspace{7pt}\\
-En résumé, ce chapitre dresse un panorama cohérent des approches algorithmiques de la reconstruction tomographique. Il montre que si les méthodes analytiques offrent rapidité et simplicité dans des conditions idéales, les méthodes itératives régularisées, appuyées par la théorie du \textit{Compressed Sensing}, constituent une réponse incontournable aux défis de l'imagerie moderne : reconstruire davantage d'information à partir de moins de données, sans compromettre la qualité diagnostique ni la sécurité du patient. La maîtrise de ces outils mathématiques apparaît ainsi comme un levier essentiel pour le développement des méthodes de reconstruction de demain.
+permettent également de relier le modèle mathématique continu à son implémentation numérique et de mettre en œuvre des algorithmes d'optimisation itératifs.
+
+Ainsi, ce chapitre met en évidence la complémentarité entre les approches analytiques et itératives. Si les premières offrent rapidité et simplicité dans des conditions idéales, les secondes apparaissent aujourd'hui essentielles pour répondre aux défis de l'imagerie moderne : reconstruire des images de qualité à partir de données limitées tout en garantissant la sécurité du patient.

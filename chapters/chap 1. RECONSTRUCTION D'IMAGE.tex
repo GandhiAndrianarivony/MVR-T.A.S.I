@@ -3,95 +3,467 @@
 %===========================================================
 
 \chapter{RECONSTRUCTION D'IMAGE}
-L'imagerie médicale occupe aujourd'hui une place centrale dans le diagnostic, le suivi thérapeutique et la recherche biomédicale. Des modalités telles que la tomodensitométrie (CT), l'imagerie par résonance magnétique (IRM) ou la tomographie par émission de positons (TEP) permettent d'explorer de manière non invasive l'anatomie et la physiologie du corps humain avec une précision toujours croissante. Toutefois, la qualité et la fiabilité de ces images reposent sur une étape fondamentale, souvent invisible pour l'utilisateur final : la reconstruction d'image.\vspace{5pt}\\
-La reconstruction d'image médicale consiste à transformer des données de mesure brutes, acquises selon différents angles ou configurations physiques, en représentations visuelles exploitables par le clinicien. Contrairement à la photographie classique, les systèmes d'imagerie médicale ne produisent pas directement des images des organes. Ils mesurent plutôt des interactions physiques --- telles que l'atténuation des rayons X, la réponse à des champs magnétiques ou les émissions radioactives --- qui ne constituent que des projections partielles de la réalité anatomique ou fonctionnelle. La reconstruction vise alors à estimer, à partir de ces projections, la distribution spatiale des tissus ou des activités biologiques.\vspace{5pt}\\
-En tomodensitométrie, les projections correspondent à l'atténuation des rayons X traversant le corps selon de multiples directions, tandis qu'en tomographie par émission de positons, elles résultent de la détection des photons émis par un traceur radioactif à l'intérieur du patient. Dans les deux cas, les données acquises sont incomplètes, bruitées et fortement corrélées, ce qui rend la reconstruction d'image intrinsèquement complexe. Ce processus s'inscrit dans le cadre des problèmes inverses, pour lesquels on cherche à retrouver les causes physiques à partir d'observations indirectes. Ces problèmes sont généralement mal posés au sens mathématique, plusieurs solutions pouvant conduire à des mesures expérimentales similaires.\vspace{5pt}\\
-Historiquement, les premières méthodes de reconstruction, telles que la rétroprojection filtrée, ont permis le développement clinique rapide de l'imagerie tomographique grâce à leur simplicité et à leur efficacité computationnelle. Cependant, ces approches restent sensibles au bruit et aux artefacts, en particulier lorsque les conditions d'acquisition s'éloignent du cadre idéal. Afin de pallier ces limitations, des méthodes itératives ont été développées. Celles-ci reposent sur une modélisation plus fidèle du processus d'acquisition et permettent d'intégrer des connaissances a priori sur les propriétés des images médicales, au prix d'un coût de calcul plus élevé.\vspace{5pt}\\
-Plus récemment, les méthodes basées sur des modèles physiques détaillés et l'intégration de techniques d'intelligence artificielle ont profondément renouvelé le domaine de la reconstruction d'image. Ces approches permettent de mieux prendre en compte la géométrie des systèmes d'acquisition, la physique des interactions rayonnement--matière ainsi que les caractéristiques des détecteurs. Elles ouvrent également la voie à des reconstructions plus rapides, plus robustes et de meilleure qualité, répondant à des enjeux majeurs tels que la réduction de la dose de rayonnement, la correction des artefacts et l'amélioration du contraste des images.\vspace{5pt}\\
+\label{chapitre1} 
+
+L'imagerie médicale a profondément transformé la pratique clinique au cours des dernières décennies, en offrant la possibilité d'explorer le corps humain de manière non invasive et de révéler aussi bien ses structures anatomiques que ses processus fonctionnels. Des modalités telles que la tomodensitométrie (TDM), l'imagerie par résonance magnétique (IRM) ou la tomographie par émission de positons (TEP) sont devenues des outils incontournables pour le diagnostic, la planification thérapeutique et le suivi des patients. Cependant, la formation d'une image médicale exploitable ne constitue pas une simple acquisition de données ; elle résulte d'un processus computationnel complexe, la reconstruction, qui vise à transformer des mesures physiques brutes et indirectes en une représentation visuelle fidèle de l'objet étudié. Cette étape algorithmique, souvent invisible pour le clinicien, conditionne pourtant directement la qualité diagnostique des examens et soulève des défis mathématiques et physiques considérables.
+
+Ce premier chapitre pose les fondements conceptuels nécessaires à la compréhension des enjeux de la reconstruction d'image. Après avoir défini la nature d'une image numérique et exploré, par analogie avec le système visuel humain, les principes de sa formation, nous présenterons la diversité des modalités d'acquisition et des formats de représentation. Une attention particulière sera portée à la distinction entre les paradigmes de construction, de reconstruction et de restauration d'image, qui, bien que souvent confondus, répondent à des problématiques mathématiques distinctes. Nous détaillerons ensuite les spécificités de la reconstruction dans trois grandes modalités médicales — TDM, IRM et TEP — en mettant en lumière les principes physiques sous-jacents et les défis algorithmiques associés. L'accent sera mis sur la transformation de Radon, outil mathématique fondamental en imagerie tomographique, ainsi que sur les limites de la méthode historique de rétroprojection filtrée (FBP). Enfin, ce chapitre introduira le Compressive Sensing (CS), une approche théorique novatrice qui, en exploitant la parcimonie des images, ouvre la voie à des reconstructions de haute qualité à partir de données significativement sous-échantillonnées, répondant ainsi aux exigences cliniques de réduction des doses et des temps d'acquisition.
+
+\section{Images et imagerie médicale}
+
+\subsection{Vision humaine}
+L'œil humain (figure \ref{fig:eye}) peut être considéré comme un système naturel d'acquisition et de traitement d'image. De manière générale, une image est la représentation d'une scène obtenue par la projection de la lumière sur une surface sensible. Dans le système visuel humain, cette surface est la rétine. La cornée et le cristallin jouent un rôle analogue à celui d'un système optique dans une caméra : ils focalisent la lumière et projettent sur la rétine une image réelle, inversée et réduite du monde extérieur. L'iris régule la quantité de lumière entrante, de manière comparable à un diaphragme optique, assurant une adaptation aux variations d'éclairement.
+
+La rétine constitue le capteur biologique de cette image. Elle contient environ 120 millions de bâtonnets, sensibles à la faible luminosité et responsables de la vision en niveaux de gris, ainsi que 6 à 7 millions de cônes, responsables de la perception des couleurs grâce à trois types sensibles aux longueurs d'onde courtes (S), moyennes (M) et longues (L). Cette organisation est comparable à l'échantillonnage spatial et spectral en traitement d'image numérique, où chaque photorécepteur peut être assimilé à un pixel sensible à une composante lumineuse. La forte concentration de cônes dans la fovéa correspond à une zone de haute résolution spatiale, tandis que la périphérie rétinienne, dominée par les bâtonnets, offre une résolution plus faible mais une meilleure sensibilité aux mouvements et à la luminosité.
+
+Contrairement à un simple capteur passif, la rétine réalise déjà un prétraitement de l'image. La phototransduction convertit la lumière en signal électrique, puis les cellules bipolaires, horizontales et amacrines effectuent un traitement local du contraste, de l'adaptation lumineuse et de la détection de contours. Ce mécanisme est analogue aux opérations de filtrage spatial et d'amélioration de contraste en traitement d'image. Les cellules ganglionnaires codent ensuite l'information et la transmettent via le nerf optique vers le cerveau.
+
+Au niveau cortical, l'information visuelle subit un traitement hiérarchique : le cortex visuel primaire analyse les orientations et les fréquences spatiales, tandis que les aires visuelles secondaires extraient des caractéristiques plus complexes comme les formes, les couleurs et le mouvement. Cette organisation rappelle les méthodes modernes de traitement et d'analyse d'image, notamment les réseaux de neurones convolutifs, qui fonctionnent par extraction progressive de caractéristiques, des plus simples aux plus abstraites.
+\begin{figure}[H]
+\centering
+\includegraphics[height=5cm, keepaspectratio]{images/eye.png}
+\caption{Anatomie de l'œil humain}
+\label{fig:eye}
+\end{figure}
+Cette analogie entre vision biologique et traitement d'image numérique constitue un fondement conceptuel important pour les systèmes de vision artificielle.
+
+\subsection{Acquisition d'images}
+L'acquisition d'images constitue la première étape fondamentale de toute chaîne de traitement d'images, car elle conditionne directement la qualité, la nature et l'interprétation des données à analyser. Elle consiste à convertir une grandeur physique — rayonnement électromagnétique, onde mécanique ou faisceau de particules — en une représentation numérique exploitable par des algorithmes. La majorité des techniques reposent sur l'interaction entre la matière et les ondes électromagnétiques, du spectre des ondes radio aux rayons gamma, chaque domaine spectral offrant des propriétés spécifiques. Par exemple, les ondes radio très pénétrantes sont utilisées en IRM et radioastronomie, l'infrarouge permet la thermographie et l'imagerie multispectrale, la lumière visible sert en photographie et vision artificielle, les rayons X en radiographie et tomodensitométrie, et les rayons gamma en médecine nucléaire. D'autres modalités exploitent les ultrasons en échographie, les ondes sismiques en imagerie géophysique, ou un faisceau d'électrons en microscopie électronique pour atteindre des résolutions nanométriques.
+
+Quelle que soit la modalité, la chaîne d'acquisition numérique suit un schéma commun : l'énergie émise interagit avec l'objet, subissant atténuation, réflexion ou émission secondaire ; un détecteur convertit cette énergie en signal électrique ; ce signal analogique est numérisé par échantillonnage spatial et quantification radiométrique ; enfin, des prétraitements corrigent le bruit et les erreurs de calibration. Cette organisation uniforme permet de comparer et d'optimiser différentes techniques d'imagerie tout en garantissant la qualité des données pour l'analyse et la reconstruction ultérieure.
+
+\begin{figure}[H]
+\centering
+% Première rangée
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\includegraphics[height=4cm, keepaspectratio]{images/new-interferometry1.jpg}
+\caption{Interférométrie optique}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\includegraphics[height=4cm, keepaspectratio]{images/new-x-ray1.jpg}
+\caption{Radiographie X (genou droit)}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\includegraphics[height=4cm, keepaspectratio]{images/new-thermography1.jpg}
+\caption{Thermographie infrarouge (bâtiments)}
+\end{subfigure}
+
+\vskip 0.5cm
+
+% Deuxième rangée
+\begin{subfigure}[b]{0.3\textwidth}
+    \centering
+    \includegraphics[height=4cm, keepaspectratio]{images/new-MRI1.jpg}
+    \caption{IRM cérébrale (coupe axiale)}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.3\textwidth}
+    \centering
+    \includegraphics[height=4cm, keepaspectratio]{images/new-seismic1.jpg}
+    \caption{Profil de sismique réflexion}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.3\textwidth}
+    \centering
+    \includegraphics[height=4cm, keepaspectratio]{images/new-electron-microscopy1.jpg}
+    \caption{Microscopie électronique à balayage}
+\end{subfigure}
+
+\caption{Types d'acquisition d'images}
+\label{fig:modalites}
+\end{figure}
+
+La figure \ref{fig:modalites} illustre cette diversité des modalités : l'interférométrie exploite les phén-\\omènes d'interférence ; la radiographie X met en évidence l'absorption différentielle des structures denses ; la thermographie infrarouge visualise les variations thermiques ; l'IRM fournit un contraste lié aux propriétés de relaxation des tissus ; l'imagerie sismique révèle la stratification du sous-sol ; la microscopie électronique à balayage produit des images de surface à très haute résolution.
+
+% ======================================================
+\subsection{Images analogiques}
+Avant l'avènement de l'imagerie numérique, la plupart des systèmes techniques d'acquisition et de transmission d'images — tels que la photographie, le cinéma et la télévision — reposaient sur des principes analogiques. Une image analogique se définit comme une représentation continue d'une scène, où l'information est codée de manière proportionnelle et continue dans l'espace et en intensité. Contrairement à l'image numérique qui décompose l'information en pixels discrets, l'image analogique enregistre une variation continue des grandeurs physiques, qu'il s'agisse de la densité d'argent sur un film photographique, de la modulation d'un signal vidéo ou de la répartition de charges sur un capteur. Cette continuité fondamentale lui confère une résolution théoriquement infinie, limitée uniquement par la granularité du support et les propriétés physiques du système d'enregistrement.
+
+Le principe de l'image analogique repose sur une correspondance directe entre le phénomène observé et sa représentation. Dans le cas de la photographie argentique, la lumière frappant une émulsion photosensible provoque une réaction chimique : les cristaux d'halogénure d'argent exposés se transforment en argent métallique lors du développement, créant une image dont la densité optique varie continûment en fonction de l'intensité lumineuse reçue. Chaque grain d'argent agit comme un élément microscopique, mais contrairement au pixel numérique qui possède une position et une valeur discrètes, la distribution des grains est aléatoire et leur densité varie de façon continue dans l'espace. Cette nature aléatoire et continue produit ce que les photographes appellent le \textit{grain}, signature esthétique caractéristique de la photographie argentique.
+
+Les supports analogiques sont multiples et variés. Au-delà du film photographique, on trouve les disques vinyles dont les sillons modulent l'information audio de manière analogique, les bandes magnétiques vidéo où l'image est codée par l'orientation de particules magnétiques, ou encore les écrans cathodiques où un faisceau d'électrons balaye continûment l'écran pour créer l'image. Dans tous ces cas, l'information n'est pas échantillonnée mais enregistrée sous forme d'une grandeur physique variant continûment : densité optique, profondeur de sillon, aimantation, ou intensité lumineuse.
+
+L'acquisition d'une image analogique fait intervenir des processus physiques fondamentaux. En photographie, l'objectif forme une image optique continue sur le plan focal où se trouve le film. Les photons incidents interagissent avec l'émulsion selon une probabilité qui dépend de leur énergie et du type d'halogénure utilisé. La formation de l'image latente, invisible avant développement, résulte de la création d'amas d'argent métallique au sein des cristaux. Le développement chimique amplifie ensuite considérablement cet effet, chaque grain exposé étant réduit en argent métallique tandis que les grains non exposés sont éliminés par le fixateur. Ce processus révèle une image dont les densités optiques sont proportionnelles au logarithme de l'exposition reçue, une relation connue sous le nom de courbe caractéristique ou courbe H\&D (Hurter et Driffield).
+
+La télévision analogique, autre forme majeure d'imagerie analogique, repose sur des principes totalement différents. L'image est analysée ligne par ligne par un faisceau d'électrons balayant la surface d'un tube de caméra. Le signal vidéo résultant est une tension électrique variant continûment dans le temps, où chaque instant correspond à un point de l'image. Ce signal peut être transmis par ondes hertziennes, enregistré sur bande magnétique ou modulé pour être diffusé. À la réception, un tube cathodique reproduit l'image en modulant l'intensité d'un faisceau d'électrons qui balaye l'écran recouvert de luminophores, dont l'excitation produit de la lumière. La persistance rétinienne et le balayage rapide créent l'illusion d'une image fixe et continue.
+
+Les propriétés des images analogiques diffèrent fondamentalement de celles des images numériques. L'absence de pixellisation permet des agrandissements extrêmes sans effet de bloc, la limite étant la granularité du support. La réponse aux faibles lumières suit des lois statistiques, produisant un bruit de nature différente du bruit numérique : il s'agit d'un bruit poissonien lié à la nature discrète des photons et des grains, plutôt qu'un bruit d'échantillonnage. La gamme dynamique, c'est-à-dire l'écart entre les zones les plus sombres et les plus claires restituables, dépend des propriétés chimiques de l'émulsion ou des caractéristiques électroniques du capteur analogique.
+
+La conservation des images analogiques pose des défis spécifiques. Les films photographiques subissent une dégradation chimique inéluctable : les colorants des films couleurs s'estompent avec le temps, le support en acétate peut se décomposer en libérant de l'acide acétique (le fameux \textit{syndrome du vinaigre}), et les gélatines peuvent être attaquées par des micro-organismes. Les bandes magnétiques souffrent de démagnétisation progressive et de fragilité mécanique. Contrairement aux données numériques qui peuvent être recopiées à l'identique, chaque copie d'un original analogique introduit une dégradation, limitant la possibilité de préservation à long terme.
+
+La numérisation des images analogiques, processus de conversion de l'analogique vers le numérique, vise à la fois à préserver le patrimoine visuel et à permettre le traitement informatique de ces images. Un scanner ou un numériseur échantillonne l'image continue en mesurant la densité optique en une grille de points, avec une certaine profondeur de quantification (nombre de bits par échantillon). Ce processus, inévitablement destructeur d'information, doit être réalisé avec une résolution suffisante pour capturer toute la finesse de l'original sans pour autant générer des fichiers démesurés. La question de la résolution de numérisation optimale fait l'objet de débats dans les communautés de restaurateurs et d'archivistes, tiraillés entre la fidélité à l'original et les contraintes pratiques de stockage.
+
+Malgré la domination actuelle du numérique, l'image analogique conserve des adeptes et des applications spécifiques. En photographie artistique, le rendu particulier des films, la maîtrise du processus chimique et l'objet physique qu'est le tirage argentique continuent de séduire. Dans certains domaines scientifiques, des capteurs analogiques sont encore utilisés pour leur réponse linéaire sur de grandes plages dynamiques. En cinéma, certains réalisateurs préfèrent encore la pellicule pour sa capacité à rendre les hautes lumières et sa profondeur d'image caractéristique. L'analogique et le numérique ne s'opposent donc pas simplement comme ancien et moderne, mais comme deux approches différentes de la représentation visuelle, chacune avec ses forces, ses faiblesses et son esthétique propre.
+
+La compréhension des principes de l'image analogique reste essentielle pour tout spécialiste du traitement d'images, car elle éclaire les fondements physiques sur lesquels reposent nos représentations visuelles. Les modèles mathématiques utilisés en traitement d'image numérique — convolution, échantillonnage, quantification, bruit — trouvent leurs origines dans l'étude des systèmes analogiques et de leur conversion vers le numérique. Cette continuité conceptuelle entre l'analogique et le numérique rappelle que derrière les pixels et les algorithmes se cachent toujours des phénomènes physiques continus qu'il s'agit de mesurer, d'interpréter et de transformer.
+% =======================================================
+\subsection{Image numérique}
+
+Une image numérique est une représentation discrète et quantifiée d'une scène ou d'un phénomène, qu'il soit réel (photographie, radiographie) ou synthétique (image de synthèse). Contrairement à une image analogique (comme une photographie argentique sur pellicule) qui est continue, l'image numérique est décomposée en un nombre fini d'éléments discrets. Cette discrétisation permet sa manipulation, son stockage et sa transmission par un ordinateur.
+Concrètement, une image numérique peut être vue comme un tableau (ou matrice) de nombres. Chaque élément de ce tableau correspond à une petite région de l'image et contient une ou plusieurs valeurs numériques décrivant l'information visuelle associée.\\
+Chaque case de ce tableau est appelée :
+\begin{itemize}
+\item[-] \textbf{pixel} (\textit{picture element}) dans le cas d'une image bidimensionnelle ;
+\item[-] \textbf{voxel} (\textit{volume element}) dans le cas d'une image tridimensionnelle.
+\end{itemize}
+
+Ces éléments contiennent une ou plusieurs valeurs représentant par exemple la luminance, la couleur ou une autre grandeur physique mesurée.
+
+\subsubsection{Formalisation mathématique}
+
+Mathématiquement, une image peut être décrite comme une fonction discrète :
+
+\[
+f : \mathbb{Z}^d \to \mathbb{R}^B
+\]
+
+ou, plus couramment en traitement d'images puisque les indices sont positifs :
+
+\[
+f : \mathbb{N}^d \to \mathbb{R}^B
+\]
+
+où :
+
+\begin{itemize}
+
+\item[-] $\mathbb{N}$ (ou $\mathbb{Z}$) désigne l'ensemble des entiers naturels (ou relatifs), représentant les indices discrets des pixels.
+
+\item[-] $d$ représente la \textbf{dimension spatiale de l'image}.
+
+\begin{itemize}
+\item[-] $d = 2$ pour une image plane (largeur et hauteur),
+\item[-] $d = 3$ pour une image volumique (par exemple en imagerie médicale comme un scanner ou une IRM).
+\end{itemize}
+
+\item[-] $\mathbb{N}^d$ représente l'ensemble discret des \textbf{coordonnées spatiales possibles} dans l'image, c'est-à-dire la grille sur laquelle l'image est échantillonnée.
+
+Par exemple, pour une image 2D, un pixel est repéré par ses coordonnées entières $(m,n)$.
+
+\item[-] $\mathbb{R}$ est l'ensemble des nombres réels. En pratique, les intensités sont souvent codées par des entiers dans un intervalle fini (par exemple $[0,255]$ pour une image 8 bits). L'utilisation de $\mathbb{R}$ permet cependant de manipuler l'image dans un cadre mathématique plus général.
+
+\item[-] $B$ représente le \textbf{nombre de canaux} ou \textbf{composantes spectrales} de l'image.
+
+\begin{itemize}
+\item[-] $B = 1$ pour une image en niveaux de gris,
+\item[-] $B = 3$ pour une image couleur dans l'espace RVB (Rouge, Vert, Bleu),
+\item[-] $B = 4$ pour une image RGBA incluant un canal de transparence,
+\item[-] $B$ peut être beaucoup plus grand pour des images multispectrales ou hyperspectrales.
+\end{itemize}
+
+\item[-] $\mathbb{R}^B$ signifie qu'à chaque position spatiale on associe un \textbf{vecteur de $B$ valeurs}.
+\end{itemize}
+
+La fonction $f$ associe donc à chaque position de pixel un vecteur d'intensités :
+
+\[
+f(n_1,n_2,\dots, n_d) = [i_1,i_2,\dots,i_B]
+\]
+
+où :
+
+\begin{itemize}
+\item[-] $(n_1,n_2,\dots, n_d)$ sont les coordonnées du pixel,
+\item[-] $i_1,i_2,\dots,i_B$ sont les valeurs associées aux différents canaux.
+\end{itemize}
+
+
+
+Une image numérique peut ainsi être interprétée de deux manières complémentaires :
+
+\begin{enumerate}
+\item[-] comme un \textbf{tableau discret de données} ;
+\item[-] comme une \textbf{fonction mathématique discrète} associant une mesure à chaque position spatiale.
+\end{enumerate}
+Prenons quelques exemples concrets pour illustrer ces concepts. En photographie en niveaux de gris, les paramètres sont \(d = 2\) (pour les deux dimensions spatiales) et \(B = 1\), car chaque pixel ne contient qu'une seule valeur représentant la luminance. Pour une photographie couleur, on a toujours \(d = 2\), mais le nombre de bandes passe à \(B = 3\), chaque pixel contenant alors trois valeurs correspondant aux composantes Rouge, Vert et Bleu. Dans le cas d'une image IRM, la dimension est \(d = 3\) pour former un volume tridimensionnel composé de voxels, avec \(B = 1\). Enfin, une vidéo non compressée peut être vue comme une fonction avec \(d = 3\) (largeur, hauteur et temps) et \(B = 3\) pour les trois canaux de couleur.
+
+% \subsubsection{Organisation spatiale des pixels}
+\subsubsection{Représentation matricielle et système de coordonnées des pixels}
+Dans le cas d'une image bidimensionnelle \( f(m,n) \) de taille \( M \times N \), l'image est représentée sous la forme d'une matrice discrète composée de \( M \) lignes et \( N \) colonnes. Le paramètre \( M \) correspond donc au nombre total de lignes, c'est-à-dire à la hauteur de l'image, tandis que \( N \) représente le nombre de colonnes, correspondant à sa largeur. Chaque élément de cette matrice représente un pixel, c'est-à-dire la plus petite unité d'information visuelle de l'image numérique. La position d'un pixel est déterminée par deux indices entiers \( (m,n) \), où \( m \) indique l'indice de ligne et \( n \) l'indice de colonne. La valeur de la fonction \( f(m,n) \) correspond alors à l'intensité lumineuse ou au niveau de gris associé à ce pixel dans le cas d'une image monochrome. Par convention en traitement d'image, l'origine du système de coordonnées est généralement située dans le coin supérieur gauche de l'image, avec l'indice \( m \) augmentant vers le bas et l'indice \( n \) augmentant vers la droite. La Figure~\ref{fig:image_coordinates} illustre le système de coordonnées généralement utilisé pour indexer les pixels d'une image numérique.
+\begin{figure}[H]
+    \centering
+    \includegraphics[height=3cm, keepaspectratio]{images/image_coordinates.png}
+    \caption{Système de coordonnées utilisé en traitement d'image}
+    \label{fig:image_coordinates}
+\end{figure}
+
+Cette convention provient historiquement du balayage utilisé dans les premiers dispositifs d'affichage (tubes cathodiques) et reste aujourd'hui utilisée dans la majorité des formats d'image et des bibliothèques logicielles de traitement d'images.
+
+\subsection{Diversité des images}
+Les images numériques peuvent être classées de différentes manières.
+\subsubsection{Dimensionnalité \( d \)}
+Les images courantes, comme les photographies, sont des images 2D (bidimensionnelles) tandis que d'autres images ont plus de deux dimensions. Une image 3D, comme on en voit dans les scanners IRM, est souvent appelée image 3D ou cube. Une image 1D est essentiellement un signal. Les éléments constitutifs d'une image 2D sont appelés \emph{pixels} (picture element), et ceux d'une image 3D sont appelés \emph{voxels} (volume element).
+
+\subsubsection{Hétérogénéité dimensionnelle}
+Dans les images 2D courantes, les deux dimensions sont des dimensions spatiales. Cependant, les dimensions peuvent représenter un autre domaine physique et être différentes. Par exemple, une vidéo peut être vue comme une image 2D+\( t \) (deux dimensions spatiales, une dimension temporelle) ; une séquence d'IRM fonctionnelle peut être vue comme une image 3D+\( t \) (trois dimensions spatiales, une dimension temporelle) ; et une image \textbf{hyperspectrale} est une image 2D+\( \lambda \) (deux dimensions spatiales, plus une troisième dimension dépendant de la longueur d'onde).
+
+\subsubsection{Dimensionnalité des éléments \( B \)}
+Chaque élément d'une image peut être scalaire (\( B = 1 \)) ou vectoriel (\( B > 1 \)). Par exemple, les pixels d'une image 2D en niveaux de gris ne recueillent qu'une seule valeur : l'intensité du gris. Les pixels d'une photographie recueillent trois valeurs (l'intensité du rouge, du vert et du bleu). Les images de la \textbf{constellation Pléiades} sont RVB-IR : elles recueillent quatre valeurs (rouge, vert, bleu et infrarouge).
+
+\subsubsection{Ensemble des valeurs d'intensité}
+Les images courantes ont des intensités de pixels dans l'intervalle \(\{0, 1, \ldots, 255\}\), mais les images binaires ont des valeurs dans \(\{0, 1\}\). La plupart du temps, les intensités sont supposées être des nombres réels.
+
+\subsection{Format d'images}
+Un format de fichier d'image est une manière standard d'organiser et de stocker des données d'image dans un fichier informatique. Divers critères sont pris en compte pour choisir le format adapté à l'application. La liste ci-dessous donne les principales caractéristiques des formats de fichiers d'image les plus courants.
+
+\begin{description}[leftmargin=!, labelwidth=\widthof{\bfseries JPEG 2000}]
+    \item[AVIF] 
+        \begin{itemize}
+            \item Nom : AV1 Image File Format
+            \item Développé en 2019 par l'Alliance for Open Media
+            \item Extension de fichier : .avif
+            \item Compression sans perte et avec perte
+            \item Peut gérer la transparence (\( B = 4 \))
+            \item Taille maximale : \( 2^{16} \times 2^{16} \)
+            \item 12 bits/bande
+        \end{itemize}
+        
+    \item[BMP] 
+        \begin{itemize}
+            \item Nom : BitMaP
+            \item Développé en 1985 par Microsoft
+            \item Extension de fichier : .bmp
+            \item Compression sans perte
+            \item Peut gérer la transparence (\( B = 4 \))
+            \item Taille maximale : \( 2^{31} \times 2^{31} \)
+            \item 8 bits/bande
+        \end{itemize}
+        
+    \item[HEIC] 
+        \begin{itemize}
+            \item Nom : High Efficiency Image Format
+            \item Développé en 2013 par le Video Coding Experts Group
+            \item Extension de fichier : .heic, .heif
+            \item Compression sans perte et avec perte
+            \item Peut gérer la transparence (\( B = 4 \))
+            \item Taille maximale : \( 2^{14} \times 2^{14} \)
+            \item 10 bits/bande
+        \end{itemize}
+        
+    \item[GIF] 
+        \begin{itemize}
+            \item Nom : Graphics Interchange Format
+            \item Développé en 1987 par CompuServe
+            \item Extension de fichier : .gif
+            \item Pas de compression
+            \item Peut gérer la transparence (\( B = 4 \)), mais codée sur 1 bit seulement
+            \item Taille maximale : \( 2^{16} \times 2^{16} \)
+            \item 256 couleurs d'une palette RVB 24 bits
+        \end{itemize}
+        
+    \item[JPEG] 
+        \begin{itemize}
+            \item Nom : Joint Photographic Expert Group
+            \item Développé en 1992 par le Joint Photographic Expert Group
+            \item Extension de fichier : .jpg, .jpeg
+            \item Compression sans perte et avec perte
+            \item Pas de transparence (\( B = 3 \))
+            \item Taille maximale : \( 2^{16} \times 2^{16} \)
+            \item 8 bits/bande
+        \end{itemize}
+        
+    \item[JPEG 2000] 
+        \begin{itemize}
+            \item Nom : Joint Photographic Expert Group 2000
+            \item Développé en 2000 par le Joint Photographic Expert Group
+            \item Extension de fichier : .jp2, .jpx
+            \item Compression sans perte et avec perte
+            \item Peut gérer la transparence (\( B = 4 \))
+            \item Taille maximale : \( 2^{32} \times 2^{32} \)
+            \item 38 bits/bande
+        \end{itemize}
+        
+    \item[PNG] 
+        \begin{itemize}
+            \item Nom : Portable Network Graphics
+            \item Développé en 1996 par le PNG Group
+            \item Extension de fichier : .png
+            \item Compression sans perte
+            \item Peut gérer la transparence (\( B = 4 \))
+            \item Taille maximale : \( 2^{31} \times 2^{31} \)
+            \item 16 bits/bande
+        \end{itemize}
+        
+    \item[TIFF] 
+        \begin{itemize}
+            \item Nom : Tagged Image File Format
+            \item Développé en 1986 par Aldus
+            \item Extension de fichier : .tiff
+            \item Compression sans perte ou avec perte
+            \item Peut gérer la transparence (\( B = 4 \))
+            \item Taille maximale : \( 2^{32} \times 2^{32} \)
+            \item 16 bits/bande
+        \end{itemize}
+\end{description}
+Bien que largement utilisés, les formats de fichiers tels que SVG (Scalable Vector Graphics) et EPS (Encapsulated PostScript) sont des graphiques vectoriels. Les données ne sont pas stockées en utilisant un tableau comme défini dans \href{https://en.wikipedia.org/wiki/Data_storage_model#Vector_data_storage}{le modèle de stockage vectoriel}. Au lieu de cela, ces formats stockent les données sous forme d'instructions mathématiques décrivant des formes.
+
+\section{Système de reconstruction}
+Au cœur de l'imagerie médicale moderne se trouve un défi fondamental : les systèmes d'acquisition, qu'il s'agisse d'un scanner, d'une IRM ou d'une caméra TEP, ne produisent pas directement une image compréhensible de l'intérieur du corps. Ils génèrent des mesures brutes, partielles et indirectes, qui résultent de l'interaction de rayonnements avec les tissus. Le système de reconstruction d'image a précisément pour mission de transformer ces données abstraites en une représentation visuelle fidèle et exploitable par le clinicien.
+
+\subsection{Définition et nature du problème inverse}
+La reconstruction d'image consiste à estimer une image à partir de mesures indirectes qui ne donnent pas directement accès aux pixels de l'image recherchée. Contrairement à d'autres paradigmes comme la construction (qui relève d'un problème direct où l'on part d'un modèle pour créer une image), la reconstruction repose sur la résolution d'un problème inverse : il s'agit de remonter des conséquences mesurables vers leurs causes inobservables.
+
+Mathématiquement, ce problème se formalise de la manière suivante : les mesures disponibles \( y \) résultent de l'application d'un opérateur connu \( H \) (modélisant le processus physique d'acquisition) à l'image inconnue \( x \), auquel s'ajoute un bruit \( n \) lié aux imperfections de la mesure :
+
+$$ y = Hx + n $$
+L'objectif est d'estimer l'image \( x \) la plus plausible connaissant à la fois l'opérateur de mesure \( H \) et les valeurs effectivement mesurées \( y \). Ce type de problème est généralement mal posé au sens d'Hadamard, ce qui signifie qu'il peut ne pas admettre de solution unique, que celle-ci peut ne pas dépendre continûment des données, ou encore que plusieurs images différentes peuvent produire des mesures similaires.
+
+\subsection{Objectifs fondamentaux}
+
+Les objectifs poursuivis par un système de reconstruction d'image sont multiples et exigeants :
+\begin{itemize}[label=-]
+ \item Restituer une image fidèle à la réalité physique sous-jacente, en préservant les valeurs quantitatives des grandeurs mesurées (coefficients d'atténuation en TDM, relaxation en IRM, activité métabolique en TEP).
+ \item Compléter les informations manquantes lorsque les mesures sont incomplètes, par exemple lorsque l'acquisition n'a pu être réalisée sous tous les angles ou lorsque l'échantillonnage est insuffisant pour respecter le critère de Nyquist-Shannon.
+ \item Estimer des structures non directement observables, comme la forme tridimensionnelle d'un organe à partir de projections bidimensionnelles.
+ \item Réduire l'impact du bruit et des artefacts pour améliorer la qualité diagnostique.
+\end{itemize}
+
+\subsection{Exemples emblématiques}
+
+La tomodensitométrie (TDM) illustre parfaitement ce paradigme. L'image en coupe examinée par le radiologue résulte d'un algorithme qui reconstruit la carte des coefficients d'atténuation des rayons X à partir d'un ensemble de projections mesurées sous différents angles. Ces projections, organisées en sinogramme, ne ressemblent en rien à une coupe anatomique ; c'est le système de reconstruction qui opère cette transformation essentielle.\\
+D'autres applications de la reconstruction d'image incluent :
+\begin{itemize}[label=-]
+    \item La super-résolution, qui vise à reconstruire une image haute résolution à partir d'une ou de plusieurs images basse résolution.
+
+    \item La photogrammétrie, qui permet de reconstruire la forme tridimensionnelle d'objets ou de scènes à partir de multiples photographies prises sous des angles différents.
+
+    \item L'interpolation et la complétion d'image, qui consistent à estimer des pixels ou des régions manquantes en s'appuyant sur les informations contextuelles disponibles.
+
+    \item La reconstruction tomographique en médecine nucléaire (TEMP, TEP) où l'on cherche à localiser la source d'émissions radioactives à partir de coïncidences détectées autour du patient.
+
+    \item L'imagerie par résonance magnétique (IRM), où des techniques de reconstruction permettent de former des images anatomiques à partir de mesures dans l'espace de Fourier (espace $k$).
+
+    \item L'imagerie astronomique, où la reconstruction d'image est utilisée pour améliorer la résolution des images acquises par les télescopes en compensant les effets de la turbulence atmosphérique et du bruit.
+
+    \item La microscopie computationnelle, qui exploite des algorithmes de reconstruction pour obtenir des images à haute résolution à partir de mesures optiques indirectes ou limitées.
+
+    \item La restauration d'image (défloutage et débruitage), où l'on cherche à reconstruire une image originale à partir d'une observation dégradée par le flou, le bruit ou d'autres perturbations.
+\end{itemize}
+% \subsection{Exemples emblématiques}
+% La tomodensitométrie (TDM) illustre parfaitement ce paradigme. L'image en coupe examinée par le radiologue résulte d'un algorithme qui reconstruit la carte des coefficients d'atténuation des rayons X à partir d'un ensemble de projections mesurées sous différents angles. Ces projections, organisées en sinogramme, ne ressemblent en rien à une coupe anatomique ; c'est le système de reconstruction qui opère cette transformation essentielle.\\
+% D'autres applications de la reconstruction d'image incluent :
+% \begin{itemize}[label=-]
+% \item La super-résolution, qui vise à reconstruire une image haute résolution à partir d'une ou plusieurs images basse résolution.
+% \item La photogrammétrie, qui permet de reconstruire la forme tridimensionnelle d'objets ou de scènes à partir de multiples photographies prises sous des angles différents.
+% \item L'interpolation et la complétion d'image, qui consistent à estimer des pixels ou des régions manquantes en s'appuyant sur les informations contextuelles disponibles.
+% \item La reconstruction tomographique en médecine nucléaire (TEMP, TEP) où l'on cherche à localiser la source d'émissions radioactives à partir de coïncidences détectées autour du patient.
+% \end{itemize}
+
+\subsection{Méthodes de reconstruction}
+Les méthodes de reconstruction d'image ont considérablement évolué au fil des décennies, offrant aujourd'hui un large éventail d'approches aux performances et aux caractéristiques complémentaires :
+\begin{itemize}
+\item[-]La rétroprojection filtrée (FBP) : méthode analytique historique, rapide et robuste, qui consiste à filtrer les projections avant de les rétroprojeter dans l'espace image. Bien que toujours utilisée, elle présente des limites en termes de gestion du bruit et d'artefacts.
+
+\item[-]Les méthodes itératives algébriques : telles que ART (Algebraic Reconstruction Technique) ou SIRT (Simultaneous Iterative Reconstruction Technique), qui corrigent progressivement une estimation initiale en comparant les projections simulées aux mesures réelles.
+
+\item[-]Les approches variationnelles : qui intègrent des termes de régularisation (comme la variation totale ou la parcimonie dans un domaine transformé) pour stabiliser la solution et incorporer des connaissances a priori sur les propriétés des images recherchées.
+
+\item[-]Les méthodes statistiques : notamment en TEP où l'algorithme OSEM (Ordered Subsets Expectation Maximization) modélise finement la nature poissonienne du bruit de comptage.
+
+\item[-]Les méthodes basées sur l'apprentissage profond : qui apprennent directement la transformation inverse à partir de vastes bases de données d'entraînement, offrant des reconstructions rapides et de haute qualité, bien que leur interprétabilité et leur généralisation fassent encore l'objet de recherches actives.
+\end{itemize}
+\subsection{Défis contemporains}
+Les systèmes de reconstruction d'image modernes doivent relever plusieurs défis majeurs. La réduction des doses en TDM et en médecine nucléaire impose de travailler avec des données de plus en plus bruitées, nécessitant des algorithmes robustes capables d'extraire l'information pertinente malgré un faible rapport signal-sur-bruit. L'accélération des temps d'acquisition en IRM, grâce au sous-échantillonnage de l'espace \( k \), requiert des méthodes de reconstruction capables de combler les données manquantes sans introduire d'artefacts. La gestion des mouvements du patient pendant l'examen reste un défi majeur, particulièrement en imagerie cardiaque ou pédiatrique. Enfin, l'intégration multi-modale (TEP-TDM, TEP-IRM) ouvre de nouvelles perspectives mais complexifie encore davantage le problème de reconstruction, qui doit désormais combiner des informations de nature différente.
+
+En définitive, le système de reconstruction d'image constitue l'étape algorithmique indispensable qui, en résolvant un problème inverse souvent complexe, transforme des mesures physiques brutes en un outil diagnostique fiable. Sans cette étape de reconstruction, les données acquises par les modalités d'imagerie médicale resteraient abstraites et inexploitables pour le clinicien.
 
 \section{Modalités d'imagerie médicale et reconstruction d'images}
-
 L'imagerie médicale regroupe plusieurs modalités utilisées pour le diagnostic et la surveillance de nombreuses pathologies. Chaque modalité repose sur des principes physiques distincts et présente des caractéristiques spécifiques en termes d'acquisition et de reconstruction des images. Comprendre ces différences est essentiel afin d'apprécier les forces, les limites et les défis associés à chaque technique de reconstruction.
 \subsection{Tomodensitométrie (TDM)}
+La tomodensitométrie repose sur l'utilisation de rayons X pour produire des images détaillées de l'intérieur du corps humain. Un tube à rayons X et un ensemble de détecteurs tournent autour du patient, permettant l'acquisition de projections sous de multiples angles. Ces projections correspondent à l'atténuation du faisceau de rayons X par les tissus traversés.
 
-La tomodensitométrie repose sur l'utilisation de rayons X pour produire des images détaillées de l'intérieur du corps humain. Un tube à rayons X et un ensemble de détecteurs tournent autour du patient, permettant l'acquisition de projections sous de multiples angles. Ces projections correspondent à l'atténuation du faisceau de rayons X par les tissus traversés.\vspace{5pt}\\
-Historiquement, la rétroprojection filtrée (\emph{Filtered Backprojection}, FBP) a constitué l'algorithme de reconstruction standard en TDM. Cette méthode consiste à filtrer les données de projection afin de corriger le flou inhérent à la rétroprojection, puis à les projeter dans l'espace image. Bien que rapide et robuste, la FBP est sensible au bruit, en particulier lorsque la dose de rayonnement est réduite.\vspace{5pt}\\
-Les systèmes de tomodensitométrie modernes intègrent de plus en plus des méthodes de reconstruction itérative. Ces techniques consistent à ajuster progressivement une estimation de l'image en comparant les projections mesurées aux projections simulées à partir de l'image courante. La reconstruction itérative permet de réduire le bruit, d'améliorer le contraste et de maintenir une qualité d'image acceptable à faible dose, au prix d'un temps de calcul plus important.\vspace{5pt}\\
-Un avantage majeur de la TDM réside dans la rapidité de la reconstruction, souvent réalisable en temps réel ou quasi temps réel. De plus, les valeurs reconstruites sont directement liées aux coefficients d'atténuation des tissus, ce qui confère à la tomodensitométrie une forte valeur quantitative.
+Historiquement, la rétroprojection filtrée (\emph{Filtered Backprojection}, FBP) a constitué l'algorithme de reconstruction standard en TDM. Cette méthode consiste à filtrer les données de projection afin de corriger le flou inhérent à la rétroprojection, puis à les projeter dans l'espace image. Bien que rapide et robuste, la FBP est sensible au bruit, en particulier lorsque la dose de rayonnement est réduite.
 
+Les systèmes de tomodensitométrie modernes intègrent de plus en plus des méthodes de reconstruction itérative. Ces techniques consistent à ajuster progressivement une estimation de l'image en comparant les projections mesurées aux projections simulées à partir de l'image courante. La reconstruction itérative permet de réduire le bruit, d'améliorer le contraste et de maintenir une qualité d'image acceptable à faible dose, au prix d'un temps de calcul plus important.
 \subsection{Imagerie par résonance magnétique (IRM)}
+L'imagerie par résonance magnétique utilise un champ magnétique intense et des ondes radiofréquence pour produire des images des structures internes du corps. Elle repose sur les principes de la résonance magnétique nucléaire et permet d'obtenir des contrastes tissulaires riches sans exposition aux rayonnements ionisants.
 
-L'imagerie par résonance magnétique utilise un champ magnétique intense et des ondes radiofréquence pour produire des images des structures internes du corps. Elle repose sur les principes de la résonance magnétique nucléaire et permet d'obtenir des contrastes tissulaires riches sans exposition aux rayonnements ionisants.\vspace{5pt}\\
-Les données IRM sont acquises dans le domaine fréquentiel, appelé espace \(k\). La reconstruction d'image consiste principalement à appliquer une transformée de Fourier inverse afin de convertir ces données fréquentielles en une image spatiale. Cette approche confère à l'IRM une base mathématique élégante et bien établie.\vspace{5pt}\\
-Afin d'accélérer les temps d'acquisition, des techniques telles que le Fourier partiel et l'imagerie parallèle ont été développées. Des méthodes comme SENSE ou GRAPPA reposent sur le sous-échantillonnage de l'espace \(k\) et sur l'utilisation de multiples bobines de réception, combinées à des algorithmes de reconstruction capables de compenser les données manquantes.\vspace{5pt}\\
+Les données IRM sont acquises dans le domaine fréquentiel, appelé espace \(k\). La reconstruction d'image consiste principalement à appliquer une transformée de Fourier inverse afin de convertir ces données fréquentielles en une image spatiale. Cette approche confère à l'IRM une base mathématique élégante et bien établie.
+
+Afin d'accélérer les temps d'acquisition, des techniques telles que le Fourier partiel et l'imagerie parallèle ont été développées. Des méthodes comme SENSE ou GRAPPA reposent sur le sous-échantillonnage de l'espace \(k\) et sur l'utilisation de multiples bobines de réception, combinées à des algorithmes de reconstruction capables de compenser les données manquantes.
+
 La reconstruction en IRM reste toutefois complexe en raison de plusieurs facteurs, notamment les inhomogénéités du champ magnétique, les artefacts liés aux mouvements du patient et la nécessité de combiner correctement les signaux issus de systèmes multi-bobines. Ces défis requièrent des modèles de reconstruction sophistiqués et une calibration précise du système.
 
 \subsection{Tomographie par émission de positons (TEP)}
 
-La tomographie par émission de positons est une modalité d'imagerie fonctionnelle qui repose sur l'injection d'un traceur radioactif dans l'organisme. Le traceur émet des positons qui, après annihilation avec des électrons, produisent deux photons gamma émis en coïncidence et détectés par le système TEP.\vspace{5pt}\\
-Comme en tomodensitométrie, la rétroprojection filtrée a été historiquement utilisée pour la reconstruction des images TEP, en particulier dans les premiers systèmes. Toutefois, en raison du caractère bruité et statistique des données TEP, les méthodes itératives se sont rapidement imposées.\vspace{5pt}\\
-La majorité des systèmes TEP modernes utilisent des algorithmes itératifs, tels que la maximisation d'espérance par sous-ensembles ordonnés (\emph{Ordered Subsets Expectation Maximization}, OSEM). Ces méthodes modélisent finement la physique de l'acquisition et permettent d'intégrer diverses corrections, notamment celles liées à l'atténuation, à la diffusion et aux coïncidences aléatoires.\vspace{5pt}\\
+La tomographie par émission de positons est une modalité d'imagerie fonctionnelle qui repose sur l'injection d'un traceur radioactif dans l'organisme. Le traceur émet des positons qui, après annihilation avec des électrons, produisent deux photons gamma émis en coïncidence et détectés par le système TEP.
+
+Comme en tomodensitométrie, la rétroprojection filtrée a été historiquement utilisée pour la reconstruction des images TEP, en particulier dans les premiers systèmes. Toutefois, en raison du caractère bruité et statistique des données TEP, les méthodes itératives se sont rapidement imposées.
+
+La majorité des systèmes TEP modernes utilisent des algorithmes itératifs, tels que la maximisation d'espérance par sous-ensembles ordonnés (\emph{Ordered Subsets Expectation Maximization}, OSEM). Ces méthodes modélisent finement la physique de l'acquisition et permettent d'intégrer diverses corrections, notamment celles liées à l'atténuation, à la diffusion et aux coïncidences aléatoires.
+
 La reconstruction TEP présente des défis spécifiques, liés à la nécessité de corriger plusieurs phénomènes physiques. L'utilisation de scanners hybrides TEP-TDM ou TEP-IRM permet d'exploiter des informations anatomiques complémentaires afin d'améliorer la qualité et la quantification des images fonctionnelles.
 
 \subsection{Comparaison des modalités}
 
-Bien que la rétroprojection filtrée ait historiquement été utilisée en tomodensitométrie et en TEP, les méthodes de reconstruction itérative sont aujourd'hui privilégiées dans ces deux modalités en raison de leur capacité à améliorer la qualité d'image et à réduire les artefacts. À l'inverse, l'IRM repose principalement sur des reconstructions basées sur la transformée de Fourier, enrichies par des techniques d'accélération et de compensation des données manquantes.\vspace{5pt}\\
-Les processus d'acquisition diffèrent également de manière significative. En TDM et en TEP, les données sont directement liées à des propriétés physiques mesurables, telles que l'atténuation des rayons X ou la distribution d'un traceur radioactif. En IRM, l'acquisition repose sur une manipulation complexe des champs magnétiques et des impulsions radiofréquence afin de coder l'information spatiale.\vspace{5pt}\\
-Enfin, chaque modalité est sujette à des artefacts spécifiques nécessitant des stratégies de correction adaptées lors de la reconstruction. La TDM doit corriger des effets tels que le durcissement du faisceau, l'IRM est sensible aux inhomogénéités de champ et aux mouvements, tandis que la TEP requiert des corrections pour l'atténuation, la diffusion et les événements aléatoires.\vspace{5pt}\\
-En résumé, bien que la reconstruction d'images soit une étape essentielle commune à ces trois modalités, la nature des données, les modèles physiques sous-jacents et les défis algorithmiques diffèrent considérablement. La compréhension de ces spécificités est indispensable pour optimiser la qualité des images et garantir une information diagnostique fiable et pertinente.
+Bien que la rétroprojection filtrée ait historiquement été utilisée en tomodensitométrie et en TEP, les méthodes de reconstruction itérative sont aujourd'hui privilégiées dans ces deux modalités en raison de leur capacité à améliorer la qualité d'image et à réduire les artefacts. À l'inverse, l'IRM repose principalement sur des reconstructions basées sur la transformée de Fourier, enrichies par des techniques d'accélération et de compensation des données manquantes.
 
-\section{Transformation de Radon et son rôle en reconstruction d'image}
-\subsubsection{Origines et développement historique}
+Les processus d'acquisition diffèrent également de manière significative. En TDM et en TEP, les données sont directement liées à des propriétés physiques mesurables, telles que l'atténuation des rayons X ou la distribution d'un traceur radioactif. En IRM, l'acquisition repose sur une manipulation complexe des champs magnétiques et des impulsions radiofréquence afin de coder l'information spatiale.
+
+Enfin, chaque modalité est sujette à des artefacts spécifiques nécessitant des stratégies de correction adaptées lors de la reconstruction. La TDM doit corriger des effets tels que le durcissement du faisceau, l'IRM est sensible aux inhomogénéités de champ et aux mouvements, tandis que la TEP requiert des corrections pour l'atténuation, la diffusion et les événements aléatoires.
+
+% \section{Transformation de Radon et son rôle en reconstruction d'image}
+\section{Application de la transformation de Radon dans la reconstruction d'image CT}
+% \subsubsection{Origines et développement historique}
 Les fondements théoriques de la reconstruction tomographique remontent au début du XXe siècle. En 1917, le mathématicien J. Radon a formulé une théorie mathématique permettant de reconstruire une fonction à partir de ses projections.
-Cependant, ce n'est qu'avec les progrès des calculateurs numériques dans les années 1960-1970 que cette théorie a pu être appliquée concrètement. Godfrey Hounsfield, ingénieur britannique, a mis au point le premier scanner TDM (tomodensitométrie ou CT) en 1971, grâce à un financement indirect provenant de la société EMI, associée au succès des Beatles. Ce développement a marqué la naissance de l'imagerie médicale tomographique, suivie par l'IRM et la tomoscintigraphie.\vspace{5pt}\\
-La transformation de Radon constitue un outil mathématique fondamental pour la reconstruction d'images à partir de projections. Elle est au cœur de nombreuses techniques d'imagerie médicale, en particulier la tomodensitométrie (TDM). Cette transformation permet de relier les mesures obtenues par les détecteurs à la distribution de densité des tissus à l'intérieur du corps.\vspace{5pt}\\
-Elle consiste à intégrer l'information provenant de différentes lignes de projection afin de créer un ensemble de mesures représentant l'objet examiné sous plusieurs angles. Dans le cadre de la TDM, ces projections correspondent à l'atténuation des rayons X lorsqu'ils traversent le corps. Chaque angle de mesure fournit une “ombre” partielle de la structure interne, et la transformation de Radon permet de regrouper l'ensemble de ces informations.\vspace{5pt}\\
-La transformée inverse de Radon joue un rôle central dans la reconstruction d'image. À partir des projections acquises, elle permet de reconstituer la distribution originale des tissus. L'une des méthodes les plus utilisées pour cette étape est la rétroprojection filtrée, qui combine les différentes projections après un traitement visant à corriger le flou inhérent aux mesures. Cette approche a longtemps constitué la base des reconstructions classiques en tomodensitométrie et demeure largement utilisée.\vspace{5pt}\\
-L'application de la transformation de Radon et de sa transformée inverse a révolutionné le diagnostic médical. Elle permet aujourd'hui de visualiser de manière non invasive et détaillée les structures internes du corps, offrant des images transversales précises qui améliorent la qualité et la fiabilité des examens cliniques.\vspace{5pt}\\
-En résumé, la transformation de Radon représente un composant essentiel de l'imagerie médicale moderne. Elle constitue le fondement de nombreuses techniques de reconstruction, transformant des données de projection en images exploitables, et reste un outil incontournable pour le diagnostic et le suivi des patients.
-\section{Limites et artefacts de la rétroprojection filtrée (FBP)}
+Cependant, ce n'est qu'avec les progrès des calculateurs numériques dans les années 1960-1970 que cette théorie a pu être appliquée concrètement. Godfrey Hounsfield, ingénieur britannique, a mis au point le premier scanner TDM (tomodensitométrie ou CT) en 1971, grâce à un financement indirect provenant de la société EMI, associée au succès des Beatles. Ce développement a marqué la naissance de l'imagerie médicale tomographique, suivie par l'IRM et la tomoscintigraphie.
+
+La transformation de Radon constitue un outil mathématique fondamental pour la reconstruction d'images à partir de projections. Elle est au cœur de nombreuses techniques d'imagerie médicale, en particulier la tomodensitométrie (TDM). Cette transformation permet de relier les mesures obtenues par les détecteurs à la distribution de densité des tissus à l'intérieur du corps.
+
+Elle consiste à intégrer l'information provenant de différentes lignes de projection afin de créer un ensemble de mesures représentant l'objet examiné sous plusieurs angles. Dans le cadre de la TDM, ces projections correspondent à l'atténuation des rayons X lorsqu'ils traversent le corps. Chaque angle de mesure fournit une \textit{ombre} partielle de la structure interne, et la transformation de Radon permet de regrouper l'ensemble de ces informations.
+
+La transformée inverse de Radon joue un rôle central dans la reconstruction d'image. À partir des projections acquises, elle permet de reconstituer la distribution originale des tissus. L'une des méthodes les plus utilisées pour cette étape est la rétroprojection filtrée, qui combine les différentes projections après un traitement visant à corriger le flou inhérent aux mesures. Cette approche a longtemps constitué la base des reconstructions classiques en tomodensitométrie et demeure largement utilisée.
+
+L'application de la transformation de Radon et de sa transformée inverse a révolutionné le diagnostic médical. Elle permet aujourd'hui de visualiser de manière non invasive et détaillée les structures internes du corps, offrant des images transversales précises qui améliorent la qualité et la fiabilité des examens cliniques.
 
 La rétroprojection filtrée, ou \emph{Filtered Backprojection} (FBP), est un algorithme de reconstruction largement utilisé dans les modalités d'imagerie médicale telles que la tomodensitométrie (CT) et la tomographie par émission de positons (TEP). Bien que cette méthode soit rapide et relativement efficace, elle présente plusieurs limitations et artefacts pouvant affecter la qualité des images reconstruites.
 
 \subsection{Limites de la rétroprojection filtrée}
 
-L'une des principales limites de la FBP réside dans le modèle d'atténuation qu'elle suppose. Celui-ci est souvent simplifié et peut ne pas représenter fidèlement les interactions complexes entre le rayonnement et les tissus du patient. Par ailleurs, l'algorithme a tendance à amplifier le bruit présent dans les données de projection, en particulier lorsque le filtrage appliqué n'est pas optimal. \vspace{5pt}\\
+L'une des principales limites de la FBP réside dans le modèle d'atténuation qu'elle suppose. Celui-ci est souvent simplifié et peut ne pas représenter fidèlement les interactions complexes entre le rayonnement et les tissus du patient. Par ailleurs, l'algorithme a tendance à amplifier le bruit présent dans les données de projection, en particulier lorsque le filtrage appliqué n'est pas optimal. 
+
 La FBP peut également introduire des artefacts de stries, surtout lorsque les projections sont incomplètes ou bruitées. La résolution des composantes haute fréquence est limitée, entraînant une perte de détails fins dans l'image reconstruite. De plus, l'algorithme suppose un échantillonnage uniforme des projections, condition rarement parfaitement respectée dans la pratique clinique.
 
 \subsection{Artefacts associés à la FBP}
 
-Plusieurs types d'artefacts peuvent apparaître dans les images reconstruites à l'aide de la FBP. Parmi les plus courants, on trouve les stries sombres ou lumineuses dues à des données incomplètes ou bruitées, ainsi que les artefacts en anneau, souvent liés à un mauvais calibrage des détecteurs. Le durcissement du faisceau peut également générer des bandes sombres ou des stries, conséquence de l'absorption préférentielle des photons de faible énergie.  \vspace{5pt}\\
+Plusieurs types d'artefacts peuvent apparaître dans les images reconstruites à l'aide de la FBP. Parmi les plus courants, on trouve les stries sombres ou lumineuses dues à des données incomplètes ou bruitées, ainsi que les artefacts en anneau, souvent liés à un mauvais calibrage des détecteurs. Le durcissement du faisceau peut également générer des bandes sombres ou des stries, conséquence de l'absorption préférentielle des photons de faible énergie.  
+
 Des zones sombres peuvent apparaître lorsque le nombre de photons détectés est insuffisant, notamment en présence d'implants métalliques ou de tissus très absorbants. Enfin, la FBP reste sensible aux mouvements du patient pendant l'examen, ce qui peut provoquer du flou ou des stries supplémentaires dans l'image finale.
 
 \subsection{Stratégies pour atténuer les artefacts et limitations}
 
-Plusieurs approches permettent de réduire l'impact des limitations et des artefacts associés à la FBP. L'optimisation des protocoles d'acquisition, par exemple l'augmentation du nombre de projections ou l'utilisation de détecteurs plus performants, contribue à améliorer la qualité des données de base.  \vspace{5pt}\\
-Le pré-traitement des données, comme le filtrage du sinogramme ou la correction du durcissement du faisceau, peut également aider à atténuer les artefacts. L'emploi d'algorithmes de reconstruction plus avancés, tels que la reconstruction itérative ou basée sur un modèle, permet de surmonter certaines des limites inhérentes à la FBP. Enfin, des techniques de post-traitement d'image, incluant le filtrage et l'amélioration de contraste, complètent le processus pour améliorer la qualité visuelle et diagnostique des images reconstruites.\vspace{5pt}\\
-En résumé, bien que la rétroprojection filtrée reste un algorithme de reconstruction largement utilisé et efficace, elle comporte des limites et génère certains artefacts susceptibles d'affecter la qualité des images. La compréhension de ces contraintes est essentielle pour développer des stratégies adaptées, tant au niveau de l'acquisition que du traitement et de la reconstruction, afin d'optimiser les résultats en imagerie médicale.
+Plusieurs approches permettent de réduire l'impact des limitations et des artefacts associés à la FBP. L'optimisation des protocoles d'acquisition, par exemple l'augmentation du nombre de projections ou l'utilisation de détecteurs plus performants, contribue à améliorer la qualité des données de base.  
 
-\section{Introduction au Compressed Sensing}
+Le pré-traitement des données, comme le filtrage du sinogramme ou la correction du durcissement du faisceau, peut également aider à atténuer les artefacts. L'emploi d'algorithmes de reconstruction plus avancés, tels que la reconstruction itérative ou basée sur un modèle, permet de surmonter certaines des limites inhérentes à la FBP. Enfin, des techniques de post-traitement d'image, incluant le filtrage et l'amélioration de contraste, complètent le processus pour améliorer la qualité visuelle et diagnostique des images reconstruites.
 
-L’un des principes fondamentaux du traitement du signal repose sur la théorie
-d’échantillonnage de Nyquist--Shannon, selon laquelle le nombre d’échantillons
+\section{Introduction au Compressive Sensing}
+
+L'un des principes fondamentaux du traitement du signal repose sur la théorie
+d'échantillonnage de Nyquist--Shannon, selon laquelle le nombre d'échantillons
 nécessaires pour reconstruire un signal sans erreur est déterminé par sa bande
-passante, c’est-à-dire la longueur du plus petit intervalle contenant le support du
+passante, c'est-à-dire la longueur du plus petit intervalle contenant le support du
 spectre du signal considéré. Toutefois, au cours des dernières années, une théorie
-alternative appelée \emph{Compressed Sensing} (ou échantillonnage compressif) a
-émergé. Celle-ci démontre qu’il est possible de reconstruire des signaux et des images,
-y compris à haute résolution, à partir d’un nombre de mesures bien inférieur à celui
+alternative appelée \emph{Compressive Sensing} (ou échantillonnage compressif) a
+émergé. Celle-ci démontre qu'il est possible de reconstruire des signaux et des images,
+y compris à haute résolution, à partir d'un nombre de mesures bien inférieur à celui
 classiquement requis.
 
-L’objectif du Compressed Sensing est de tirer parti de la structure intrinsèque des
+L'objectif du Compressive Sensing est de tirer parti de la structure intrinsèque des
 signaux afin de réduire significativement la quantité de données nécessaires lors du
-processus d’acquisition. Un aspect particulièrement remarquable de cette théorie
+processus d'acquisition. Un aspect particulièrement remarquable de cette théorie
 réside dans ses nombreuses interactions avec divers domaines des sciences appliquées
-et de l’ingénierie, tels que les statistiques, la théorie de l’information, la théorie du
-codage ou encore l’informatique théorique, ce qui souligne son caractère fondamental
+et de l'ingénierie, tels que les statistiques, la théorie de l'information, la théorie du
+codage ou encore l'informatique théorique, ce qui souligne son caractère fondamental
 et transversal.
 
 De manière générale, la parcimonie, et plus largement la compressibilité, joue depuis
 longtemps un rôle central dans de nombreux domaines scientifiques. La parcimonie
-permet d’obtenir des estimations efficaces, notamment à travers des méthodes de
+permet d'obtenir des estimations efficaces, notamment à travers des méthodes de
 seuillage ou de régularisation, dont les performances dépendent fortement du nombre
 réduit de composantes significatives du signal. Elle constitue également le fondement
 des techniques modernes de compression, où la qualité du codage dépend de la
@@ -99,86 +471,60 @@ capacité du signal à admettre une représentation parcimonieuse dans une base
 appropriée. En outre, la parcimonie favorise la réduction de dimension ainsi que la
 construction de modèles compacts et efficaces.
 
-La contribution essentielle du Compressed Sensing réside dans le fait que la
-parcimonie n’intervient plus uniquement au stade du traitement ou de la compression,
-mais influence directement le processus d’acquisition des données. Cette approche
-ouvre la voie à des protocoles d’acquisition plus efficaces, permettant de convertir des
+La contribution essentielle du Compressive Sensing réside dans le fait que la
+parcimonie n'intervient plus uniquement au stade du traitement ou de la compression,
+mais influence directement le processus d'acquisition des données. Cette approche
+ouvre la voie à des protocoles d'acquisition plus efficaces, permettant de convertir des
 signaux analogiques en une représentation numérique déjà compressée, tout en
-optimisant l’utilisation des ressources disponibles.
+optimisant l'utilisation des ressources disponibles.
 
 En pratique, il est bien établi que les signaux naturels possèdent une structure
 intrinsèque qui autorise une compression efficace avec une perte perceptuelle limitée.
 Les méthodes de codage par transformée exploitent le fait que de nombreux signaux
 admettent une représentation parcimonieuse dans une base fixe. Le schéma classique
-consiste à acquérir l’ensemble des données, à calculer tous les coefficients de la
+consiste à acquérir l'ensemble des données, à calculer tous les coefficients de la
 transformée, puis à ne conserver que les plus significatifs en éliminant les autres. Ce
-processus, bien que largement utilisé, demeure peu efficace, puisqu’il implique une
+processus, bien que largement utilisé, demeure peu efficace, puisqu'il implique une
 acquisition massive de données dont une grande partie est finalement rejetée.
 
 Cette observation soulève une question fondamentale : si la majorité des signaux sont
-compressibles, pourquoi acquérir l’intégralité des données alors qu’une grande partie
-sera inévitablement inutilisée~? Le Compressed Sensing apporte une réponse claire à
-cette problématique en montrant qu’il est possible d’acquérir directement les données
+compressibles, pourquoi acquérir l'intégralité des données alors qu'une grande partie
+sera inévitablement inutilisée~? Le Compressive Sensing apporte une réponse claire à
+cette problématique en montrant qu'il est possible d'acquérir directement les données
 sous une forme compressée, sans passer par une étape intermédiaire de
 sur-acquisition suivie de compression.
 
 \section{Reconstruction d'images par Compressive Sensing (CS)}
 
-La \emph{Compressive Sensing} (CS) est une approche moderne de reconstruction d'images qui a émergé au milieu des années 2000 comme alternative aux méthodes classiques telles que la rétroprojection filtrée. Elle repose sur l’idée que de nombreuses images médicales peuvent être représentées de manière parcimonieuse dans un certain domaine de transformation, ce qui permet de reconstruire des images de qualité à partir d’un nombre réduit de mesures. Cette capacité à exploiter l’information essentielle rend la CS particulièrement pertinente dans des modalités où l’acquisition est longue, coûteuse ou comporte des risques pour le patient.
+La \emph{Compressive Sensing} (CS) est une approche moderne de reconstruction d'images qui a émergé au milieu des années 2000 comme alternative aux méthodes classiques telles que la rétroprojection filtrée. Elle repose sur l'idée que de nombreuses images médicales peuvent être représentées de manière parcimonieuse dans un certain domaine de transformation, ce qui permet de reconstruire des images de qualité à partir d'un nombre réduit de mesures. Cette capacité à exploiter l'information essentielle rend la CS particulièrement pertinente dans des modalités où l'acquisition est longue, coûteuse ou comporte des risques pour le patient.
 
 \subsection{Principes et avantages}
 
-La CS réduit considérablement le nombre de projections ou d’échantillons nécessaires pour obtenir une image diagnostique exploitable. Elle est donc idéale pour des modalités telles que la tomodensitométrie, la TEP, ou l’IRM dynamique, où chaque mesure peut être longue ou exposer le patient à un rayonnement ou à un contraste. En exploitant la parcimonie naturelle des images médicales, la CS permet non seulement de diminuer la dose de rayonnement, mais aussi de réduire le temps global d’acquisition tout en maintenant une qualité diagnostique élevée.
+La CS réduit considérablement le nombre de projections ou d'échantillons nécessaires pour obtenir une image diagnostique exploitable. Elle est donc idéale pour des modalités telles que la tomodensitométrie, la TEP, ou l'IRM dynamique, où chaque mesure peut être longue ou exposer le patient à un rayonnement ou à un contraste. En exploitant la parcimonie naturelle des images médicales, la CS permet non seulement de diminuer la dose de rayonnement, mais aussi de réduire le temps global d'acquisition tout en maintenant une qualité diagnostique élevée.
 
-Un avantage supplémentaire réside dans sa capacité à limiter le bruit. Contrairement à la rétroprojection filtrée (FBP), qui peut amplifier les fluctuations aléatoires des mesures, la CS intègre des contraintes de régularisation qui favorisent des reconstructions plus stables, visuellement plus propres et moins sensibles aux artefacts issus des mesures bruitées.
-
-\vspace{0.2cm}
-\noindent
-\textbf{Contexte additionnel :}
-\begin{itemize}
-    \item \textbf{Transitions cliniques réussies :} Certains scanners commerciaux ont commencé à intégrer la CS, par exemple en tomodensitométrie cardiaque ou en imagerie mammaire, permettant une réduction de dose pouvant atteindre 50\% sans compromettre la qualité diagnostique.
-    \item \textbf{Fondement théorique :} La CS repose sur deux concepts clés : la parcimonie du signal et l’incohérence entre la matrice d’acquisition et la base dans laquelle le signal est parcimonieux, comme les ondelettes ou la variation totale.
-\end{itemize}
+Un avantage supplémentaire réside dans sa capacité à limiter le bruit. Contrairement à la rétroprojection filtrée (FBP), qui peut amplifier les fluctuations aléatoires des mesures, la CS intègre des contraintes de régularisation qui favorisent des reconstructions plus stables, visuellement plus propres et moins sensibles aux artefacts issus des mesures bruitées. Cette approche a déjà connu des transitions cliniques réussies : certains scanners commerciaux ont commencé à intégrer la CS, notamment en tomodensitométrie cardiaque ou en imagerie mammaire, permettant une réduction de dose pouvant atteindre 50\% sans compromettre la qualité diagnostique. Sur le plan théorique, la CS repose sur deux concepts fondamentaux : la parcimonie du signal, qui suppose que l'information utile peut être représentée par un nombre limité de coefficients significatifs dans une base appropriée, et l'incohérence entre la matrice d'acquisition et la base de représentation du signal, souvent choisie parmi des bases transformées telles que les ondelettes ou la variation totale.
 
 \subsection{Limites et défis}
 
-Malgré ses avantages, la CS présente des limites importantes. Elle repose sur l’hypothèse que les images sont parcimonieuses, ce qui n’est pas toujours vrai pour certaines structures anatomiques complexes. Les algorithmes CS sont itératifs et demandent plus de ressources computationnelles que la FBP, ce qui peut freiner leur utilisation dans des contextes nécessitant une reconstruction quasi temps réel.
+Malgré ses avantages, la CS présente des limites importantes. Elle repose sur l'hypothèse que les images sont parcimonieuses, ce qui n'est pas toujours vrai pour certaines structures anatomiques complexes. Les algorithmes CS sont itératifs et demandent plus de ressources computationnelles que la FBP, ce qui peut freiner leur utilisation dans des contextes nécessitant une reconstruction quasi temps réel.
 
-La qualité de reconstruction dépend fortement du choix de la régularisation et de l’algorithme d’optimisation. Des réglages inadéquats peuvent entraîner des artefacts, une perte de détails fins ou un lissage excessif des structures importantes, rendant l’interprétation diagnostique plus difficile.
 
-\vspace{0.2cm}
-\noindent
-\textbf{Contexte additionnel :}
-\begin{itemize}
-    \item \textbf{Validation clinique :} Les images reconstruites par CS peuvent paraître différentes de celles obtenues par FBP, même lorsque les métriques quantitatives, telles que le rapport signal-sur-bruit, sont meilleures. Les radiologues doivent donc s’adapter à ce nouvel “aspect” des images.
-    \item \textbf{Choix de la base parcimonieuse :} Le type de base choisi influence fortement la reconstruction : la variation totale favorise des contours nets, tandis que les ondelettes sont plus adaptées à la préservation des textures fines.
-\end{itemize}
+La qualité de reconstruction dépend fortement du choix de la régularisation et de l'algorithme d'optimisation. Des réglages inadéquats peuvent entraîner des artefacts, une perte de détails fins ou un lissage excessif des structures importantes, rendant l'interprétation diagnostique plus difficile. Dans un contexte clinique, les images reconstruites par CS peuvent également présenter un aspect visuel différent de celles obtenues par rétroprojection filtrée (FBP), même lorsque les métriques quantitatives, telles que le rapport signal-sur-bruit, indiquent une amélioration de la qualité. Les radiologues doivent ainsi s'adapter à ce nouvel « aspect » des images lors de leur interprétation. Par ailleurs, le choix de la base parcimonieuse joue un rôle déterminant dans la qualité de la reconstruction : l'utilisation de la variation totale tend à favoriser la préservation de contours nets et bien définis, tandis que les bases d'ondelettes sont généralement plus adaptées à la conservation des textures fines présentes dans l'image.
 
 \subsection{Artefacts et comportements observés}
 
 Les artefacts observés en CS sont différents de ceux classiques de la FBP. On retrouve notamment des effets de bloc ou des textures irrégulières, généralement dus à un sous-échantillonnage excessif ou à une régularisation trop forte. Les détails fins peuvent être atténués et des motifs répétitifs peuvent apparaître dans certaines zones.  
 
-Les mouvements du patient ont un impact moindre que sur la FBP, mais ils peuvent encore dégrader les reconstructions, en particulier lorsque le nombre de mesures est limité ou que les projections sont bruitées.
-
-\vspace{0.2cm}
-\noindent
-\textbf{Contexte additionnel :}
-\begin{itemize}
-    \item \textbf{Artefacts de type « piqûre » (staircasing) :} Typiques de la régularisation par variation totale, ces artefacts donnent un aspect en escalier aux zones de gradient doux et peuvent masquer des lésions subtiles.
-    \item \textbf{Sensibilité aux hyperparamètres :} Contrairement à la FBP, qui ne nécessite presque aucun paramètre, la CS dépend fortement du poids de régularisation et des paramètres d’optimisation, souvent ajustés par validation croisée.
-\end{itemize}
+Les mouvements du patient ont généralement un impact moindre sur les reconstructions basées sur la CS que sur celles obtenues par rétroprojection filtrée (FBP), mais ils peuvent néanmoins dégrader la qualité des images, en particulier lorsque le nombre de mesures est limité ou lorsque les projections sont fortement bruitées. Par ailleurs, certaines formes d'artefacts spécifiques peuvent apparaître selon la méthode de régularisation utilisée. Par exemple, la régularisation par variation totale peut engendrer des artefacts dits de « piqûre » ou effet d'escalier (\textit{staircasing}), qui se traduisent par un aspect en paliers dans les zones où les gradients d'intensité devraient varier de manière douce, ce qui peut masquer certaines lésions subtiles. De plus, contrairement à la FBP qui nécessite très peu de paramètres, les méthodes de CS sont particulièrement sensibles au choix des hyperparamètres, notamment au poids de régularisation et aux paramètres de l'algorithme d'optimisation. Ces paramètres doivent souvent être ajustés avec soin, parfois à l'aide de techniques comme la validation croisée, afin d'obtenir un compromis optimal entre réduction du bruit, préservation des détails et stabilité de la reconstruction.
 
 \subsection{Stratégies pour améliorer la reconstruction}
 
-Plusieurs stratégies permettent d’atténuer les limitations et les artefacts de la CS. L’optimisation des acquisitions, notamment via un sous-échantillonnage structuré plutôt qu’aléatoire, améliore la fidélité des reconstructions. Les algorithmes itératifs peuvent être combinés avec des techniques de régularisation adaptées, comme la parcimonie dans un domaine transformé ou la minimisation de normes spécifiques, afin d’obtenir des reconstructions plus robustes.
+Plusieurs stratégies permettent d'atténuer les limitations et les artefacts de la CS. L'optimisation des acquisitions, notamment via un sous-échantillonnage structuré plutôt qu'aléatoire, améliore la fidélité des reconstructions. Les algorithmes itératifs peuvent être combinés avec des techniques de régularisation adaptées, comme la parcimonie dans un domaine transformé ou la minimisation de normes spécifiques, afin d'obtenir des reconstructions plus robustes.
 
-Le post-traitement d’image, par filtrage ou amélioration adaptative du contraste, contribue également à améliorer la lisibilité et la qualité visuelle. Dans certaines modalités, comme l’IRM, des acquisitions adaptatives permettent de mieux préserver les informations structurelles tout en maintenant un niveau élevé de sous-échantillonnage.
+Le post-traitement d'image, par filtrage ou par amélioration adaptative du contraste, contribue également à améliorer la lisibilité et la qualité visuelle des images reconstruites. Dans certaines modalités d'imagerie, comme l'IRM, des stratégies d'acquisition adaptatives permettent de mieux préserver les informations structurelles tout en maintenant un niveau élevé de sous-échantillonnage. Par ailleurs, les avancées algorithmiques ont joué un rôle important dans l'amélioration des performances de la compressive sensing (CS). Des méthodes d'optimisation modernes, telles que les algorithmes ADMM (\textit{Alternating Direction Method of Multipliers}), permettent d'accélérer la convergence des reconstructions tout en renforçant leur robustesse face au bruit et aux données incomplètes. En IRM notamment, l'utilisation de schémas d'échantillonnage variables dans l'espace de Fourier (\textit{k-space}) permet de préserver efficacement les basses fréquences, qui contiennent l'essentiel de l'information structurelle de l'image, tout en optimisant la reconstruction des hautes fréquences sous-échantillonnées. Enfin, la CS peut être intégrée à des approches hybrides combinant des modèles physiques ou des méthodes statistiques, afin d'améliorer davantage la qualité des reconstructions et de réduire les artefacts dans des situations d'acquisition particulièrement difficiles.
 
-\vspace{0.2cm}
-\noindent
-\textbf{Contexte additionnel :}
-\begin{itemize}
-    \item \textbf{Avancées algorithmiques :} Les méthodes d’optimisation moderne, comme les algorithmes ADMM (Alternating Direction Method of Multipliers), ont amélioré la vitesse de convergence et la robustesse des reconstructions CS.
-    \item \textbf{Acquisitions structurées :} En IRM, des schémas d’échantillonnage variables dans l’espace de Fourier (k-space) permettent de mieux préserver les basses fréquences et d’optimiser la reconstruction des hautes fréquences sous-échantillonnées.
-    \item \textbf{Intégration multi-modale :} La CS peut être combinée avec d’autres approches, comme les modèles physiques ou les méthodes statistiques, pour renforcer la qualité des reconstructions et réduire les artefacts dans les cas difficiles.
-\end{itemize}
+\section*{Conclusion}
+
+La reconstruction d'image constitue l'étape algorithmique fondamentale qui transforme des mesures physiques brutes et indirectes en une représentation visuelle exploitable pour le diagnostic médical. Comme nous l'avons vu tout au long de ce chapitre, cette opération repose sur la résolution d'un problème inverse dont la complexité varie considérablement selon la modalité d'imagerie considérée. De la vision humaine aux capteurs numériques, en passant par les principes physiques de la TDM, de l'IRM et de la TEP, nous avons établi les bases conceptuelles nécessaires à la compréhension des enjeux de la reconstruction. La transformation de Radon et la rétroprojection filtrée, bien que toujours utilisées, révèlent leurs limites face aux exigences cliniques contemporaines de réduction des doses et d'accélération des acquisitions.
+
+L'émergence du Compressive Sensing marque un tournant paradigmatique dans ce domaine. En exploitant la parcimonie naturelle des images médicales, cette approche théorique novatrice permet de s'affranchir partiellement du critère de Nyquist-Shannon et ouvre la voie à des reconstructions de haute qualité à partir de données significativement sous-échantillonnées. Si des défis persistent — choix de la régularisation, artefacts spécifiques, acceptation clinique des nouveaux aspects visuels — les bénéfices potentiels en termes de réduction des doses de rayonnement et de temps d'acquisition justifient pleinement l'intérêt croissant porté à ces méthodes. Les progrès algorithmiques récents, combinés à l'essor de l'apprentissage profond, laissent entrevoir des avancées majeures dans les années à venir, au bénéfice direct de la qualité des soins et de l'expérience patient.

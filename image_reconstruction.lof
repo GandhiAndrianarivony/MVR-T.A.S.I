@@ -1,23 +1,27 @@
 \babel@toc {french}{}\relax 
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Anatomie de l'œil humain}}{4}{figure.caption.5}%
+\contentsline {figure}{\numberline {1.2}{\ignorespaces Types d'acquisition d'images}}{5}{figure.caption.6}%
+\contentsline {figure}{\numberline {1.3}{\ignorespaces Système de coordonnées utilisé en traitement d'image}}{9}{figure.caption.7}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Principe de fonctionnement d'un appareil de tomodensitométrie}}{12}{figure.caption.3}%
-\contentsline {figure}{\numberline {2.2}{\ignorespaces paramètrisation d'une droite \( l_{t,\theta } \) par \( t \) et \( \theta \)}}{21}{figure.caption.4}%
-\contentsline {figure}{\numberline {2.3}{\ignorespaces Transformée de Radon pour $\theta _1$ et $\theta _2$.}}{22}{figure.caption.5}%
-\contentsline {figure}{\numberline {2.4}{\ignorespaces Retroprojection d'un carré dans 5, 25, 100 et 1000 directions}}{25}{figure.caption.6}%
-\contentsline {figure}{\numberline {2.5}{\ignorespaces Calcul du coefficient de poids $\varphi _{i,j}$ de la matrice système $\Phi $ à partir de la longueur d'intersection du $i$-ème rayon à travers le $j$-ème pixel.}}{34}{figure.caption.7}%
-\contentsline {figure}{\numberline {2.6}{\ignorespaces Mesures des rayons-\textbf {X} $a$, $b$, $c$ et $d$ pour des angles de rotation $\alpha $, $90-\alpha $, $90+\alpha $ et $180-\alpha $. Les propriétés de symétrie permettent de déduire les poids d'un rayon à partir d'un autre.}}{35}{figure.caption.8}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Principe de fonctionnement d'un appareil de tomodensitométrie}}{23}{figure.caption.8}%
+\contentsline {figure}{\numberline {2.2}{\ignorespaces paramètrisation d'une droite \( l_{t,\theta } \) par \( t \) et \( \theta \)}}{32}{figure.caption.9}%
+\contentsline {figure}{\numberline {2.3}{\ignorespaces Transformée de Radon pour $\theta _1$ et $\theta _2$.}}{33}{figure.caption.10}%
+\contentsline {figure}{\numberline {2.4}{\ignorespaces Retroprojection d'un carré dans 5, 25, 100 et 1000 directions}}{36}{figure.caption.11}%
+\contentsline {figure}{\numberline {2.5}{\ignorespaces Coefficient $\phi _{i,j}$ calculé à partir de l'intersection du rayon $i$ avec le pixel $j$.}}{44}{figure.caption.12}%
+\contentsline {figure}{\numberline {2.6}{\ignorespaces Mesures des rayons X pour différents angles de rotation et propriétés de symétrie associées.}}{45}{figure.caption.13}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Fantôme de Shepp--Logan}}{42}{figure.caption.9}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Gradient du fantôme de Shepp--Logan}}{42}{figure.caption.10}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Orthogonalité}}{49}{figure.caption.11}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Transformation en ondelettes}}{50}{figure.caption.12}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Ondelette de Daubechies pour différentes valeurs}}{52}{figure.caption.13}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Orthogonalité}}{58}{figure.caption.15}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Transformation en ondelettes}}{59}{figure.caption.16}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Ondelette de Daubechies pour différentes valeurs}}{61}{figure.caption.17}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Processus de transformation de Radon}}{63}{figure.caption.14}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Diagramme de génération d'un sinogramme}}{63}{figure.caption.15}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Images-Sinogrammes pairs}}{64}{figure.caption.16}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Pipeline de sous-échantillonnage angulaire}}{67}{figure.caption.17}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Opérateur de Transformée en Ondelettes}}{69}{figure.caption.18}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces Opérateur $A$ et son Adjoint $A^T$ pour la Reconstruction CT}}{73}{figure.caption.19}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces Flux d'exécution de la reconstruction tomographique par ADMM}}{75}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Processus de transformation de Radon}}{71}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Diagramme de génération d'un sinogramme}}{72}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Images-Sinogrammes pairs}}{72}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Pipeline de sous-échantillonnage angulaire}}{76}{figure.caption.21}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Opérateur de Transformée en Ondelettes}}{78}{figure.caption.22}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Opérateur $A$ et son Adjoint $A^T$ pour la Reconstruction CT}}{84}{figure.caption.23}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Flux d'exécution de la reconstruction tomographique par ADMM}}{86}{figure.caption.24}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Convergence du résidu primal (ADMM combinée avec Bior4.4)}}{89}{figure.caption.25}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Décroissance du résidu dual — ADMM combinée avec Bior4.4}}{90}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Comparaison des métriques PSNR et SSIM}}{91}{figure.caption.28}%

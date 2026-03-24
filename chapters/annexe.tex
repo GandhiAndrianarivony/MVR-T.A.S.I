@@ -1,584 +1,838 @@
 \appendix
 % \stepcounter{chapter}
-\annexechapter{Génération de sinogrammes}
+\annexechapter{Librairies}
+Cette annexe présente l'ensemble des bibliothèques utilisées tout au long de ce travail. L'environnement de développement repose sur des librairies scientifiques fondamentales telles que \texttt{NumPy}, \texttt{SciPy} et \texttt{Pandas} pour le calcul numérique et la manipulation de données. Pour les opérations d'imagerie, nous utilisons \texttt{scikit-image} pour les transformations géométriques et les métriques d'évaluation, \texttt{PyWavelets} et \texttt{ptwt} (PyTorch Wavelets) pour les décompositions en ondelettes sur CPU et GPU respectivement. La gestion des images est assurée par \texttt{PIL}, tandis que \texttt{tqdm} fournit les barres de progression pour le suivi des calculs longs.
+
+L'implémentation des algorithmes de reconstruction exploite plusieurs bibliothèques spécialisées. \texttt{PyLops} est utilisé pour la définition d'opérateurs linéaires et l'implémentation des algorithmes ISTA et FISTA. La bibliothèque \texttt{QBI\_radon} offre une alternative pour la transformation de Radon. Pour l'accélération matérielle, \texttt{CuPy} permet d'exécuter les calculs sur GPU en reproduisant l'interface de NumPy, tandis que \texttt{cupyx.scipy.sparse.linalg} fournit les solveurs itératifs optimisés pour les architectures parallèles.
+
+L'environnement est configuré pour une exécution hybride CPU/GPU, avec une détection automatique de la disponibilité CUDA. La reproductibilité des résultats est assurée par la fixation de la graine aléatoire de NumPy. Cette architecture logicielle permet ainsi de comparer équitablement les performances des différentes méthodes de reconstruction sur les deux types de processeurs.
 
 \begin{minted}{python}
-from PIL import Image
-import numpy as np
-from skimage.data import shepp_logan_phantom
-from skimage.transform import radon, iradon, resize, iradon_sart, rescale
-from skimage.metrics import peak_signal_noise_ratio as psnr
-from skimage.metrics import structural_similarity as ssim
+    import time
+    import os
+    from typing import Annotated, List, Tuple, Literal, Callable, Any
+    from pathlib import Path
+    from abc import ABC, abstractmethod
+    from dataclasses import dataclass
+
+    from PIL import Image
+    from PIL.Image import Image as PILImage
+
+    from tqdm.auto import tqdm
+
+    import numpy as np
+    import pandas as pd
+    import torch
+
+    import pywt  # PyWavelets
+    import ptwt
+
+    import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
+
+    from skimage.data import shepp_logan_phantom
+    from skimage.transform import radon, iradon, resize, iradon_sart, rescale
+    from skimage.metrics import peak_signal_noise_ratio as psnr
+    from skimage.metrics import structural_similarity as ssim
+
+    from scipy.sparse.linalg import cg, LinearOperator
+    from scipy import sparse
+
+
+    from QBI_radon import Radon
+    import pylops
+
+
+    import cupy as cp
+    from cupyx.scipy.sparse.linalg import (
+        LinearOperator as cupyLinearOperator,
+        cg as cupy_cg
+    )
+    np.random.seed(0)
 \end{minted}
 
-\textbf{Description :}  
-Le code ci-dessous montre deux fonctions principales pour la génération de sinogrammes en tomographie.  
-Un sinogramme est la représentation de projections d'une image 2D selon différents angles, obtenue via la transformée de Radon. Ces sinogrammes sont utilisés pour reconstruire l'image originale, par exemple en tomographie par rayons X.  
+\annexechapter{Génération de sinogrammes}
+Ce module implémente les fonctions de simulation des acquisitions tomographiques. La fonction \texttt{generate\_sinogram} réalise la transformation de Radon d'une image d'entrée selon un nombre spécifié d'angles équidistants sur 180 degrés. Elle offre également la possibilité d'ajouter un bruit gaussien paramétrable, permettant ainsi de simuler différentes conditions d'acquisition allant du cas idéal aux situations cliniques réalistes où le bruit de mesure est présent.
+
+La fonction \texttt{generate\_undersampled\_sinogram} constitue un élément central pour l'évaluation des méthodes de reconstruction parcimonieuse. Elle simule une acquisition à faible dose en sélectionnant aléatoirement un sous-ensemble d'angles de projection, contrôlé par le paramètre \texttt{undersampling\_factor}. Cette approche reproduit fidèlement les protocoles cliniques visant à réduire l'exposition du patient en limitant le nombre de vues acquises.
+
+Ces deux fonctions retournent non seulement le sinogramme résultant mais également les angles de projection utilisés, essentiels pour les étapes de reconstruction ultérieures. La sélection aléatoire des angles, combinée à la fixation de la graine aléatoire, garantit la reproductibilité des expériences tout en préservant la variabilité nécessaire à une validation robuste.
 
 \begin{minted}{python}
     def generate_sinogram(
         image: np.ndarray,
-        num_angles: int,
-        add_noise: bool = False,
-        noise_level: float = 0.05
+        add_noise: bool =False,
+        noise_level: float =0.05,
+        num_angles: int= 360,
     ):
         """
-        Génère un sinogramme à partir d'une image en utilisant la transformée de Radon.
-
-        Paramètres :
-        - image : np.ndarray, image 2D à projeter
-        - num_angles : int, nombre de directions de projection (angles uniformes)
-        - add_noise : bool, si True, ajoute du bruit gaussien pour simuler des mesures bruitées
-        - noise_level : float, amplitude relative du bruit ajouté
-
-        Retour :
-        - sinogram : np.ndarray, sinogramme obtenu
-        - theta : np.ndarray, angles utilisés pour la projection
+        Generate sinogram from image using Radon transform
         """
-        # Crée un vecteur d'angles également espacés de 0 à 180°
+        # Create equally spaced angles
         theta = np.linspace(0., 180., num_angles, endpoint=False)
 
-        # Calcule la transformée de Radon (projections de l'image)
+        # Compute Radon transform
         sinogram = radon(image, theta=theta, circle=True)
 
-        # Ajoute du bruit si demandé
+        # Add noise if required
         if add_noise:
             noise = np.random.normal(0, noise_level * np.max(sinogram), sinogram.shape)
             sinogram = sinogram + noise
 
         return sinogram, theta
-\end{minted}
 
-\paragraph{Explication :}  
-Cette fonction est utilisée pour générer le sinogramme complet d'une image. Elle est utile pour des simulations de reconstruction classique où toutes les projections sont disponibles. Le paramètre add\_noise permet de simuler des mesures réalistes avec bruit, ce qui est important pour tester la robustesse des algorithmes de reconstruction.
 
-\begin{minted}{python}
-    def generate_undersampled_sinogram(
-        image: np.ndarray,
-        undersampling_factor: float = 0.5
-    ):
+    def generate_undersampled_sinogram(image: np.ndarray, undersampling_factor: float=0.5):
         """
-        Génère un sinogramme sous-échantillonné pour la reconstruction par Compressed Sensing.
-
-        Paramètres :
-        - image : np.ndarray, image 2D à projeter
-        - undersampling_factor : float, fraction des angles à utiliser (0 < factor <= 1)
-
-        Retour :
-        - sinogram : np.ndarray, sinogramme sous-échantillonné
-        - theta_undersampled : np.ndarray, angles sélectionnés pour la projection
-        - selected_indices : np.ndarray, indices des angles sélectionnés
+        Generate undersampled sinogram for CS reconstruction
+        This function simulates a low-dose / sparse-view CT acquisition
         """
-        # Ensemble complet d'angles de 0 à 180°
+        # Full set of angles
         full_angles = np.linspace(0., 180., 360, endpoint=False)
 
-        # Sélectionne un sous-ensemble d'angles en fonction du facteur d'undersampling
+        # Select subset of angles
         num_angles = int(len(full_angles) * undersampling_factor)
         selected_indices = np.sort(np.random.choice(len(full_angles), num_angles, replace=False))
         theta_undersampled = full_angles[selected_indices]
 
-        # Génère le sinogramme uniquement aux angles sélectionnés
+        # Generate sinogram only at selected angles
         sinogram = radon(image, theta=theta_undersampled, circle=True)
 
         return sinogram, theta_undersampled, selected_indices
 \end{minted}
 
-\paragraph{Explication :}  
-Cette fonction est conçue pour simuler un scénario de Compressed Sensing (CS) où toutes les projections ne sont pas disponibles (sparse-view CT). 
-\begin{itemize} 
-    \item[-] undersampling\_factor contrôle combien d'angles sont conservés.  
-    \item[-] Cela permet d'évaluer la performance des algorithmes de reconstruction CS sur des données réalistes avec moins d'informations.
-\end{itemize}
-\paragraph{Exemple d'utilisation pour simulation :}  
+\annexechapter{Configuration}
+
+Ce fichier centralise l'ensemble des paramètres de configuration de l'étude, garantissant la cohérence et la reproductibilité des expériences. La constante \texttt{DEVICE} détecte automatiquement la présence d'un GPU compatible CUDA pour basculer entre les implémentations CPU et GPU. Les dimensions des images sont fixées à $256 \times 256$ pixels, et le nombre d'itérations maximum pour les algorithmes itératifs est défini à $100$.
+
+Les classes de configuration sous forme de \texttt{dataclasses} encapsulent les hyperparamètres spécifiques à chaque algorithme. \texttt{ADMMConfig} regroupe le coefficient de régularisation $L_1$ (\texttt{lambda\_l1}), le paramètre de pénalité (\texttt{rho}) et le type d'ondelette. \texttt{ISTAConfig} et \texttt{FISTAConfig} partagent une structure similaire avec l'ajout du paramètre de pas de descente. Enfin, \texttt{FBPConfig} définit le type de filtre pour la rétroprojection filtrée parmi les options classiques.
+
+La classe abstraite \texttt{CTAlgorithm} établit une interface commune pour tous les algorithmes de reconstruction, imposant l'implémentation d'une méthode \texttt{process\_image}. Cette architecture orientée objet facilite l'extension du framework à de nouvelles méthodes et garantit une intégration homogène dans la chaîne d'évaluation.
+
 \begin{minted}{python}
-    if __name__ == "__main__":
-        # Crée un fantôme Shepp-Logan (image test standard en tomographie)
-        image = shepp_logan_phantom()
+    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    IMAGE_SHAPE = (256, 256)
+    N_PIXELS = IMAGE_SHAPE[0] * IMAGE_SHAPE[1]
+    MAX_ITER = 100
+    UNDERSAMPLING_FACTOR = .4
 
-        # Sinogramme complet
-        sinogram_full, theta_full = generate_sinogram(image, num_angles=180)
 
-        # Sinogramme sous-échantillonné (50% des angles)
-        sinogram_cs, theta_cs, selected_indices = generate_undersampled_sinogram(image, undersampling_factor=0.5)
+    class CTAlgorithm(ABC):
+        @abstractmethod
+        def process_image(self, image: Annotated[PILImage, "Grayscale"]):
+            raise NotImplementedError("Need to process image first.")
+
+
+    @dataclass
+    class ADMMConfig:
+        lambda_l1: float = 0.01
+        rho: float = 1.0
+        wavelet: str = "bior4.4" # TODO: Literal
+
+    @dataclass
+    class ISTAConfig:
+        lambda_l1: float = 0.01
+        step_size: int = 0
+        normalize: bool = False
+
+
+    @dataclass
+    class FISTAConfig:
+        lambda_l1: float = 0.01
+        step_size: int = 0
+        normalize: bool = False
+
+
+
+    @dataclass(frozen=True)
+    class FBPConfig:
+        filter: Literal['ramp', 'shepp-logan', 'hann'] = "ramp"
+
+
 \end{minted}
 
 \annexechapter{Opérateur de Transformée en Ondelettes}
+
+Cette classe \texttt{WaveletOperatorGPU} implémente un opérateur linéaire pour la transformation en ondelettes 2D sur GPU, héritant de \texttt{cupyx.scipy.sparse.linalg.LinearOperator}. Elle permet de représenter la transformation comme une matrice, facilitant son utilisation dans les algorithmes d'optimisation itératifs. Le constructeur initialise la structure de décomposition en ondelettes biorthogonales Bior4.4 sur quatre niveaux et calcule la dimension de l'espace des coefficients via la méthode interne \texttt{\_count\_coeffs}.
+
+L'opérateur définit les méthodes \texttt{\_matvec} et \texttt{\_rmatvec} qui implémentent respectivement la transformation directe (image $\rightarrow$ coefficients) et adjointe (coefficients $\rightarrow$ image). La transformation directe utilise \texttt{ptwt.wavedec2} pour décomposer l'image en coefficients d'approximation et de détails, puis aplatit le résultat avec \texttt{\_flatten}. La transformation adjointe reconstruit l'image à partir des coefficients via \texttt{ptwt.waverec2}.
+
+La structure de l'opérateur est construite dynamiquement à partir d'une image factice, permettant de déterminer précisément la forme de chaque sous-bande de coefficients. Les méthodes \texttt{\_flatten} et \texttt{\_unflatten} assurent la conversion bidirectionnelle entre la structure hiérarchique des coefficients et un vecteur plat.
+
 \begin{minted}{python}
-from typing import Annotated
-from scipy import sparse
-from scipy.sparse.linalg import LinearOperator
-import pywt  # PyWavelets for wavelet transform
-import time
+    #@title WOP-GPU
+    class WaveletOperatorGPU(cupyLinearOperator):
+        def __init__(
+            self,
+            image_shape: tuple[int, int],
+            wavelet: str = "bior4.4",
+            level: int = 4,
+            device: str = "cuda",
+        ):
+            self.image_shape = tuple(image_shape)
+            self.wavelet = wavelet
+            self.level = level
+            self.device = device
 
+            self.height, self.width = self.image_shape
 
-def create_wavelet_operator(
-    image_shape: Annotated[Tuple[int, int], "Height x Width"],
-    wavelet: str ='db1',
-    level: int|None =None
-):
-    """
-    Create wavelet transform operator W and its adjoint W^T
-    """
+            self.structure = self._build_structure()
 
-    height, width = image_shape
-    n_pixels = height * width
+            super().__init__(
+                dtype='float32',
+                shape=(self._count_coeffs(), np.prod(self.image_shape))
+            )
 
-    # ---- Create reference coefficient structure ----
-    dummy = np.zeros(image_shape)
-    coeffs = pywt.wavedec2(dummy, wavelet, level=level)
-    coeff_array_ref, coeff_slices = pywt.coeffs_to_array(coeffs)
+        # ---------------------------
+        # Internal utilities
+        # ---------------------------
+        def _build_structure(self) -> list:
+            dummy = torch.zeros(self.image_shape, device=self.device)
+            coeffs = ptwt.wavedec2(dummy, self.wavelet, level=self.level)
 
-    coeff_shape = coeff_array_ref.shape
-    n_coeffs = coeff_array_ref.size
+            structure = []
 
-    # ---- Forward: W x ----
-    def wavelet_forward(x):
-        img = x.reshape(image_shape)
-        coeffs = pywt.wavedec2(img, wavelet, level=level)
-        coeff_array, _ = pywt.coeffs_to_array(coeffs)
-        return coeff_array.flatten()
+            structure.append(coeffs[0].shape)
 
-    # ---- Adjoint / Inverse: W^T w ----
-    def wavelet_adjoint(w):
-        coeff_array = w.reshape(coeff_shape)
-        coeffs = pywt.array_to_coeffs(
-            coeff_array,
-            coeff_slices,
-            output_format='wavedec2'
-        )
-        img = pywt.waverec2(coeffs, wavelet)
-        return img[:height, :width].flatten()
+            for (cH, cV, cD) in coeffs[1:]:
+                structure.append((cH.shape, cV.shape, cD.shape))
 
-    Wop = LinearOperator(
-        shape=(n_coeffs, n_pixels),
-        matvec=wavelet_forward,
-        rmatvec=wavelet_adjoint,
-        dtype=np.float64
-    )
+            return structure
 
-    return Wop
+        def _count_coeffs(self) -> int:
+            total = torch.prod(torch.tensor(self.structure[0])).item()
+            for shapes in self.structure[1:]:
+                for s in shapes:
+                    total += torch.prod(torch.tensor(s)).item()
+            return int(total)
+
+        def _flatten(self, coeffs: list) -> torch.Tensor:
+            flat = []
+
+            flat.append(coeffs[0].reshape(-1))
+
+            for (cH, cV, cD) in coeffs[1:]:
+                flat.extend([
+                    cH.reshape(-1),
+                    cV.reshape(-1),
+                    cD.reshape(-1)
+                ])
+
+            return torch.cat(flat)
+
+        def _unflatten(self, flat: torch.Tensor) -> list:
+            coeffs = []
+            idx = 0
+
+            cA_shape = self.structure[0]
+            size = torch.prod(torch.tensor(cA_shape)).item()
+            cA = flat[idx:idx+size].reshape(cA_shape)
+            idx += size
+            coeffs.append(cA)
+
+            for shapes in self.structure[1:]:
+                level_coeffs = []
+                for shape in shapes:
+                    size = torch.prod(torch.tensor(shape)).item()
+                    c = flat[idx:idx+size].reshape(shape)
+                    idx += size
+                    level_coeffs.append(c)
+                coeffs.append(tuple(level_coeffs))
+
+            return coeffs
+
+        # ---------------------------
+        # Linear operator interface
+        # ---------------------------
+        def _matvec(
+            self,
+            image: Annotated[cp.ndarray, "Expected shape [N,1] ou [N,]"]
+        ) -> cp.ndarray:
+
+            img = image.reshape(self.image_shape)
+            img_tensor = torch.as_tensor(img, device=self.device).float()
+
+            coeffs = ptwt.wavedec2(img_tensor, self.wavelet, level=self.level)
+            flat = self._flatten(coeffs)
+
+            return cp.asarray(flat)
+
+        def _rmatvec(
+            self,
+            w: Annotated[cp.ndarray, "Expected shape [M,1] ou [M,]"]
+        ) -> cp.ndarray:
+
+            w_tensor = torch.as_tensor(w, device=self.device).float()
+            coeffs = self._unflatten(w_tensor)
+            img = ptwt.waverec2(coeffs, self.wavelet)
+
+            img = img[:self.height, :self.width]
+
+            return cp.asarray(img.reshape(-1))
+
+    #@title WOP-GPU
+    class WaveletOperatorGPU(cupyLinearOperator):
+        def __init__(
+            self,
+            image_shape: tuple[int, int],
+            wavelet: str = "bior4.4",
+            level: int = 4,
+            device: str = "cuda",
+        ):
+            self.image_shape = tuple(image_shape)
+            self.wavelet = wavelet
+            self.level = level
+            self.device = device
+
+            self.height, self.width = self.image_shape
+
+            self.structure = self._build_structure()
+
+            super().__init__(
+                dtype='float32',
+                shape=(self._count_coeffs(), np.prod(self.image_shape))
+            )
+
+        # ---------------------------
+        # Internal utilities
+        # ---------------------------
+        def _build_structure(self) -> list:
+            dummy = torch.zeros(self.image_shape, device=self.device)
+            coeffs = ptwt.wavedec2(dummy, self.wavelet, level=self.level)
+
+            structure = []
+
+            structure.append(coeffs[0].shape)
+
+            for (cH, cV, cD) in coeffs[1:]:
+                structure.append((cH.shape, cV.shape, cD.shape))
+
+            return structure
+
+        def _count_coeffs(self) -> int:
+            total = torch.prod(torch.tensor(self.structure[0])).item()
+            for shapes in self.structure[1:]:
+                for s in shapes:
+                    total += torch.prod(torch.tensor(s)).item()
+            return int(total)
+
+        def _flatten(self, coeffs: list) -> torch.Tensor:
+            flat = []
+
+            flat.append(coeffs[0].reshape(-1))
+
+            for (cH, cV, cD) in coeffs[1:]:
+                flat.extend([
+                    cH.reshape(-1),
+                    cV.reshape(-1),
+                    cD.reshape(-1)
+                ])
+
+            return torch.cat(flat)
+
+        def _unflatten(self, flat: torch.Tensor) -> list:
+            coeffs = []
+            idx = 0
+
+            cA_shape = self.structure[0]
+            size = torch.prod(torch.tensor(cA_shape)).item()
+            cA = flat[idx:idx+size].reshape(cA_shape)
+            idx += size
+            coeffs.append(cA)
+
+            for shapes in self.structure[1:]:
+                level_coeffs = []
+                for shape in shapes:
+                    size = torch.prod(torch.tensor(shape)).item()
+                    c = flat[idx:idx+size].reshape(shape)
+                    idx += size
+                    level_coeffs.append(c)
+                coeffs.append(tuple(level_coeffs))
+
+            return coeffs
+
+        # ---------------------------
+        # Linear operator interface
+        # ---------------------------
+        def _matvec(
+            self,
+            image: Annotated[cp.ndarray, "Expected shape [N,1] ou [N,]"]
+        ) -> cp.ndarray:
+
+            img = image.reshape(self.image_shape)
+            img_tensor = torch.as_tensor(img, device=self.device).float()
+
+            coeffs = ptwt.wavedec2(img_tensor, self.wavelet, level=self.level)
+            flat = self._flatten(coeffs)
+
+            return cp.asarray(flat)
+
+        def _rmatvec(
+            self,
+            w: Annotated[cp.ndarray, "Expected shape [M,1] ou [M,]"]
+        ) -> cp.ndarray:
+
+            w_tensor = torch.as_tensor(w, device=self.device).float()
+            coeffs = self._unflatten(w_tensor)
+            img = ptwt.waverec2(coeffs, self.wavelet)
+
+            img = img[:self.height, :self.width]
+
+            return cp.asarray(img.reshape(-1))
+
 \end{minted}
 
-\annexechapter{Reconstruction d'Images en Tomographie par Transformée de Radon}
+\annexechapter{Opérateur de Transformée de Radon}
+
+Deux versions de l'opérateur de Radon sont proposées pour permettre une évaluation comparative sur CPU et GPU. \texttt{RadonOperatorCPU} hérite de \texttt{pylops.LinearOperator} et utilise les implémentations CPU de \texttt{scikit-image} pour la transformation directe (\texttt{radon}) et adjointe (\texttt{iradon} sans filtrage).
+
+\texttt{RadonOperatorGPU} étend cette approche en exploitant \texttt{CuPy} pour les calculs sur GPU. Cette architecture hybride permet de bénéficier de l'accélération GPU tout en conservant la robustesse des implémentations CPU.
+
+Les deux classes partagent une interface commune, ce qui les rend interchangeables dans les algorithmes de reconstruction. Leur constructeur assure la cohérence dimensionnelle avec le problème inverse formulé comme :
+\[
+g = Hf
+\]
 \begin{minted}{python}
-    from scipy.sparse.linalg import LinearOperator
-    from skimage.transform import radon, iradon
-    import numpy as np
+    #@title ROP-CPU
+    class RadonOperatorCPU(pylops.LinearOperator):
+        def __init__(self, image_shape, theta):
+            self.image_shape = image_shape
+            self.theta = theta
 
-    def create_system_matrix(image_shape, theta):
-        """
-        Matrix-free CT system operator A and its adjoint A^T
-        (true Radon transform and unfiltered backprojection)
-        """
-        height, width = image_shape
-        n_pixels = height * width
-        n_rays = height * len(theta)
+            self.height, self.width = image_shape
+            self.image_shape = (self.height, self.width)
 
-        def matvec(x):
-            """
-            Forward projection: y = A x
-            """
-            image = x.reshape(image_shape)
-            sinogram = radon(image, theta=theta, circle=True)
-            return sinogram.flatten()
+            # forward size
+            test = np.zeros(self.image_shape)
+            sino = radon(test, theta=self.theta, circle=True)
 
-        def rmatvec(y):
-            """
-            Adjoint operator: x = A^T y
-            (unfiltered backprojection)
-            """
-            sino = y.reshape((height, len(theta)))
+            super().__init__(
+                dtype='float32',
+                shape=(sino.size, self.height * self.width)
+            )
+
+        def _matvec(self, x):
+            x_img = x.reshape(self.image_shape)
+            sino = radon(x_img, theta=self.theta, circle=True)
+            return sino.ravel()
+
+        def _rmatvec(self, y):
+            sino = y.reshape(-1, len(self.theta))
+            # unfiltered backprojection (adjoint)
             backproj = iradon(
                 sino,
-                theta=theta,
-                filter_name=None,  # CRITICAL
-                circle=True,
-                output_size=height
+                theta=self.theta,
+                filter_name=None,
+                circle=True
             )
-            return backproj.flatten()
+            return backproj.ravel()
 
-        A = LinearOperator(
-            shape=(n_rays, n_pixels),
-            matvec=matvec,
-            rmatvec=rmatvec,
-            dtype=np.float64
-        )
+    #@title ROP-GPU
+    class RadonOperatorGPU(pylops.LinearOperator):
+        def __init__(self, image_shape, theta):
+            self.image_shape = image_shape
+            self.theta = theta
 
-        return A
-\end{minted}
-\section{Explication détaillée du code : opérateur de tomographie (CT scan)}
+            self.height, self.width = image_shape
+            self.image_shape = (self.height, self.width)
 
-\subsection{Objectif du code}
+            # forward size
+            test = np.zeros(self.image_shape)
+            sino = radon(test, theta=self.theta, circle=True)
 
-Ce code crée un opérateur linéaire qui modélise un système de tomographie (scanner médical) en utilisant la transformée de Radon. Il permet de simuler l'acquisition de données CT (projections) et la rétroprojection non filtrée.
+            super().__init__(
+                dtype='float32',
+                shape=(sino.size, self.height * self.width)
+            )
 
-\subsection{Explication ligne par ligne}
+        def _matvec(self, x: Annotated[np.ndarray, "Flatten Vector"])-> cp.ndarray:
+            x_img = x.reshape(self.image_shape)
+            sino = radon(x_img, theta=self.theta, circle=True)
+            res = cp.asarray(sino.ravel())
+            return res
 
-\subsubsection{Importations}
+        def _rmatvec(self, y: Annotated[cp.ndarray, "Flatten Vector"])-> cp.ndarray:
+            sino = y.reshape(-1, len(self.theta))
+            sino = cp.asnumpy(sino)
+            # unfiltered backprojection (adjoint)
+            backproj = iradon(
+                sino,
+                theta=self.theta,
+                filter_name=None,
+                circle=True
+            )
+            return cp.asarray(backproj.ravel())
 
-\begin{minted}{python}
-from scipy.sparse.linalg import LinearOperator
-from skimage.transform import radon, iradon
-import numpy as np
-\end{minted}
-
-\begin{itemize}
-\item \texttt{LinearOperator} : classe de SciPy pour créer des opérateurs linéaires sans matrice explicite.
-\item \texttt{radon}, \texttt{iradon} : fonctions de scikit-image pour la transformée de Radon directe et inverse.
-\item \texttt{numpy} : manipulation de tableaux.
-\end{itemize}
-
-\subsubsection{Paramètres de la fonction}
-
-\begin{minted}{python}
-def create_system_matrix(image_shape, theta):
-    """
-    Matrix-free CT system operator A and its adjoint A^T
-    (true Radon transform and unfiltered backprojection)
-    """
-    height, width = image_shape
-    n_pixels = height * width
-    n_rays = height * len(theta)
 \end{minted}
 
-\begin{itemize}
-\item \texttt{image\_shape} : dimensions (hauteur, largeur) de l'image à reconstruire.
-\item \texttt{theta} : liste des angles de projection (en degrés) pour lesquels on acquiert des données.
-\item \texttt{n\_pixels} : nombre total de pixels dans l'image.
-\item \texttt{n\_rays} : nombre total de rayons mesurés (hauteur du détecteur $\times$ nombre d'angles).
-\end{itemize}
+\annexechapter{Algorithmes}
 
-\subsubsection{Fonction de projection avant ($A$)}
+Ce module contient les implémentations des principaux algorithmes de reconstruction. La classe \texttt{ADMMGPU} implémente l'algorithme \emph{Alternating Direction Method of Multipliers} avec accélération GPU. Elle repose sur trois étapes itératives : mise à jour de l'image via un gradient conjugué, mise à jour des coefficients par seuillage doux, et mise à jour du multiplicateur de Lagrange.
 
-\begin{minted}{python}
-def matvec(x):
-    """
-    Forward projection: y = A x
-    """
-    image = x.reshape(image_shape)
-    sinogram = radon(image, theta=theta, circle=True)
-    return sinogram.flatten()
-\end{minted}
+Les classes \texttt{ADMMCPU}, \texttt{ISTA}, \texttt{FISTA} et \texttt{FBP} fournissent des implémentations de référence. \texttt{ISTA} et \texttt{FISTA} s'appuient sur \texttt{PyLops}, tandis que \texttt{FBP} utilise la rétroprojection filtrée de \texttt{scikit-image}.
 
-\begin{itemize}
-\item Remet le vecteur \texttt{x} en forme 2D.
-\item Applique la transformée de Radon pour simuler l'acquisition CT.
-\item Retourne le sinogramme aplati en un vecteur 1D.
-\end{itemize}
-
-\textbf{Interprétation physique :} Cette fonction simule le passage des rayons X à travers l'objet. Chaque pixel du sinogramme représente l'atténuation totale le long d'un rayon.
-
-\subsubsection{Fonction de rétroprojection ($A^T$)}
+Chaque algorithme expose une interface unifiée via la méthode \texttt{\_\_call\_\_}, facilitant leur comparaison.
 
 \begin{minted}{python}
-def rmatvec(y):
-    """
-    Adjoint operator: x = A^T y
-    (unfiltered backprojection)
-    """
-    sino = y.reshape((height, len(theta)))
-    backproj = iradon(
-        sino,
-        theta=theta,
-        filter_name=None,  # CRITICAL
-        circle=True,
-        output_size=height
-    )
-    return backproj.flatten()
-\end{minted}
+    #@title ADMMGPU
+    class ADMMGPU:
+        def __init__(
+            self,
+            radon_op: RadonOperatorGPU,
+            wavelet_op: WaveletOperatorGPU,
+            config: ADMMConfig = ADMMConfig(),
+            *args, **kwargs
+        ):
+            self.config = config
+            self.wavelet_op = wavelet_op
+            self.radon_op = radon_op
 
-\begin{itemize}
-\item Remet le sinogramme aplati en forme 2D.
-\item Applique la rétroprojection non filtrée via \texttt{iradon} avec \texttt{filter\_name=None}.
-\item Recadre l'image à la taille originale et l'aplatit.
-\end{itemize}
+        def _lhs(self, v: Annotated[cp.ndarray, "Expected shape [N,1] ou [N,]"]) -> cp.ndarray:
+            v_np: np.ndarray = cp.asnumpy(v)
 
-\textbf{Interprétation physique :} La rétroprojection "étale" chaque mesure le long du trajet du rayon correspondant. C'est l'opération mathématiquement adjointe à la projection avant.
+            AtA: cp.ndarray = self.radon_op.rmatvec(self.radon_op.matvec(v_np))
+            WtW: cp.ndarray = self.wavelet_op.rmatvec(self.wavelet_op.matvec(v))
+            return AtA + self.config.rho * WtW
 
-\subsubsection{Création de l'opérateur linéaire}
+        def _x_update(self, x, rhs, maxiter: int = 20)-> tuple[cp.ndarray, Any]:
+            """Solve linear system by using conjugate gradient"""
+            linop = cupyLinearOperator((N_PIXELS, N_PIXELS), matvec=self._lhs)
+            x, info = cupy_cg(
+                linop,
+                rhs,
+                x0=x,
+                maxiter=maxiter
+            )
+            return x, info
 
-\begin{minted}{python}
-A = LinearOperator(
-    shape=(n_rays, n_pixels),
-    matvec=matvec,
-    rmatvec=rmatvec,
-    dtype=np.float64
-)
+        def _z_update(self,x, u, z)-> cp.ndarray:
+            # ---- z-update (soft threshold) ---- #
+            Wx: cp.ndarray = self.wavelet_op.matvec(x)
+            v = Wx + u
+            thresh = self.config.lambda_l1 / self.config.rho
+            z = cp.sign(v) * cp.maximum(cp.abs(v) - thresh, 0)
+            return z
 
-return A
-\end{minted}
+        def _u_update(self, x: cp.ndarray, u: cp.ndarray, z: cp.ndarray) -> cp.ndarray:
+            Wx = self.wavelet_op.matvec(x)
+            return u + Wx - z
 
-\subsection{Utilisation typique}
+        def __call__(self, sinogram: Annotated[np.ndarray, "H x W"]):
+            sinogram = cp.asarray(sinogram.ravel())
+            # ---- Initialize (GPU) ---- #
+            x = cp.zeros(N_PIXELS, dtype=np.float32)
+            z = cp.zeros(self.wavelet_op.shape[0], dtype=cp.float32)
+            u = cp.zeros_like(z)
 
-\begin{minted}{python}
-# Définir la géométrie d'acquisition
-image_size = 256
-angles = np.linspace(0, 180, 180)  # 180 projections sur 180°
+            # sparse_images = []
+            primal_residuals = []
+            dual_residuals = []
 
-# Créer l'opérateur CT
-A = create_system_matrix((image_size, image_size), angles)
+            for k in range(MAX_ITER):
+                rhs: cp.ndarray = self.radon_op.rmatvec(sinogram) + self.config.rho * self.wavelet_op.rmatvec(z - u)
 
-# Simuler l'acquisition à partir d'une image fantôme
-phantom = np.zeros((256, 256))
-# ... remplir le fantôme ...
-projections = A @ phantom.flatten()  # Équivalent à A * phantom
+                # ---- x-update ---- #
+                x, info = self._x_update(x, rhs)
 
-# Reconstruire par rétroprojection (non filtrée)
-reconstruction = A.H @ projections    # Équivalent à A^T * projections
-\end{minted}
+                # ---- z-update (soft threshold) ---- #
+                z_old = z.copy()
+                z = self._z_update(x, u, z)
 
-\subsection{Applications}
+                # ---- u-update ---- #
+                u = self._u_update(x, u, z)
 
-\begin{enumerate}
-\item Simulation d'acquisitions CT pour générer des données synthétiques.
-\item Reconstruction itérative (ART, SIRT, méthodes de gradient).
-\item Résolution de problèmes inverses avec régularisation (TV, ondelettes, etc.).
-\item Compressed sensing en tomographie.
-\end{enumerate}
+                # ---- convergence ---- #
+                Wx = self.wavelet_op.matvec(x)
+                r_norm = cp.linalg.norm(Wx - z).item()
+                s_norm = (self.config.rho * cp.linalg.norm(z - z_old)).item()
 
-\subsection{Notes importantes}
+                primal_residuals.append(r_norm)
+                dual_residuals.append(s_norm)
 
-\begin{itemize}
-\item L'opérateur est "matrix-free" : aucune matrice n'est stockée explicitement.
-\item Mémoire utilisée : $O(n\_pixels)$ au lieu de $O(n\_pixels \times n\_rays)$.
-\item L'opérateur adjoint $A^T$ est différent de l'inverse $A^{-1}$.
-\item Pour une reconstruction réelle, appliquer un filtre (ramp) ou utiliser des méthodes itératives.
-\end{itemize}
+                sparsity = cp.mean(cp.abs(z) < 1e-6).item()
 
+                if r_norm < 1e-4 and s_norm < 1e-4:
+                    print(f"ADMM converged at iteration {k}")
+                    break
 
-\annexechapter{La Reconstruction Tomographique par Séparation de Variables (ADMM)}
-\begin{minted}{python}
-    from tqdm import tqdm
-    import numpy as np
-    from scipy.sparse.linalg import cg, LinearOperator
-
-
-    def cs_reconstruction_admm(
-        sinogram, theta, image_shape,
-        rho=1.0, lambda_l1=0.01, max_iter=100
-    ):
-
-        height, width = image_shape
-        n_pixels = height * width
-
-        A = create_system_matrix(image_shape, theta)
-        Wop = create_wavelet_operator(image_shape, wavelet="bior4.4")
+            return (
+                cp.asnumpy(x).reshape(IMAGE_SHAPE),
+                # sparse_images,
+                primal_residuals,
+                dual_residuals,
+                cp.asnumpy(z)
+            )
+    #@title ADMMCPU
 
 
-        # Initialize
-        x = np.zeros(n_pixels)
-        z = np.zeros(Wop.shape[0])
-        u = np.zeros_like(z)
+    class ADMMCPU:
+        def __init__(
+            self,
+            radon_op: RadonOperatorCPU,
+            wavelet_op,
+            config: ADMMConfig = ADMMConfig(),
+        ):
+            self.config = config
+            self.wavelet_op = wavelet_op
+            self.radon_op = radon_op
 
-        for k in tqdm(range(max_iter)):
+        def _lhs(self, v):
+            AtA = self.radon_op.rmatvec(self.radon_op.matvec(v))
+            WtW = self.wavelet_op.rmatvec(self.wavelet_op.matvec(v))
+            return AtA + self.config.rho * WtW
 
+        def _rhs(self, sinogram, u, z):
             # ---- x-update ----
-            def lhs(v):
-                return (
-                    A.rmatvec(A.matvec(v)) +
-                    rho * Wop.rmatvec(Wop.matvec(v))
-                )
+            At = self.radon_op.rmatvec(sinogram)
+            Wt = self.wavelet_op.rmatvec(z - u)
+            return At + self.config.rho * Wt
 
-            rhs = (
-                A.rmatvec(sinogram.flatten()) +
-                rho * Wop.rmatvec(z - u)
-            )
 
-            x, _ = cg(
-                LinearOperator((n_pixels, n_pixels), matvec=lhs),
+        def _x_update(self, x, u, z, rhs, lhs, maxiter: int=50)-> tuple[np.ndarray, Any]:
+            linop = LinearOperator((N_PIXELS, N_PIXELS), matvec=lhs)
+            return cg(
+                linop,
                 rhs, x0=x, maxiter=50
             )
 
-            # ---- z-update (soft thresholding) ----
-            Wx = Wop.matvec(x)
+        def _z_update(self, x, u) -> np.ndarray:
+            Wx = self.wavelet_op.matvec(x)
             v = Wx + u
-            z_old = z.copy()
-            z = np.sign(v) * np.maximum(np.abs(v) - lambda_l1 / rho, 0)
+            return np.sign(v) * np.maximum(np.abs(v) - self.config.lambda_l1 / self.config.rho, 0)
 
-            # ---- u-update ----
-            u = u + Wx - z
+        def _u_update(self, x, u, z) -> np.ndarray:
+            Wx = self.wavelet_op.matvec(x)
+            return u + Wx - z
 
-            # ---- convergence check ----
-            r_norm = np.linalg.norm(Wx - z)
-            s_norm = rho * np.linalg.norm(z - z_old)
+        def __call__(self, sinogram: Annotated[np.ndarray, "flatten vector"])-> tuple[np.ndarray, list[np.ndarray], list, np.ndarray]:
+            # Initialize
+            x = np.zeros(N_PIXELS)
+            z = np.zeros(self.wavelet_op.shape[0])
+            u = np.zeros_like(z)
 
-            if r_norm < 1e-4 and s_norm < 1e-4:
-                print(f"ADMM converged at iteration {k}")
-                break
+            sparse_images = []
+            primal_residuals = []
+            dual_residuals = []
 
-        return x.reshape(image_shape)
-\section{Reconstruction CT par Compressed Sensing avec ADMM}
+            pbar = tqdm(range(MAX_ITER), desc="ADMM", leave=True)
 
-\subsection{Objectif du code}
+            for k in pbar:
+                # ---- x-update ----
+                x, info = self._x_update(
+                    x, u, z,
+                    rhs=self._rhs(sinogram, u, z),
+                    lhs=lambda v: self._lhs(v),
+                    maxiter=50
+                )
 
-Ce code reconstruit une image CT à partir d'un sinogramme incomplet ou bruité en utilisant la régularisation par ondelettes (compressed sensing) avec l'algorithme ADMM (Alternating Direction Method of Multipliers).
+                sparse_images.append(
+                    x.reshape(IMAGE_SHAPE).astype(np.float32).copy()
+                )
 
-\subsection{Contexte mathématique}
+                # ---- z-update (soft thresholding) ----
+                z_old = z.copy()
+                z = self._z_update(x, u)
 
-On cherche à résoudre : 
-\[
-\min_x \frac{1}{2}\|Ax - y\|_2^2 + \lambda \|Wx\|_1
-\]
-où :
-\begin{itemize}
-\item $A$ est l'opérateur de projection CT
-\item $y$ est le sinogramme mesuré
-\item $W$ est la transformée en ondelettes
-\item $\lambda$ contrôle la force de la régularisation parcimonieuse
-\end{itemize}
+                # ---- u-update ----
+                u = self._u_update(x, u, z)
 
-\subsection{Explication ligne par ligne}
+                # ---- convergence check ----
+                Wx = self.wavelet_op.matvec(x)
+                r_norm = np.linalg.norm(Wx - z)
+                s_norm = self.config.rho * np.linalg.norm(z - z_old)
 
-\subsubsection{Paramètres de la fonction}
+                primal_residuals.append(r_norm)
+                dual_residuals.append(s_norm)
 
-\begin{minted}{python}
-def cs_reconstruction_admm(
-    sinogram, theta, image_shape,
-    rho=1.0, lambda_l1=0.01, max_iter=100
-):
+                # ---- sparsity metric ----
+                sparsity = np.mean(np.abs(z) < 1e-6)
+
+
+                # ---- update tqdm ----
+                pbar.set_postfix({
+                    "r": f"{r_norm:.2e}",
+                    "s": f"{s_norm:.2e}",
+                    "ρ": self.config.rho,
+                    "sp": f"{sparsity:.2%}",
+                    "cg": info  # 0 = success
+                })
+
+                if r_norm < 1e-4 and s_norm < 1e-4:
+                    print(f"ADMM converged at iteration {k}")
+                    break
+
+            return x.reshape(IMAGE_SHAPE), sparse_images, primal_residuals, dual_residuals, z
+
+    #@title ISTA, FISTA, FBP
+    class ISTA:
+        def __init__(
+            self,
+            radon_op,
+            config: ISTAConfig = ISTAConfig(),
+            *args, **kwargs
+        ):
+            self.radon_op = radon_op
+            self.config = config
+
+        def __call__(self, sinogram: Annotated[np.ndarray, "H x W"]):
+            # -------------------------
+            # ISTA reconstruction
+            # -------------------------
+            xista, niter, cost = pylops.optimization.sparsity.ista(
+                self.radon_op,
+                sinogram.ravel(),
+                niter=100,
+                eps=1e-3,   # sparsity weight
+                tol=1e-6,
+            )
+            xista = xista.reshape(IMAGE_SHAPE)
+            return xista, niter, cost
+
+
+    class FISTA:
+        def __init__(
+            self,
+            radon_op,
+            config: FISTAConfig = FISTAConfig(),
+            *args, **kwargs
+        ):
+            self.radon_op = radon_op
+            self.config = config
+
+        def __call__(self, sinogram: Annotated[np.ndarray, "H x W"]):
+            # -------------------------
+            # ISTA reconstruction
+            # -------------------------
+            xista, niter, cost = pylops.optimization.sparsity.fista(
+                self.radon_op,
+                sinogram.ravel(),
+                niter=100,
+                eps=1e-3,   # sparsity weight
+                tol=1e-6,
+            )
+            xista = xista.reshape(IMAGE_SHAPE)
+            return xista, niter, cost
+
+
+    class FBP:
+        def __init__(self, config: FBPConfig = FBPConfig(), *args, **kwargs):
+            self.config = config
+
+        def __call__(self, sinogram: Annotated[np.ndarray, "H x M"]) -> tuple[np.ndarray, Any]:
+
+        # def fbp_reconstruction(sinogram, theta, image_shape, filter_type="ramp"):
+            """
+            Filtered Back Projection reconstruction
+
+            Parameters:
+            - sinogram : measured projections
+            - theta : projection angles (degrees)
+            - image_shape : (height, width)
+            - filter_type : 'ramp', 'shepp-logan', 'hann', etc.
+
+            Returns:
+            - reconstructed image
+            """
+
+            reconstruction = iradon(
+                sinogram,
+                theta=theta,
+                filter_name=self.config.filter,  # CRITICAL for FBP
+                circle=True,
+                output_size=IMAGE_SHAPE[0]
+            )
+
+            return reconstruction, _
+
+
 \end{minted}
 
-\begin{itemize}
-\item \texttt{sinogram} : données CT acquises (projections)
-\item \texttt{theta} : angles de projection utilisés
-\item \texttt{image\_shape} : dimensions de l'image à reconstruire
-\item \texttt{rho} : paramètre de pénalité ADMM
-\item \texttt{lambda\_l1} : poids de la régularisation L1
-\item \texttt{max\_iter} : nombre maximal d'itérations
-\end{itemize}
+\annexechapter{Reconstructions}
 
-\subsubsection{Initialisation des opérateurs}
+Ce script réalise l'évaluation systématique des algorithmes. La fonction \texttt{evaluate} calcule les métriques PSNR (\emph{Peak Signal-to-Noise Ratio}) et SSIM (\emph{Structural Similarity Index Measure}) entre l'image originale et l'image reconstruite.
 
+La boucle principale itère sur chaque algorithme puis sur chaque image. Pour chaque cas, un sinogramme sous-échantillonné est généré avec un facteur de $40\%$. Les opérateurs sont instanciés et la reconstruction est effectuée.
+
+Les résultats sont collectés dans une structure \texttt{pandas DataFrame} pour analyse. Cette méthodologie garantit la reproductibilité et la comparabilité des performances.
 \begin{minted}{python}
-A = create_system_matrix(image_shape, theta)
-Wop = create_wavelet_operator(image_shape, wavelet="bior4.4")
+    def evaluate(gt: np.ndarray, pred: np.ndarray):
+        gt = np.clip(gt, 0, 1)
+        pred = np.clip(pred, 0, 1)
+
+        data_range = 1.0
+        psnr_val = psnr(gt, pred, data_range=data_range)
+        ssim_val = ssim(gt, pred, data_range=data_range)
+        return psnr_val, ssim_val
+
+
+    rows = []
+
+    algorithms = [
+        # ADMMGPU,
+        FBP,
+        FISTA,
+        ISTA
+    ]
+
+    outer_pbar = tqdm(algorithms, desc="Algorithms", position=0)
+
+    for algorithm in outer_pbar:
+        psnr_list = []
+        ssim_list = []
+
+        inner_pbar = tqdm(images, desc=f"{algorithm.__name__}", position=1, leave=False)
+
+        for img in inner_pbar:
+            with Image.open(img).convert("L") as im:
+                img_array = np.array(im)
+            reshaped_image = resize(img_array, IMAGE_SHAPE, anti_aliasing=True)
+
+            sinogram, theta, _ = generate_undersampled_sinogram(
+                reshaped_image,
+                undersampling_factor=UNDERSAMPLING_FACTOR
+            )
+
+            # OPERATORS
+
+            if algorithm in [FISTA, ISTA, FBP]:
+                radon_op = RadonOperatorCPU(theta=theta, image_shape=IMAGE_SHAPE)
+                wavelet_op = pylops.signalprocessing.DWT2D(
+                    dims=IMAGE_SHAPE,
+                    wavelet="bior4.4",
+                )
+            else:
+                radon_op = RadonOperatorGPU(theta=theta, image_shape=IMAGE_SHAPE)
+                wavelet_op = WaveletOperatorGPU(image_shape=IMAGE_SHAPE, wavelet="bior4.4")
+
+            pred, *_ = algorithm(
+                radon_op=radon_op,
+                wavelet_op=wavelet_op
+            )(sinogram)
+
+            psnr_val, ssim_val = evaluate(reshaped_image, pred)
+
+            psnr_list.append(psnr_val)
+            ssim_list.append(ssim_val)
+
+            # Update tqdm postfix (live metrics)
+            inner_pbar.set_postfix({
+                "PSNR": f"{psnr_val:.2f}",
+                "SSIM": f"{ssim_val:.3f}",
+                "avg_PSNR": f"{np.mean(psnr_list):.2f}",
+                "avg_SSIM": f"{np.mean(ssim_list):.3f}"
+            })
+
+            rows.append({
+                "algorithm": algorithm.__name__,
+                "image": img.name,
+                "psnr": psnr_val,
+                "ssim": ssim_val
+            })
+
+        # Update outer bar summary after each algorithm
+        outer_pbar.set_postfix({
+            "last_alg": algorithm.__name__,
+            "avg_PSNR": f"{np.mean(psnr_list):.2f}",
+            "avg_SSIM": f"{np.mean(ssim_list):.3f}"
+        })
 \end{minted}
-
-\begin{itemize}
-\item $A$ : opérateur de projection CT
-\item $Wop$ : opérateur de transformée en ondelettes biorthogonales 4.4
-\end{itemize}
-
-\subsubsection{Initialisation des variables ADMM}
-
-\begin{minted}{python}
-x = np.zeros(n_pixels)           # Image à reconstruire
-z = np.zeros(Wop.shape[0])       # Variable auxiliaire (coefficients d'ondelettes)
-u = np.zeros_like(z)             # Multiplicateur de Lagrange (dual)
-\end{minted}
-
-ADMM décompose le problème en sous-problèmes plus simples avec trois variables :
-\begin{itemize}
-\item $x$ : image dans l'espace des pixels
-\item $z$ : coefficients d'ondelettes (parcimonieux)
-\item $u$ : variable duale qui force $Wx \approx z$
-\end{itemize}
-
-\subsubsection{Boucle principale ADMM}
-
-\begin{minted}{python}
-for k in tqdm(range(max_iter)):
-\end{minted}
-
-\paragraph{Mise à jour de x (sous-problème quadratique)}
-
-\begin{minted}{python}
-def lhs(v):
-    return (
-        A.rmatvec(A.matvec(v)) +
-        rho * Wop.rmatvec(Wop.matvec(v))
-    )
-
-rhs = (
-    A.rmatvec(sinogram.flatten()) +
-    rho * Wop.rmatvec(z - u)
-)
-
-x, _ = cg(
-    LinearOperator((n_pixels, n_pixels), matvec=lhs),
-    rhs, x0=x, maxiter=50
-)
-\end{minted}
-
-On résout : $(A^TA + \rho W^TW)x = A^Ty + \rho W^T(z - u)$
-
-\begin{itemize}
-\item \texttt{lhs(v)} : application de $(A^TA + \rho W^TW)$
-\item \texttt{rhs} : membre droit
-\item Algorithme du gradient conjugué (CG), 50 itérations max par itération ADMM
-\end{itemize}
-
-\paragraph{Mise à jour de z (seuillage doux)}
-
-\begin{minted}{python}
-Wx = Wop.matvec(x)
-v = Wx + u
-z_old = z.copy()
-z = np.sign(v) * np.maximum(np.abs(v) - lambda_l1 / rho, 0)
-\end{minted}
-
-Opération de \textbf{proximal operator} pour la norme L1 :
-\begin{itemize}
-\item Calcule les coefficients d'ondelettes $Wx$
-\item Applique le seuillage doux avec seuil $\lambda/\rho$
-\item Rend les coefficients parcimonieux
-\end{itemize}
-
-\paragraph{Mise à jour de u (variable duale)}
-
-\begin{minted}{python}
-u = u + Wx - z
-\end{minted}
-
-Met à jour le multiplicateur de Lagrange.
-
-\paragraph{Vérification de convergence}
-
-\begin{minted}{python}
-r_norm = np.linalg.norm(Wx - z)           # Résidu primal
-s_norm = rho * np.linalg.norm(z - z_old)  # Résidu dual
-
-if r_norm < 1e-4 and s_norm < 1e-4:
-    print(f"ADMM converged at iteration {k}")
-    break
-\end{minted}
-
-Critères classiques d'arrêt :
-\begin{itemize}
-\item Résidu primal : $\|Wx - z\|$
-\item Résidu dual : $\rho \|z - z_\text{old}\|$
-\end{itemize}
-
-\subsection{Utilisation typique}
-
-\begin{minted}{python}
-# Données CT (peu de projections)
-angles = np.linspace(0, 180, 30)
-sinogram = radon(phantom, theta=angles, circle=True)
-
-# Reconstruction CS
-reconstructed = cs_reconstruction_admm(
-    sinogram, angles, (256, 256),
-    rho=1.0, lambda_l1=0.01, max_iter=50
-)
-
-# Visualisation
-plt.imshow(reconstructed, cmap='gray')
-\end{minted}
-
-\subsection{Avantages}
-
-\begin{enumerate}
-\item Compressed sensing : reconstruction avec peu de projections
-\item Régularisation parcimonieuse : exploite la parcimonie en ondelettes
-\item ADMM : décomposition en sous-problèmes simples
-\item Matrix-free : adaptée aux grandes images sans mémoire excessive
-\end{enumerate}
-
-\subsection{Paramètres clés à ajuster}
-
-\begin{itemize}
-\item \texttt{rho} : équilibre fidélité/régularisation (0.1 à 10)
-\item \texttt{lambda\_l1} : force de la régularisation L1
-\item \texttt{max\_iter} : nombre d'itérations ADMM (50–200 selon la difficulté)
-\end{itemize}

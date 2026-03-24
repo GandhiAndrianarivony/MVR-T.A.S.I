@@ -2,7 +2,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[provide=*,french]{babel}
 \usepackage[utf8]{inputenc}
-\usepackage[top=2cm,right=3cm,left=2cm]{geometry}
+\usepackage[top=2cm,right=2cm,left=2cm]{geometry}
 \usepackage{soul}
 
 \usepackage{amsmath, amssymb, amsthm, mathrsfs}
@@ -15,10 +15,8 @@
 \usepackage{cleveref}
 
 \usepackage{graphicx}
-% \usepackage{caption}
 \usepackage{appendix}
-\usepackage[textfont=bf]{caption}
-\usepackage[labelfont=bf]{caption}
+\usepackage[textfont=bf, labelfont=bf]{caption}
 
 \usepackage{subcaption}
 \usepackage{tabularx}
@@ -28,12 +26,15 @@
 \usepackage{minted}
 \usepackage{fancyhdr}
 \usepackage{longtable}
-\usepackage{algorithm}
-\usepackage{algpseudocode} 
 \usepackage{tocloft}
 \usepackage{pdfpages}  % Pour insérer des PDF
 \usepackage{nomencl}
 \usepackage{etoolbox}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{siunitx}
+\usepackage{enumitem}
+\usepackage{calc}
+\usepackage{tikz}      % for \widthof
 \makenomenclature
 
 
@@ -89,6 +90,10 @@
 \addto\captionsfrench{%
   \renewcommand{\listfigurename}{\large LISTE DES FIGURES}
 }
+% ===== LISTE DES TABLEAUX ======
+\addto\captionsfrench{%
+  \renewcommand{\listtablename}{\large LISTE DES TABLEAUX}
+}
 
 % Préfixe "Figure"
 \renewcommand{\cftfigpresnum}{Figure }
@@ -101,7 +106,7 @@
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
 % =================================================================
 % NOMENCLATURE STYLE
-\renewcommand{\nomname}{\large Liste des abréviations}
+\renewcommand{\nomname}{\large LISTE DES ABRÉVIATIONS}
 % =================================================================
 % SECTION STYLE
 % font_size
@@ -146,14 +151,19 @@
     % blan page
     \newpage
     \thispagestyle{empty}
-    ~
+
+    \pagenumbering{roman}
+    \setcounter{page}{1}
+    
     \newpage
     % Remerciements
     \input{chapters/remerciements.tex}
     \newpage
 
     % -- TODO --
-    % Resumé
+    \input{chapters/resume.tex}
+    \newpage
+
 
     \pagenumbering{roman}
     \setcounter{page}{1}
@@ -166,16 +176,26 @@
     \newpage
     \input{chapters/abreviations.tex} % modularité : toutes les abréviations dans un fichier
     \printnomenclature[3cm]  
+    \addcontentsline{toc}{chapter}{LISTE DES ABRÉVIATIONS}
 
     % Liste des figures
     \newpage
     \listoffigures
+    \addcontentsline{toc}{chapter}{LISTE DES FIGURES}
 
-    % TODO --- Introduction
+
+    % Listes des tableaux
+    \newpage
+    \listoftables
+    \addcontentsline{toc}{chapter}{LISTE DES TABLEAUX}
 
     \newpage
     \pagenumbering{arabic}
     \setcounter{page}{1}
+    
+    % TODO --- Introduction
+    \newpage
+    \input{chapters/introduction_general.tex}
 
     % ================================================================
     % ADD CHAPTERS HERE
@@ -183,6 +203,8 @@
     \input{chapters/chap 2. OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES PAR LE COMPRESSED SENSING.tex}
     \input{chapters/chap 3. NOTRE MODÈLE.tex}
     \input{chapters/chap 4. SIMULATION, DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES.tex}
+    \input{chapters/CONCLUSION GENERALE.tex}
+
     \input{chapters/annexe.tex}
     % \input{chapters/3. Reconstruction d'images : problèmes inverses et compressive sensing.tex}
     % \input{chapters/4. Inverse Problem-based Image Reconstruction using Neural Regularizers.tex}
@@ -190,20 +212,9 @@
 
     % ================================================================
     % ADD BIBILIOGRAPHY HERE
+    \addcontentsline{toc}{chapter}{BIBLIOGRAPHIE}
     \bibliographystyle{unsrt}
-    \begin{thebibliography}{100} % 100 is a random guess of the total number of references
-        % \bibitem{1} Wei Zou, Jiajun Wang, David Dagan Feng, \emph{Image reconstruction of fluorescent molecular
-        %     tomography based on the tree structured Schur complement decomposition}
-        % \bibitem{2}RANDRIANARISON N.Tsirilala, RANDRIAMITANTSOA P. Auguste, RAMAFIARISON H. Malalatiana, \emph{Performance of K-SVD algorithm in digital Optical Coherence Tomography}
-        % \bibitem{3} Linwei Fan, Fan Zhang, Hui Fan, and Caiming Zhang, \emph{Brief review of image denoising techniques}
-        % \bibitem{4} Michael S. Hansen, and Peter Kellman, \emph{Image reconstruction: an overview from clinicians}
-        % \bibitem{5} Joshua Trzasko*, Member, IEEE, and Armando Manduca, Member, IEEE, \emph{Highly Undersampled Magnetic Resonance Image Reconstruction via Homotopic `0-Minimization}
-        % \bibitem{6} Helmholtz Imaging, Deutsches Elektronen-Synchrotron DESY, Notkestr. 85, 22607 Hamburg, Germany, \emph{ntroduction to Regularization and Learning Methods for Inverse Problems}
-        % \bibitem{7} Bunyamin Yildiz *, Murat Subasi, Ali Sever, \emph{On a regularization problem}
-        % \bibitem{8} J. P. Bregman, \emph{Bregman Iteration for Correspondence Problems}
-        % \bibitem{15} Gao, Hongxia, Luo, Yinghao, Chen, Kewei, Ma, Ge, and Wu, Lixuan, \emph{An Image Reconstruction Model and Hybrid Algorithm for Limited-angle Projection Data}.
-        % \bibitem{16} INGRID DAUBECHIES, A. COHEN \emph{Biorthogonal Bases of Compactly Supported Wavelets} 
-        % \bibitem{22} Sarobidy Nomenjanahary Razafitsalama Fin Luc1 , Marie Emile Randrianandrasana2 , Hariony Bienvenu Rakotonirina2, \emph{Image Reconstruction in Compressive Sensing Using Daubechies 7 (db7) and Lifting Wavelet Transforms with SP, CoSaMP, and ALISTA Algorithms}
+    \begin{thebibliography}{100}
         \bibitem{17} \emph{COMPARISON BETWEEN ORTHOGONAL AND BI-ORTHOGONAL WAVELETS}
         \bibitem{14}  Engl, Heinz W., and R. Ramlau, \emph{Regularization of inverse problems}. Kluwer Academic Publishers, 2000.
         \bibitem{9} Jen Beatty Colby College, \emph{The Radon Transform and the Mathematics of Medical Imaging}
@@ -235,5 +246,6 @@
     \end{thebibliography}
 
     % ================================================================
-
+    \newpage
+    \input{chapters/last_page.tex}
 \end{document}

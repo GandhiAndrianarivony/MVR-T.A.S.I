@@ -1,16 +1,20 @@
 
 \begin{thenomenclature} 
 \nomgroup{A}
-  \item [{ADMM}]\begingroup Alternating direction method of multipliers\nomeqref {0.0}\nompageref{iii}
-  \item [{ALARA}]\begingroup As Low As Reasonably Achievable\nomeqref {0.0}\nompageref{iii}
-  \item [{CT}]\begingroup Computed tomography\nomeqref {0.0}\nompageref{iii}
-  \item [{FBP}]\begingroup Filtered back projection\nomeqref {0.0}\nompageref{iii}
-  \item [{FISTA}]\begingroup FISTA: Accelerated proximal gradient method\nomeqref {0.0}\nompageref{iii}
-  \item [{ISTA}]\begingroup Iterative Shrinkage-Thresholding Algorithm\nomeqref {0.0}\nompageref{iii}
-  \item [{LNT}]\begingroup Linear No-threshold Theory\nomeqref {0.0}\nompageref{iii}
-  \item [{STFT}]\begingroup Short-time Fourier transform\nomeqref {0.0}\nompageref{iii}
-  \item [{TDM}]\begingroup Tomodensitométrie\nomeqref {0.0}\nompageref{iii}
-  \item [{TEP}]\begingroup Tomographie par émission de positons\nomeqref {0.0}\nompageref{iii}
-  \item [{TV}]\begingroup Total Variation\nomeqref {0.0}\nompageref{iii}
+  \item [{ADMM}]\begingroup Alternating direction method of multipliers\nomeqref {0.0}\nompageref{iv}
+  \item [{ALARA}]\begingroup As Low As Reasonably Achievable\nomeqref {0.0}\nompageref{iv}
+  \item [{CCD}]\begingroup Charge Coupled Device\nomeqref {0.0}\nompageref{iv}
+  \item [{CMOS}]\begingroup Charge Matching Organic Semiconductor\nomeqref {0.0}\nompageref{iv}
+  \item [{CT}]\begingroup Computed tomography\nomeqref {0.0}\nompageref{iv}
+  \item [{FBP}]\begingroup Filtered back projection\nomeqref {0.0}\nompageref{iv}
+  \item [{FISTA}]\begingroup FISTA: Accelerated proximal gradient method\nomeqref {0.0}\nompageref{iv}
+  \item [{IRM}]\begingroup Imagerie par résonance magnétique\nomeqref {0.0}\nompageref{iv}
+  \item [{ISTA}]\begingroup Iterative Shrinkage-Thresholding Algorithm\nomeqref {0.0}\nompageref{iv}
+  \item [{LNT}]\begingroup Linear No-threshold Theory\nomeqref {0.0}\nompageref{iv}
+  \item [{STFT}]\begingroup Short-time Fourier transform\nomeqref {0.0}\nompageref{iv}
+  \item [{TDM}]\begingroup Tomodensitométrie\nomeqref {0.0}\nompageref{iv}
+  \item [{TEMP}]\begingroup Thermal emittance profile\nomeqref {0.0}\nompageref{iv}
+  \item [{TEP}]\begingroup Tomographie par émission de positons\nomeqref {0.0}\nompageref{iv}
+  \item [{TV}]\begingroup Total Variation\nomeqref {0.0}\nompageref{iv}
 
 \end{thenomenclature}

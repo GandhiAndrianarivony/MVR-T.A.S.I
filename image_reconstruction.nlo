@@ -9,3 +9,7 @@
 \nomenclatureentry{aFISTA@[{FISTA}]\begingroup FISTA: Accelerated proximal gradient method\nomeqref {0.0}|nompageref}{iv}
 \nomenclatureentry{aADMM@[{ADMM}]\begingroup Alternating direction method of multipliers\nomeqref {0.0}|nompageref}{iv}
 \nomenclatureentry{aSTFT@[{STFT}]\begingroup Short-time Fourier transform\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aIRM@[{IRM}]\begingroup Imagerie par résonance magnétique\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aCCD@[{CCD}]\begingroup Charge Coupled Device\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aCMOS@[{CMOS}]\begingroup Charge Matching Organic Semiconductor\nomeqref {0.0}|nompageref}{iv}
+\nomenclatureentry{aTEMP@[{TEMP}]\begingroup Thermal emittance profile\nomeqref {0.0}|nompageref}{iv}
