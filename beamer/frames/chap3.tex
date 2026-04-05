@@ -1,0 +1,220 @@
+\section{Approche ADMM associée aux ondelettes biorthogonales 4.4}
+
+\subsection{Problème inverse en tomodensitométrie}
+\begin{frame}{Modélisation du problème}
+        \begin{equation}
+            \mathbf{g} = A \mathbf{f} + \mathbf{n}
+        \end{equation}
+        où \begin{itemize}
+            \item \( \mathbf{f} \) : image (coefficients d'atténuation)
+            \item \( \mathbf{g} \) : projections (sinogramme)
+            \item \( A \) : transformée de Radon discrète
+            \item \( \mathbf{n} \) : bruit
+        \end{itemize}
+\end{frame}
+
+\subsection{Mal-positude}
+\begin{frame}{Mal-positude}
+    \transfade
+    \begin{block}<1->{Difficulté de la reconstruction}
+        \begin{itemize}
+            \item Sous-déterminé
+            \item Sensible au bruit
+            \item Non unicité des solutions
+        \end{itemize}
+    \end{block}
+
+    \begin{block}<2->{Conséquences}
+        \begin{itemize}
+            \item artefacts
+            \item instabilité
+            \item mauvaise qualité image
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\subsection{Ondelettes orthogonales}
+\begin{frame}{Ondelettes orthogonales}
+
+    \textbf{Principe fondamental}
+    \begin{itemize}
+        \item La base d'analyse et la base de synthèse coïncident
+        \item L'opérateur de transformation $W$ est une matrice orthogonale
+    \end{itemize}
+
+    \textbf{Propriétés mathématiques}
+    \begin{itemize}
+        \item L'adjoint coïncide avec l'inverse :
+        \[
+        W^T = W^{-1}
+        \]
+        \item Orthogonalité des colonnes :
+        \[
+        W^T W = I
+        \]
+        \item Conservation de l'énergie (propriété de Parseval) :
+        \[
+        \|Wx\|_2 = \|x\|_2
+        \]
+        \item Représentation non redondante : $m = n$
+    \end{itemize}
+    % \textbf{Avantages et limitations}
+    % \begin{itemize}
+    %     \item[+] Conservation exacte de l'énergie
+    %     \item[+] Reconstruction parfaite et simple ($W^{-1} = W^T$)
+    %     \item[+] Transformation bijective et sans redondance
+    %     \item[-] Filtres généralement non symétriques
+    %     \item[-] Absence de phase linéaire (distorsion possible des contours)
+    % \end{itemize}
+    \textbf{Exemples :} Haar, Daubechies, Symlets
+
+\end{frame}
+
+
+\subsection{Ondelettes biorthogonales}
+\begin{frame}{Ondelettes biorthogonales}
+    \textbf{Principe fondamental}
+    \begin{itemize}
+        \item Deux bases distinctes :
+        \begin{itemize}
+            \item Base d'analyse : $W$ (décomposition)
+            \item Base de synthèse : $\tilde{W}$ (reconstruction)
+        \end{itemize}
+        \item Filtres d'analyse : $h$, $g$ (passe-bas, passe-haut)
+        \item Filtres de synthèse : $\tilde{h}$, $\tilde{g}$ (passe-bas, passe-haut)
+    \end{itemize}
+
+    \vspace{0.2cm}
+
+    \textbf{Propriétés mathématiques}
+    \begin{itemize}
+        \item Reconstruction parfaite :
+        \[
+        \tilde{W} W = I
+        \]
+        \item L'adjoint de l'analyse n'est pas l'opérateur de synthèse :
+        \[
+        W^T \neq \tilde{W}
+        \]
+        \item Condition de biorthogonalité :
+        \[
+        \langle \psi_{j,k}, \tilde{\psi}_{j',k'} \rangle = \delta_{j,j'} \delta_{k,k'}
+        \]
+    \end{itemize}
+
+    % \vspace{0.2cm}
+
+    % \textbf{Avantages pratiques}
+    % \begin{itemize}
+    %     \item[+] Filtres symétriques possibles → phase linéaire
+    %     \item[+] Meilleure préservation des contours et structures géométriques
+    %     \item[+] Flexibilité accrue dans la conception des filtres
+    %     \item[+] Qualité de reconstruction supérieure pour l'imagerie
+    % \end{itemize}
+
+    % \vspace{0.2cm}
+
+    % \textbf{À retenir pour l'optimisation}
+    % \begin{itemize}
+    %     \item Reconstruction effective : $\tilde{W}$ (synthèse)
+    %     \item Gradient / optimisation : $W^T$ (adjoint mathématique)
+    %     \item \textcolor{red}{Attention :} Certaines implémentations utilisent $\tilde{W}$ à la place de $W^T$
+    % \end{itemize}
+
+    % \vspace{0.2cm}
+    \textbf{Exemples :} Bior4.4, Bior2.2, Bior6.8
+
+\end{frame}
+
+\subsection{Reconstruction tomographique à faible dose par parcimonie: Compressed Sensing}
+\begin{frame}{Modélisation CT et exploitation de la parcimonie}
+    \transfade
+    \only<1>{\begin{block}{Modèle d'acquisition CT}
+        \begin{equation}
+            \mathbf{g} = A \mathbf{f} \in \mathbb{R}^m, \quad A \in \mathbb{R}^{m \times n} \text{ (matrice système)}
+        \end{equation}
+        \begin{itemize}
+            \item $\mathbf{f} \in \mathbb{R}^n$ : image à reconstruire
+            \item $\mathbf{g} \in \mathbb{R}^m$ : projections (sinogramme)
+            \item $A$ : modélise la géométrie CT
+        \end{itemize}
+    \end{block}}
+
+    \only<2>{\begin{block}{Avec représentation parcimonieuse}
+        \begin{equation}
+            \mathbf{g} = A \mathbf{f} = A W \mathbf{x} = \Phi' \mathbf{x}, \quad \Phi' = A W
+        \end{equation}
+        \begin{itemize}
+            \item $W$ : matrice d'ondelettes
+            \item $\mathbf{x}$ : coefficients parcimonieux dans la base $W$
+            \item $\Phi'$ : matrice combinée système CT + ondelettes
+        \end{itemize}
+        \vspace{0.5em}
+        \centering
+        \textit{On travaille maintenant directement avec les coefficients parcimonieux $\mathbf{x}$ pour reconstruire $\mathbf{f}$ à partir de peu de mesures.}
+    \end{block}}
+
+\end{frame}
+
+\subsection{Approche ADMM combinée avec ondelettes (Bior4.4)}
+\begin{frame}{ADMM combinée à bior4.4}
+    \transfade
+    \only<1>{\begin{block}{Principe ADMM}
+        Décomposition du problème
+        On introduit :
+        \[
+        z = W\mathbf{f}
+        \]
+        
+        \[
+        \min_{\mathbf{f},z}
+        \frac{1}{2} ||A\mathbf{f} - \mathbf{g}||_2^2 + \lambda ||z||_1
+        \]
+    \end{block}}
+    \only<2>{\begin{block}{Lagrangien augmenté}
+        \[
+        L_\rho(\mathbf{f},z,u) =
+        \frac{1}{2} ||A\mathbf{f} - \mathbf{g}||_2^2
+        + \lambda |z|_1
+        + \frac{\rho}{2} ||W\mathbf{f} - z + u||_2^2
+          \]
+    \end{block}
+    où \begin{itemize}
+            \item $\mathbf{x}$ : variable primaire, vecteur des coefficients d'image à reconstruire
+            \item $z$ : variable auxiliaire pour séparer le terme $\ell_1$ et faciliter l'optimisation
+            \item $u$ : variable duale mise à l'échelle (dual scaled), associée à la contrainte $Wx = z$
+            \item $W$ : matrice de transformation (par exemple, base d'ondelettes ou opérateur de gradient)
+            \item $A$ : opérateur de mesure (matrice système ou projection CT)
+            \item $\mathbf{y}$ : vecteur de mesures (sinogramme)
+            \item $\lambda$ : paramètre de régularisation, contrôle l'importance de la parcimonie
+            \item $\rho > 0$ : paramètre de pénalité, contrôle l'écart à la contrainte $Wx = z$ et influence la vitesse de convergence
+        \end{itemize}
+    }
+    \only<3>{
+    \begin{block}{Algorithme ADMM}
+        \begin{itemize}
+            \item \textbf{Mise à jour de $\mathbf{x}$ (sous-problème quadratique)}  
+            Résolution du système :
+            \[
+            x^{k+1} = \arg\min_{x} \frac{1}{2}\|\mathcal{A}x - y\|_2^2 + \frac{\rho}{2}\|Wx - z^k + u^k\|_2^2
+            \]
+            ou équivalent linéaire :
+            \[
+            (A^T A + \rho W^T W)x = A^T y + \rho W^T (z^k - u^k)
+            \]
+
+            \item \textbf{Mise à jour de $z$ (seuillage doux)}  
+            Imposition de la parcimonie via l’opérateur proximal $\ell_1$ :
+            \[
+            z^{k+1} = \mathcal{S}_{\lambda / \rho}(Wx^{k+1} + u^k), \quad
+            \mathcal{S}_{\tau}(t) = \operatorname{sign}(t)\max(0, |t|-\tau)
+            \]
+
+            \item \textbf{Mise à jour de la variable duale $u$}  
+            Correction de la violation de contrainte $Wx = z$ :
+            \[
+            u^{k+1} = u^k + (Wx^{k+1} - z^{k+1})
+            \]
+        \end{itemize}
+    \end{block}}
+\end{frame}

@@ -34,10 +34,15 @@
 \usepackage{siunitx}
 \usepackage{enumitem}
 \usepackage{calc}
-\usepackage{tikz}      % for \widthof
+\usepackage{tikz}  
+\usepackage{lastpage}   
+
+\usepackage{etoolbox}
+
+\newcommand{\totalfigures}{\number\value{figure}}
+\newcommand{\totaltables}{\number\value{table}}
+
 \makenomenclature
-
-
 % Show Prop, Lemma and other label near them
 % \usepackage{showkeys}
 
@@ -55,60 +60,85 @@
 \newtheorem{remarque}{Remarque}[section]
 
 
+% ================================================================
 % Afficher les numéros en arabic
 \renewcommand{\thedefinition}{\arabic{chapter}.\arabic{definition}}
 \renewcommand{\theproposition}{\arabic{chapter}.\arabic{proposition}}
 \renewcommand{\thelemme}{\arabic{chapter}.\arabic{lemme}}
 \renewcommand{\thecorollaire}{\arabic{chapter}.\arabic{corollaire}}
 \renewcommand{\theproperty}{\arabic{chapter}.\arabic{property}}
-% ================================================================
-
 % =================================================================
-% CHAPTER STYLE
-% numbering
-\renewcommand{\thechapter}{\Roman{chapter}}
+
+
+% BIBLIOGRAPHY
+\addto\captionsfrench{%
+  \renewcommand{\bibname}{REFERENCES}%
+}
+% =================================================================
+
+
+% CHAPTER
+\renewcommand{\thechapter}{\arabic{chapter}}
 \renewcommand{\cftchappresnum}{CHAPITRE }
 \renewcommand{\cftchapaftersnum}{: }
 \setlength{\cftchapnumwidth}{8.5em}
+% Title format
+\titleformat{\chapter}
+  {\rmfamily\bfseries\large}
+  {CHAPITRE \ \thechapter. \ }{0pt}{}
+% =================================================================
 
-% font_size
-\titleformat{\chapter}[display]
-  {\rmfamily\bfseries} % <-- change ici la police : \rmfamily, \sffamily, \ttfamily
-  {CHAPITRE \ \thechapter}{20pt}{\large}
 
 
+% ANNEXE
 \newcommand{\annexechapter}[1]{%
   \refstepcounter{chapter}%
-  \chapter*{ANNEXE \ \thechapter\quad #1}%
-  \addcontentsline{toc}{chapter}{ANNEXE \ \thechapter\quad #1}%
+  \chapter*{ANNEXE \ \arabic{chapter}.\quad #1}%
+  \addcontentsline{toc}{chapter}{ANNEXE \ \arabic{chapter}\quad #1}%
 }
 % =================================================================
-% FIGURES STYLE
+
+
+% FIGURES
 % Numérotation des figures en chiffres arabes
 \renewcommand{\thefigure}{\arabic{chapter}.\arabic{figure}}
 % ===== LISTE DES FIGURES : STYLE PERSONNALISÉ =====
 \addto\captionsfrench{%
   \renewcommand{\listfigurename}{\large LISTE DES FIGURES}
 }
+% Préfixe "Figure"
+\renewcommand{\cftfigpresnum}{Figure }
+% \renewcommand{\cftfigaftersnum}{ : }
+\setlength{\cftfignumwidth}{6em}
+% =================================================================
+
+
+% TABLE
 % ===== LISTE DES TABLEAUX ======
+\addto\captionsfrench{%
+  \renewcommand{\tablename}{Tableau}%
+}
 \addto\captionsfrench{%
   \renewcommand{\listtablename}{\large LISTE DES TABLEAUX}
 }
-
-% Préfixe "Figure"
-\renewcommand{\cftfigpresnum}{Figure }
-\renewcommand{\cftfigaftersnum}{ : }
-
-% Largeur pour "Figure 1.10 :"
-\setlength{\cftfignumwidth}{6em}
+% Préfixe "Tableau" pour la liste des tableaux
+\renewcommand{\cfttabpresnum}{Tableau }
+% \renewcommand{\cfttabaftersnum}{ : }
+\setlength{\cfttabnumwidth}{6em}
 % =================================================================
-% EQUATION STYLE
+
+
+% EQUATION
 \renewcommand{\theequation}{\arabic{chapter}.\arabic{equation}}
 % =================================================================
-% NOMENCLATURE STYLE
+
+
+% NOMENCLATURE
 \renewcommand{\nomname}{\large LISTE DES ABRÉVIATIONS}
 % =================================================================
-% SECTION STYLE
+
+
+% SECTION
 % font_size
 \titleformat{\section}
   {\normalfont\fontsize{12}{14}\selectfont\bfseries}
@@ -121,8 +151,9 @@
 % subsubsection to a. b. c.
 \setcounter{secnumdepth}{3}
 \renewcommand{\thesubsubsection}{\alph{subsubsection}.}
-
 % =================================================================
+
+
 % DEFINITON STYLE
 % text (it, gras, ...)
 \begingroup
@@ -212,7 +243,7 @@
 
     % ================================================================
     % ADD BIBILIOGRAPHY HERE
-    \addcontentsline{toc}{chapter}{BIBLIOGRAPHIE}
+    \addcontentsline{toc}{chapter}{REFERENCES}
     \bibliographystyle{unsrt}
     \begin{thebibliography}{100}
         \bibitem{17} \emph{COMPARISON BETWEEN ORTHOGONAL AND BI-ORTHOGONAL WAVELETS}

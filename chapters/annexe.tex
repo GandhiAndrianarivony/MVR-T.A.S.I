@@ -160,117 +160,10 @@ L'opérateur définit les méthodes \texttt{\_matvec} et \texttt{\_rmatvec} qui 
 La structure de l'opérateur est construite dynamiquement à partir d'une image factice, permettant de déterminer précisément la forme de chaque sous-bande de coefficients. Les méthodes \texttt{\_flatten} et \texttt{\_unflatten} assurent la conversion bidirectionnelle entre la structure hiérarchique des coefficients et un vecteur plat.
 
 \begin{minted}{python}
-    #@title WOP-GPU
-    class WaveletOperatorGPU(cupyLinearOperator):
-        def __init__(
-            self,
-            image_shape: tuple[int, int],
-            wavelet: str = "bior4.4",
-            level: int = 4,
-            device: str = "cuda",
-        ):
-            self.image_shape = tuple(image_shape)
-            self.wavelet = wavelet
-            self.level = level
-            self.device = device
-
-            self.height, self.width = self.image_shape
-
-            self.structure = self._build_structure()
-
-            super().__init__(
-                dtype='float32',
-                shape=(self._count_coeffs(), np.prod(self.image_shape))
-            )
-
-        # ---------------------------
-        # Internal utilities
-        # ---------------------------
-        def _build_structure(self) -> list:
-            dummy = torch.zeros(self.image_shape, device=self.device)
-            coeffs = ptwt.wavedec2(dummy, self.wavelet, level=self.level)
-
-            structure = []
-
-            structure.append(coeffs[0].shape)
-
-            for (cH, cV, cD) in coeffs[1:]:
-                structure.append((cH.shape, cV.shape, cD.shape))
-
-            return structure
-
-        def _count_coeffs(self) -> int:
-            total = torch.prod(torch.tensor(self.structure[0])).item()
-            for shapes in self.structure[1:]:
-                for s in shapes:
-                    total += torch.prod(torch.tensor(s)).item()
-            return int(total)
-
-        def _flatten(self, coeffs: list) -> torch.Tensor:
-            flat = []
-
-            flat.append(coeffs[0].reshape(-1))
-
-            for (cH, cV, cD) in coeffs[1:]:
-                flat.extend([
-                    cH.reshape(-1),
-                    cV.reshape(-1),
-                    cD.reshape(-1)
-                ])
-
-            return torch.cat(flat)
-
-        def _unflatten(self, flat: torch.Tensor) -> list:
-            coeffs = []
-            idx = 0
-
-            cA_shape = self.structure[0]
-            size = torch.prod(torch.tensor(cA_shape)).item()
-            cA = flat[idx:idx+size].reshape(cA_shape)
-            idx += size
-            coeffs.append(cA)
-
-            for shapes in self.structure[1:]:
-                level_coeffs = []
-                for shape in shapes:
-                    size = torch.prod(torch.tensor(shape)).item()
-                    c = flat[idx:idx+size].reshape(shape)
-                    idx += size
-                    level_coeffs.append(c)
-                coeffs.append(tuple(level_coeffs))
-
-            return coeffs
-
-        # ---------------------------
-        # Linear operator interface
-        # ---------------------------
-        def _matvec(
-            self,
-            image: Annotated[cp.ndarray, "Expected shape [N,1] ou [N,]"]
-        ) -> cp.ndarray:
-
-            img = image.reshape(self.image_shape)
-            img_tensor = torch.as_tensor(img, device=self.device).float()
-
-            coeffs = ptwt.wavedec2(img_tensor, self.wavelet, level=self.level)
-            flat = self._flatten(coeffs)
-
-            return cp.asarray(flat)
-
-        def _rmatvec(
-            self,
-            w: Annotated[cp.ndarray, "Expected shape [M,1] ou [M,]"]
-        ) -> cp.ndarray:
-
-            w_tensor = torch.as_tensor(w, device=self.device).float()
-            coeffs = self._unflatten(w_tensor)
-            img = ptwt.waverec2(coeffs, self.wavelet)
-
-            img = img[:self.height, :self.width]
-
-            return cp.asarray(img.reshape(-1))
-
-    #@title WOP-GPU
+    wavelet_op_cpu = wavelet_op = pylops.signalprocessing.DWT2D(
+    dims=IMAGE_SHAPE,
+    wavelet="bior4.4",
+)
     class WaveletOperatorGPU(cupyLinearOperator):
         def __init__(
             self,
@@ -652,7 +545,7 @@ Chaque algorithme expose une interface unifiée via la méthode \texttt{\_\_call
                 pbar.set_postfix({
                     "r": f"{r_norm:.2e}",
                     "s": f"{s_norm:.2e}",
-                    "ρ": self.config.rho,
+                    "rho": self.config.rho,
                     "sp": f"{sparsity:.2%}",
                     "cg": info  # 0 = success
                 })
@@ -742,7 +635,7 @@ Chaque algorithme expose une interface unifiée via la méthode \texttt{\_\_call
                 output_size=IMAGE_SHAPE[0]
             )
 
-            return reconstruction, _
+            return reconstruction, None
 
 
 \end{minted}

@@ -1,8 +1,8 @@
-\chapter{OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES CT PAR LE COMPRESSED SENSING}
+\chapter{OUTILS MATHÉMATIQUES UTILISÉS DANS LA RECONSTRUCTION D'IMAGES CT PAR LE COMPRESSIVE SENSING}
 \label{chapitre2} 
-L'imagerie par tomodensitométrie (CT) repose sur un problème inverse fondamental : reconstruire une carte des coefficients d'atténuation à partir de mesures de projections angulaires. Mathématiquement, ce problème trouve sa formulation naturelle dans la transformée de Radon, qui associe à chaque orientation de mesure l'intégrale de ligne de la fonction d'atténuation. Le théorème de la coupe centrale établit ensuite un lien essentiel entre ces projections et le domaine fréquentiel via la transformée de Fourier, ouvrant la voie aux méthodes analytiques de reconstruction. La rétroprojection filtrée (FBP), qui combine filtrage fréquentiel et rétroprojection spatiale, constitue l'aboutissement pratique de cette approche et demeure la référence clinique pour sa rapidité d'exécution. Ces outils mathématiques classiques — transformée de Fourier, convolution, transformée de Radon — forment ainsi le socle théorique indispensable à toute reconstruction tomographique.
+L'imagerie par tomodensitométrie (CT) repose sur un problème inverse fondamental : reconstruire une carte des coefficients d'atténuation à partir de mesures de projections angulaires. Mathématiquement, ce problème trouve sa formulation naturelle dans la transformée de Radon, qui associe à chaque orientation de mesure l'intégrale de ligne de la fonction d'atténuation. Le théorème de la coupe centrale établit ensuite un lien essentiel entre ces projections et le domaine fréquentiel via la transformée de Fourier, ouvrant la voie aux méthodes analytiques de reconstruction. La rétroprojection filtrée (FBP), qui combine filtrage fréquentiel et rétroprojection spatiale, constitue l'aboutissement pratique de cette approche et demeure la référence clinique pour sa rapidité d'exécution. Ces outils mathématiques classiques, transformée de Fourier, convolution, transformée de Radon, forment ainsi le socle théorique indispensable à toute reconstruction tomographique.
 
-Les contraintes cliniques contemporaines, notamment la réduction de la dose d'irradiation, imposent cependant de repenser ces méthodes. Dans un contexte de données sous-échantillonnées, les approches analytiques traditionnelles produisent des artefacts sévères et une dégradation de la qualité image. Le Compressed Sensing offre alors un cadre théorique alternatif puissant, exploitant la parcimonie des images médicales dans des domaines transformés pour résoudre le problème inverse sous-déterminé. La régularisation par variation totale, en particulier, favorise les solutions présentant des régions homogènes et des contours préservés. Ce chapitre développe l'ensemble des outils mathématiques nécessaires à la compréhension de ces méthodes, depuis les fondements classiques jusqu'aux formulations modernes d'optimisation, en mettant l'accent sur leur articulation cohérente dans le contexte de la reconstruction CT.
+Les contraintes cliniques contemporaines, notamment la réduction de la dose d'irradiation, imposent cependant de repenser ces méthodes. Dans un contexte de données sous-échantillonnées, les approches analytiques traditionnelles produisent des artefacts sévères et une dégradation de la qualité image. Le Compressive Sensing offre alors un cadre théorique alternatif puissant, exploitant la parcimonie des images médicales dans des domaines transformés pour résoudre le problème inverse sous-déterminé. La régularisation par variation totale, en particulier, favorise les solutions présentant des régions homogènes et des contours préservés. Ce chapitre développe l'ensemble des outils mathématiques nécessaires à la compréhension de ces méthodes, depuis les fondements classiques jusqu'aux formulations modernes d'optimisation, en mettant l'accent sur leur articulation cohérente dans le contexte de la reconstruction CT.
 
 \section{Classification des approches de reconstruction}
 Le paysage algorithmique de la tomographie se divise principalement en trois familles, distinguées par leur traitement de l'opérateur de projection.
@@ -21,7 +21,7 @@ sensible au bruit et aux artefacts, en particulier lorsque le nombre de projecti
 ou que la dose d'irradiation est réduite.
 
 
-\subsubsection{Fondements de la tomographie assistée par ordinateur (CT)}
+\subsubsection{Fondements de la tomographie assistée par ordinateur}
 Imaginons qu'on ait un objet opaque constitué de différents matériaux, et que l'on souhaite savoir comment ces matériaux sont répartis à l'intérieur sans l'endommager (par exemple, l'objet peut être un malade à l'intérieur du corps duquel on aimerait voir). L'une des méthodes est le scanner  : on lance de fins faisceaux de rayons X à travers l'objet dans toutes les directions et on mesure quelle proportion de chaque faisceau a été absorbée.
 
 La tomographie est un procédé permettant de créer l'image d'un objet en deux ou trois dimensions à partir de multiples \textit{coupes} unidimensionnelles (Voir \Cref{fig :tomography_device}). Dans un scanner CT, ces coupes sont définies par des faisceaux de rayons $\mathbf{X}$ parallèles projetés à travers l'objet. En changeant l'orientation de la source et du détecteur (l'angle \(\theta\)), on obtient des informations sur la densité interne sous différents angles.\\
@@ -35,7 +35,7 @@ Le fonctionnement repose sur la mesure de l'intensité des rayons $\mathbf{X}$ :
 \begin{figure}[H]
     \centering
     \includegraphics[height=4cm, keepaspectratio]{./images/ct_device.png}
-    \caption{Principe de fonctionnement d'un appareil de tomodensitométrie}
+    \caption{Appareil de tomodensitométrie}
     \label{fig :tomography_device}
 \end{figure}
 \medskip
@@ -82,7 +82,7 @@ Autrement dit, pour tout $x$ et $x+l$ sur un axe  :
 
 Notons que si le phénomène physique d'atténuation est spécifique de la tomographie à rayons X, les méthodes de reconstruction sont en revanche plus générales et sont appliquées également dans d'autres systèmes d'imagerie, dans lesquelles des équations analogues expriment une fonction à reconstruire en fonction de projections. C'est le cas par exemple de la TEP utilisée en médecine nucléaire.
 
-\subsubsection{Reconstruction d'images en tomodensitométrie : inversion de Fourier, rétroprojection et FBP}
+\subsubsection{Reconstruction en tomodensitométrie : inversion de Fourier et rétroprojection filtrée}
 À partir de la modélisation physique de l'atténuation et de la formulation mathématique de la
 transformée de Radon, plusieurs méthodes analytiques ont été proposées pour résoudre le
 problème inverse de la reconstruction tomographique.
@@ -107,9 +107,9 @@ rétroprojection (\cite{9}) tout en conservant une complexité de calcul réduit
 effectué en une dimension. Ces méthodes analytiques supposent néanmoins la disponibilité d'un
 grand nombre de projections uniformément réparties, hypothèse qui n'est plus toujours valide
 dans des contextes modernes tels que l'imagerie à faible dose ou à angles limités, où des
-approches itératives basées sur le \emph{Compressed Sensing} sont alors privilégiées.
+approches itératives basées sur le \emph{Compressive Sensing} sont alors privilégiées.
 
-\subsection{Méthodes itératives et Compressed Sensing}
+\subsection{Méthodes itératives et Compressive Sensing}
 
 La réduction des données de projection et de la dose de rayonnement en tomodensitométrie n'est
 pas simplement une préférence de calcul ; elle est dictée par la sécurité clinique, l'efficacité
@@ -134,7 +134,7 @@ débit patient. Pour les populations sensibles (enfants) ou dans des contextes d
 répétée (radiothérapie guidée par l'image), cette réduction devient une obligation clinique
 et éthique, conforme au principe ALARA (As Low As Reasonably Achievable). Le défi technique
 réside dans la résolution du problème de reconstruction sous-déterminé qui en résulte,
-nécessitant des méthodes avancées comme la reconstruction itérative ou le Compressed Sensing \cite{12}
+nécessitant des méthodes avancées comme la reconstruction itérative ou le Compressive Sensing \cite{12}
 pour préserver la qualité diagnostique malgré la réduction des données.
 
 \subsubsection{Formulation générale du problème inverse}
@@ -163,14 +163,14 @@ abordent ce problème en recherchant une solution régularisée (i.e une approxi
 d'une fonction de coût combinant un terme d'adéquation aux données et un terme de
 régularisation incorporant des connaissances \emph{a priori} sur l'image.
 
-\subsubsection{Principe du Compressed Sensing}
-Le Compressed Sensing fournit un cadre mathématique rigoureux pour la reconstruction de
+\subsubsection{Principe du Compressive Sensing}
+Le Compressive Sensing fournit un cadre mathématique rigoureux pour la reconstruction de
 signaux parcimonieux ou compressibles à partir de mesures linéaires sous-échantillonnées,
 sous certaines conditions sur l'opérateur de mesure. Il permet de résoudre des problèmes
 inverses sous-déterminés au moyen de méthodes d'optimisation favorisant la parcimonie ou
 d'algorithmes gloutons, avec des garanties théoriques de stabilité et de robustesse au bruit.
 
-Dans le cadre de l'imagerie tomographique, le Compressed Sensing exploite l'idée que de
+Dans le cadre de l'imagerie tomographique, le Compressive Sensing exploite l'idée que de
 nombreuses images médicales admettent une représentation parcimonieuse dans une base ou un
 dictionnaire approprié, tel que les ondelettes ou le gradient de l'image. La reconstruction
 est alors formulée comme un problème d'optimisation sous contrainte :
@@ -203,7 +203,7 @@ Cette approche permet de réduire efficacement le bruit tout en préservant les 
 qualité essentielle pour l'analyse diagnostique.
 
 \subsubsection{Algorithmes itératifs}
-La résolution des problèmes d'optimisation issus du Compressed Sensing et des méthodes
+La résolution des problèmes d'optimisation issus du Compressive Sensing et des méthodes
 variationnelles repose sur des algorithmes itératifs, tels que les méthodes de descente de
 gradient proximal, l'algorithme ISTA/FISTA, l'ADMM ou encore les méthodes de type primal-dual.
 Ces algorithmes procèdent par mises à jour successives de l'image estimée, alternant entre la
@@ -217,7 +217,7 @@ tomodensitométrie moderne.
 \subsubsection{Comparaison avec les méthodes analytiques}
 En résumé, les méthodes analytiques privilégient la rapidité et la simplicité au prix d'une
 sensibilité accrue au bruit et aux artefacts, tandis que les méthodes itératives et basées sur
-le Compressed Sensing s'inscrivent pleinement dans le cadre des problèmes inverses
+le Compressive Sensing s'inscrivent pleinement dans le cadre des problèmes inverses
 régularisés. Elles exploitent des informations \emph{a priori} et des contraintes de parcimonie
 pour améliorer la stabilité et la qualité de reconstruction dans des conditions d'acquisition
 dégradées, répondant ainsi aux exigences de sécurité clinique et d'efficacité opérationnelle.
@@ -441,7 +441,7 @@ ou encore
 $ln(\frac{I_0}{I_1})$ désigne les données de projection, communément appelées le sinogramme, qui résultent de l'acquisition des projections tomographiques.
 \medskip
 \noindent
-Nous sommes maintenant prêts à introduire des outils mathématiques — en particulier la transformée de Radon — qui joueront un rôle central dans la détermination du coefficient d'atténuation dans l'équation \eqref{eq:loi_beer_lambert}.
+Nous sommes maintenant prêts à introduire des outils mathématiques, en particulier la transformée de Radon, qui joueront un rôle central dans la détermination du coefficient d'atténuation dans l'équation \eqref{eq:loi_beer_lambert}.
 
 L'écriture sous forme normale d'une équation de droite joue un rôle clé dans la transformée de Radon, car elle permet une paramétrisation naturelle et complète de toutes les droites du plan, ce qui est essentiel pour la définition mathématique et le calcul pratique de cette transformation.
 
@@ -480,7 +480,7 @@ où $\langle . \rangle$ est le produit scalaire.
 \begin{figure}[H]
     \centering
     \includegraphics[height=4cm, keepaspectratio]{./images/l_t_theta.png}
-    \caption{paramètrisation d'une droite \( l_{t,\theta} \) par \( t \) et \( \theta \)}
+    \caption{Paramètrisation d'une droite \( l_{t,\theta} \) par \( t \) et \( \theta \)}
     \label{fig:l_t_theta}
 \end{figure}
 On voit  que $(t\, \cos(\theta), t\, \sin(\theta))$ est un point situé sur la droite \( l_{t,\theta} \) (\Cref{fig:l_t_theta}) et $(-\sin(\theta), \cos(\theta))$ est un vecteur perpendiculaire au vecteur unitaire $\mathbf{w}$.
@@ -596,7 +596,7 @@ $Rg(S,\theta)$, ce qui conclut la démonstration.
 \hfill$\square$
 
 % \section{Inversion analytique de la transformée de Radon}
-\subsection{Rétroprojection filtrée (FBP)}
+\subsection{Rétroprojection filtrée}
 Nous sommes maintenant enfin prêts à effectuer une première tentative pour retrouver la fonction de coefficient d'atténuation.
 Rappelons que, d'un point de vue physique, la transformée de Radon
 $\mathcal{R}f(t,\theta)$ nous donne la densité totale de l'objet $f$ le long d'une droite
@@ -1097,7 +1097,7 @@ f_i = \sum_j A_{ij} \, g_j
 
 On obtient :
 \begin{equation}
-g = Af \quad \text{(ou } f = Ag \text{ selon la convention)}
+g = Af 
 \end{equation}
 
 En pratique, $A$ est \textbf{très grande et creuse}, mais la reconstruction se réduit à un produit matriciel.
@@ -1144,18 +1144,5 @@ Le passage de l'intégrale continue à $g = Af$ se fait en quatre étapes princi
     \item \textbf{Formulation linéaire matricielle}.
 \end{enumerate}
 
-\subsubsection*{Conclusion}
-
-Ce chapitre a présenté les principaux outils mathématiques qui sous-tendent la reconstruction d'images tomographiques, en mettant en évidence l'évolution des méthodes analytiques classiques vers les approches modernes fondées sur le \textit{Compressed Sensing}.
-
-Les méthodes analytiques, historiquement les premières, reposent sur une formulation mathématique directe du problème inverse. La transformée de Radon en constitue l'élément central en modélisant la relation entre l'objet et ses projections. Son inversion, reposant sur le théorème de la coupe centrale et mise en œuvre notamment dans l'algorithme de rétroprojection filtrée (FBP), permet une reconstruction rapide. Toutefois, ces méthodes supposent généralement des données complètes, abondantes et peu bruitées.
-
-Dans les contextes actuels d'imagerie médicale, marqués par la nécessité de réduire la dose d'irradiation et le temps d'acquisition, les données disponibles sont souvent sous-échantillonnées. Dans ces conditions, les méthodes analytiques peuvent produire des artefacts et deviennent sensibles au bruit. Les approches itératives, associées au cadre du \textit{Compressed Sensing}, offrent alors une alternative plus robuste. En formulant la reconstruction comme un problème inverse régularisé, elles exploitent des connaissances a priori sur l'image, telles que sa parcimonie dans certains domaines de représentation (ondelettes, gradient). La régularisation par variation totale (TV) constitue un exemple particulièrement efficace pour préserver les contours tout en limitant le bruit.
-
-Par ailleurs, la transformée de Fourier et l'opération de convolution jouent un rôle fondamental, notamment dans l'implémentation du filtrage pour la FBP et dans l'analyse fréquentielle des données. La discrétisation des opérateurs et la formulation matricielle du problème,
-\[
-g = Hf,
-\]
-permettent également de relier le modèle mathématique continu à son implémentation numérique et de mettre en œuvre des algorithmes d'optimisation itératifs.
-
-Ainsi, ce chapitre met en évidence la complémentarité entre les approches analytiques et itératives. Si les premières offrent rapidité et simplicité dans des conditions idéales, les secondes apparaissent aujourd'hui essentielles pour répondre aux défis de l'imagerie moderne : reconstruire des images de qualité à partir de données limitées tout en garantissant la sécurité du patient.
+\section*{Conclusion}
+Ce chapitre a retracé l'évolution de la reconstruction tomographique, des méthodes analytiques classiques vers les approches modernes de \textit{Compressive Sensing}. Si les techniques analytiques comme la rétroprojection filtrée (FBP) s'appuient sur la transformée de Radon pour une reconstruction rapide en conditions idéales, elles s'avèrent limitées face au bruit et au sous-échantillonnage imposés par les contraintes cliniques actuelles. L'alternative réside dans les méthodes itératives qui, en modélisant la reconstruction comme un problème inverse régularisé de type $g = Af$, exploitent la parcimonie et la variation totale (TV) pour préserver les structures à partir de données restreintes. Cette transition, soutenue par les outils fondamentaux de Fourier et de convolution, souligne la complémentarité entre rapidité algorithmique et robustesse mathématique, garantissant ainsi une imagerie de haute qualité tout en minimisant l'exposition du patient.

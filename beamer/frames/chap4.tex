@@ -1,0 +1,79 @@
+\section{Reconstruction tomographique parcimonieuse par ADMM et ondelettes Bior4.4}
+%------------------------------------------------
+\begin{frame}{Résultats Quantitatifs}
+    \only<1>{
+        \begin{block}{Performance de la méthode ADMM-Bior4.4}
+            \textbf{Cas d'étude détaillé (Image Shepp-Logan)}
+            \begin{table}[H]
+            \centering
+            \caption{Évaluation comparative des performances de reconstruction}
+            \label{tab:quantitative_results}
+            \begin{tabular}{lcc}
+            \hline
+            \textbf{Méthode} & \textbf{PSNR $\uparrow$ (dB)} & \textbf{SSIM $\uparrow$}  \\
+            \hline
+            FBP & 25.04 & 0.678 \\
+            ISTA & 24.83 & 0.768  \\
+            FISTA & 31.50 & 0.758  \\
+            ADMM-Bior4.4 & \textbf{37.31} & \textbf{0.972}  \\
+            \hline
+            \end{tabular}
+            \end{table}
+            
+            \begin{itemize}
+                \item Ces valeurs, obtenues sur l'image de référence, démontrent une reconstruction de très haute qualité, avec une excellente préservation des structures anatomiques.
+            \end{itemize}
+        \end{block}
+    }
+    % \only<2>{
+    %     \begin{block}{Performances moyennes sur l'ensemble des 19 images}
+    %         \begin{table}[h]
+    %         \centering
+    %         \caption{Comparaison des métriques PSNR et SSIM}
+    %         \begin{tabular}{|c|c|c|c|c|}
+    %         \hline
+    %         \textbf{Algorithme} & \textbf{PSNR\_mean} & \textbf{PSNR\_std} & \textbf{SSIM\_mean} & \textbf{SSIM\_std} \\
+    %         \hline
+    %         ADMM-Bior4.4 & 26.203727 & 0.151281 & 0.865829 & 0.008924 \\
+    %         FISTA         & 25.132216 & 0.220781 & 0.677443 & 0.010547 \\
+    %         ISTA          & 22.397596 & 0.385292 & 0.650520 & 0.015583 \\
+    %         FBP           & 21.610267 & 0.301994 & 0.558846 & 0.021965 \\
+    %         \hline
+    %         \end{tabular}
+    %         \end{table}
+    %     \end{block}
+    % }
+    \only<2>{
+        \begin{block}{Performances moyennes sur l'ensemble des 19 images}
+            \centering
+            \captionof{table}{Comparaison des métriques PSNR et SSIM}
+            \resizebox{0.9\textwidth}{!}{
+                \begin{tabular}{|c|c|c|c|c|}
+                \hline
+                \textbf{Algorithme} & \textbf{PSNR\_mean} & \textbf{PSNR\_std} & \textbf{SSIM\_mean} & \textbf{SSIM\_std} \\
+                \hline
+                ADMM-Bior4.4 & 26.203727 & 0.151281 & 0.865829 & 0.008924 \\
+                FISTA         & 25.132216 & 0.220781 & 0.677443 & 0.010547 \\
+                ISTA          & 22.397596 & 0.385292 & 0.650520 & 0.015583 \\
+                FBP           & 21.610267 & 0.301994 & 0.558846 & 0.021965 \\
+                \hline
+                \end{tabular}%
+            }
+        \end{block}
+    }
+    \only<3>{
+        \begin{block}{Analyse et Interprétation}
+            \begin{itemize}
+                \item \textbf{Analyse :} ADMM-Bior4.4 surpasse nettement les autres méthodes en moyenne, avec des écarts-types plus faibles, attestant d'une grande stabilité.
+                
+                \vspace{0.3cm}
+                
+                \item \textbf{Interprétation :}
+                \begin{itemize}
+                    \item Un \textbf{PSNR} de 26.20 dB indique une excellente fidélité aux données.
+                    \item Un \textbf{SSIM} de 0.866, proche de 1, confirme une très bonne préservation des structures anatomiques, même en contexte de sous-échantillonnage.
+                \end{itemize}
+            \end{itemize}
+        \end{block}
+    }
+\end{frame}

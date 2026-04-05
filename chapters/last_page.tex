@@ -1,20 +1,19 @@
 \noindent
 {\Large \textbf{Titre :} « \textbf{RECONSTRUCTION D'IMAGES ISSUES DE TOMODENSITOMÉTRIE} » }\vspace{0.5cm}\\
 \textbf{Auteur :} ANDRIANARIVONY Selison Fréderic \\
-\textbf{Nombre de pages :} 120 \\
+\textbf{Nombre de pages :} \pageref{LastPage}\\
 \textbf{Nombre de figures :} 22 \\
-\textbf{Nombre de tableaux :} 2
+\textbf{Nombre de tableaux :} 02
 \vspace{0.5cm}
 
 \noindent
 \paragraph{RESUMÉ} \\
-Ce mémoire de master à visée de recherche s'intéresse à la reconstruction d'images issues de la tomodensitométrie, une technique d'imagerie médicale essentielle pour l'observation non invasive de l'intérieur du corps humain. L'objectif est d'améliorer la qualité des images obtenues à partir des données brutes issues des scanners, en explorant des méthodes avancées de reconstruction qui permettent de réduire le bruit, d'augmenter la résolution et de limiter la dose de rayonnement administrée aux patients.\\
-
-Le travail s'inscrit dans une démarche scientifique visant à proposer des approches innovantes, probablement basées sur des modèles mathématiques, des algorithmes d'optimisation ou des techniques d'apprentissage automatique. En évaluant les performances de ces méthodes sur des données réelles ou simulées, on cherche à contribuer à l'amélioration des pratiques cliniques et à l'évolution des systèmes d'imagerie médicale vers plus de précision et de sécurité pour les patients.
+Ce mémoire de master à visée de recherche explore l'optimisation de la \textbf{reconstruction d'images issue de la tomodensitométrie} (TDM) pour concilier qualité diagnostique et réduction de la dose d'irradiation. Face aux limites de la rétroprojection filtrée (FBP) en situation de sous-échantillonnage, ce travail adopte le paradigme du Compressive Sensing en couplant l'algorithme d'optimisation \textbf{ADMM} aux ondelettes biorthogonales \textbf{Bior4.4}. Ce choix technique permet d'exploiter la parcimonie des images médicales pour reconstruire fidèlement les structures fines à partir de mesures réduites.
+Structuré en quatre chapitres allant des fondements théoriques (Radon, Fourier) à l'expérimentation numérique, ce mémoire démontre la supériorité de l'approche proposée. Sur 19 images tests, la méthode atteint un PSNR moyen de $26.20\,dB$ et un SSIM de $0,866$, surpassant nettement la FBP (21,61 dB) et les algorithmes ISTA/FISTA. Avec une convergence stable et un taux de parcimonie de 20\%, ces résultats ouvrent des perspectives majeures : accélération sur GPU pour le temps réel, passage à la reconstruction 3D et hybridation avec l'apprentissage profond.
 \vspace{0.5cm}
 
 \noindent
-\textbf{ENCADREUR DE MEMOIRE :} Madame RAMAFIARISONA Malalatiana
+\textbf{ENCADREUR DE MEMOIRE :} Madame RAMAFIARISONA Hajasoa Malalatiana
 
 \vspace{0.5cm}
 

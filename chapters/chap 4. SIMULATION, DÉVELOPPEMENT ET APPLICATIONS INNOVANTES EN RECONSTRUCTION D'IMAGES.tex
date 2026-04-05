@@ -1,6 +1,6 @@
 \chapter{DÉVELOPPEMENT ET APPLICATIONS INNOVANTES EN RECONSTRUCTION D'IMAGES CT}
 \label{chapitre4} 
-La reconstruction d'images à partir de projections sous-échantillonnées constitue un défi majeur en tomographie, notamment lorsque les contraintes cliniques imposent une réduction de la dose d'irradiation ou une accélération des temps d'acquisition. Dans ces conditions, les méthodes analytiques classiques comme la rétroprojection filtrée atteignent leurs limites, produisant des images dégradées par des artefacts sévères. Le paradigme du Compressed Sensing (CS) offre un cadre théorique permettant de relever ce défi, en exploitant la parcimonie des images dans un domaine de transformation approprié pour reconstruire une solution de haute qualité à partir de données incomplètes.
+La reconstruction d'images à partir de projections sous-échantillonnées constitue un défi majeur en tomographie, notamment lorsque les contraintes cliniques imposent une réduction de la dose d'irradiation ou une accélération des temps d'acquisition. Dans ces conditions, les méthodes analytiques classiques comme la rétroprojection filtrée atteignent leurs limites, produisant des images dégradées par des artefacts sévères. Le paradigme du Compressive Sensing (CS) offre un cadre théorique permettant de relever ce défi, en exploitant la parcimonie des images dans un domaine de transformation approprié pour reconstruire une solution de haute qualité à partir de données incomplètes.
 
 Ce chapitre présente le développement et l'évaluation d'une approche innovante de reconstruction tomographique en contexte sous-échantillonné, fondée sur l'algorithme de séparation de variables par directions alternées (ADMM) couplé à une régularisation parcimonieuse dans le domaine des ondelettes biorthogonales Bior4.4. Après avoir détaillé la génération des données par transformée de Radon et la construction des opérateurs linéaires nécessaires (opérateur système et transformée en ondelettes), nous analysons les performances quantitatives de la méthode à travers les métriques PSNR et SSIM. Une étude approfondie de la convergence de l'algorithme, via l'évolution des résidus primal et dual, permet de valider sa stabilité numérique. La discussion propose enfin une comparaison critique avec les approches conventionnelles, mettant en lumière la synergie entre l'ADMM et la Bior4.4, ainsi que les perspectives qu'offre cette combinaison pour la réduction de dose en imagerie médicale.
 
@@ -111,9 +111,9 @@ Ce processus physique peut être implémenté numériquement à l'aide du pseudo
 
     \Return{$S$, $\Theta$}\;
 \end{algorithm}
-\subsection{Sous-échantillonnage angulaire en tomographie pour le Compressed Sensing}
+\subsection{Sous-échantillonnage angulaire en tomographie pour le Compressive Sensing}
 
-La tomographie moderne repose souvent sur l'acquisition d'un nombre restreint de projections angulaires, une stratégie au cœur du Compressed Sensing (CS) qui permet de réduire l'exposition aux rayonnements ou le temps d'acquisition. Cette approche permet de réduire la dose d'irradiation lors des acquisitions médicales tout en conservant une qualité d'image satisfaisante, grâce à des algorithmes de reconstruction avancés. Elle répond aux besoins croissants de sécurité des patients et d'acquisition rapide, tout en exploitant les propriétés structurelles des images médicales.\\
+La tomographie moderne repose souvent sur l'acquisition d'un nombre restreint de projections angulaires, une stratégie au cœur du Compressive Sensing (CS) qui permet de réduire l'exposition aux rayonnements ou le temps d'acquisition. Cette approche permet de réduire la dose d'irradiation lors des acquisitions médicales tout en conservant une qualité d'image satisfaisante, grâce à des algorithmes de reconstruction avancés. Elle répond aux besoins croissants de sécurité des patients et d'acquisition rapide, tout en exploitant les propriétés structurelles des images médicales.\\
 En tomographie conventionnelle, le critère de Nyquist définit le nombre minimal d'angles nécessaires pour éviter les artefacts de repliement spectral dans le sinogramme.\\ Formellement, on a :
 \begin{equation}
 N_{\text{angles}} \geq \frac{\pi}{2} \cdot N_{\text{pixels}}
@@ -122,7 +122,7 @@ Le sous-échantillonnage consiste à acquérir volontairement moins d'angles que
 \begin{equation}
 N_{\text{sous-échantillonné}} = \alpha \cdot N_{\text{complet}}
 \end{equation}
-où \(\alpha \in [0,1]\) représente le facteur de sous-échantillonnage. Cette réduction entraîne une perte d'information, mais le Compressed Sensing permet de compenser cette limitation grâce à des hypothèses de parcimonie sur l'image.\\
+où \(\alpha \in [0,1]\) représente le facteur de sous-échantillonnage. Cette réduction entraîne une perte d'information, mais le Compressive Sensing permet de compenser cette limitation grâce à des hypothèses de parcimonie sur l'image.\\
 
 La sélection des angles pour le sous-échantillonnage suit généralement un processus aléatoire uniforme, sans remise, afin de garantir l'incohérence nécessaire au CS :
 \begin{equation}
@@ -130,7 +130,7 @@ La sélection des angles pour le sous-échantillonnage suit généralement un pr
 \end{equation}
 où \(\{i_1, i_2, ..., i_M\}\) est un sous-ensemble aléatoire de \(\{0, 1, ..., N-1\}\), et \(M = \lfloor \alpha \cdot N \rfloor\) correspond au nombre d'angles acquis (la notation \(\lfloor x \rfloor\) désigne la partie entière inférieure, c'est-à-dire le plus grand entier inférieur ou égal au nombre). Les indices sont triés pour préserver l'ordre angulaire, ce qui facilite l'interprétation du sinogramme (Voir Annexe A pour l'implémentation).\\
 
-Le Compressed Sensing repose sur trois concepts fondamentaux : la parcimonie, qui veut que l'image soit parcimonieuse dans un domaine de transformation \(\Psi\) (c'est-à-dire que seule une fraction des coefficients est significative) ; l'incohérence, qui exige que la matrice de mesure \(\Phi\) soit incohérente par rapport à la base dans laquelle l'image est parcimonieuse ; et la reconstruction non-linéaire, où le signal est reconstruit via une optimisation qui favorise la parcimonie, typiquement par la minimisation de la norme \(L_1\).  
+Le Compressive Sensing repose sur trois concepts fondamentaux : la parcimonie, qui veut que l'image soit parcimonieuse dans un domaine de transformation \(\Psi\) (c'est-à-dire que seule une fraction des coefficients est significative) ; l'incohérence, qui exige que la matrice de mesure \(\Phi\) soit incohérente par rapport à la base dans laquelle l'image est parcimonieuse ; et la reconstruction non-linéaire, où le signal est reconstruit via une optimisation qui favorise la parcimonie, typiquement par la minimisation de la norme \(L_1\).  
 
 Pour une image \(x \in \mathbb{R}^n\), le sinogramme sous-échantillonné \(y\) est obtenu par :
 \begin{equation}
@@ -176,7 +176,7 @@ x = \Psi c
 \end{equation}
 avec \(\|c\|_0 \ll n\) où \(\|c\|_0\) est le nombre de coefficients significatifs.\\
 
-Pour mettre en œuvre la stratégie de sous-échantillonnage angulaire discutée précédemment, un pipeline de traitement a été développé, dont l'architecture est schématisée à la Figure \ref{fig:sinogram_undersampling_pipeline}. Ce pipeline débute par l'acquisition complète des projections de l'image originale \(x\) via la transformée de Radon. Conformément aux principes du Compressed Sensing, un sous-échantillonnage aléatoire est ensuite appliqué selon un facteur \(\alpha\), ne retenant qu'une fraction des angles disponibles pour former le sinogramme sous-échantillonné \(y\). Cette étape simule une acquisition réduite tout en respectant les conditions d'incohérence requises pour la reconstruction. Le sinogramme \(y\) est alors traité par un algorithme d'optimisation cherchant à résoudre le problème inverse : retrouver l'image originale en minimisant la norme L1 dans un domaine de parcimonie \(\Psi\) (ondelettes, gradient total, etc.), sous contrainte de fidélité aux données mesurées. Ce processus conduit à l'estimation \(\hat{x}\) de l'image reconstruite. Les détails d'implémentation, incluant les paramètres algorithmiques et les critères d'arrêt, sont fournis en Annexe A.
+Pour mettre en œuvre la stratégie de sous-échantillonnage angulaire discutée précédemment, un pipeline de traitement a été développé, dont l'architecture est schématisée à la Figure \ref{fig:sinogram_undersampling_pipeline}. Ce pipeline débute par l'acquisition complète des projections de l'image originale \(x\) via la transformée de Radon. Conformément aux principes du Compressive Sensing, un sous-échantillonnage aléatoire est ensuite appliqué selon un facteur \(\alpha\), ne retenant qu'une fraction des angles disponibles pour former le sinogramme sous-échantillonné \(y\). Cette étape simule une acquisition réduite tout en respectant les conditions d'incohérence requises pour la reconstruction. Le sinogramme \(y\) est alors traité par un algorithme d'optimisation cherchant à résoudre le problème inverse : retrouver l'image originale en minimisant la norme L1 dans un domaine de parcimonie \(\Psi\) (ondelettes, gradient total, etc.), sous contrainte de fidélité aux données mesurées. Ce processus conduit à l'estimation \(\hat{x}\) de l'image reconstruite. Les détails d'implémentation, incluant les paramètres algorithmiques et les critères d'arrêt, sont fournis en Annexe A.
 
 \begin{figure}[H]
     \centering
@@ -235,271 +235,250 @@ La mise en œuvre du sous-échantillonnage angulaire aléatoire repose sur la pr
 \end{algorithm}
 
 \subsection{Opérateur de transformée en ondelettes}
-La transformation par ondelettes constitue un outil fondamental en traitement d'images et en optimisation, permettant de représenter une image dans une base multi-résolution. Cette décomposition hiérarchique offre une représentation parcimonieuse des images naturelles et médicales, où l'information essentielle est concentrée dans un faible nombre de coefficients significatifs — une propriété particulièrement exploitée dans le cadre du Compressed Sensing (CS). Dans ce contexte, l'opérateur d'ondelettes \(\Psi\) établit une correspondance linéaire entre l'espace des pixels (domaine spatial) et l'espace des coefficients d'ondelettes (domaine de parcimonie), permettant ainsi de formuler le problème de reconstruction comme une minimisation L1. Le diagramme présenté à la Figure \ref{fig:wt_creation} illustre la construction de cet opérateur, détaillant à la fois la transformation directe \(W : x \rightarrow w\) qui décompose l'image en coefficients, et la transformation adjointe \(W^T : w \rightarrow x\) qui assure la reconstruction à partir de ces coefficients. L'implémentation complète de cet opérateur, incluant la gestion des différentes familles d'ondelettes et des niveaux de décomposition, est fournie en Annexe~B.
+La transformation en ondelettes constitue un outil fondamental en traitement du signal et en imagerie, permettant de représenter une image dans une base multi-résolution adaptée à ses structures intrinsèques. Cette décomposition hiérarchique offre une représentation parcimonieuse des images naturelles et médicales, dans laquelle l'essentiel de l'information est concentré dans un nombre réduit de coefficients significatifs. Cette propriété est largement exploitée dans le cadre du \textit{Compressive Sensing} (CS), où la reconstruction repose sur des hypothèses de parcimonie dans un domaine transformé.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[height=20cm, keepaspectratio]{images/wt_creation.png}
-    \caption{Opérateur de Transformée en Ondelettes}
-    \label{fig:wt_creation}
-\end{figure}
-
-Mathématiquement, une image discrète de taille \(H \times W\) peut être représentée sous forme vectorielle \(x \in \mathbb{R}^n\), où \(n = H \times W\). L'opérateur de transformation en ondelettes est défini comme un opérateur linéaire :
+Soit une image discrète de taille $(H \times W)$, représentée sous forme vectorielle $x \in \mathbb{R}^n$, avec $n = H \times W$. La transformation en ondelettes est modélisée comme un opérateur linéaire :
 
 \begin{equation}
 W : \mathbb{R}^n \rightarrow \mathbb{R}^m
 \end{equation}
 
-qui associe à chaque image \(x\) un vecteur de coefficients d'ondelettes :
+qui associe à chaque image $x$ un vecteur de coefficients d'ondelettes :
 
 \begin{equation}
-w = W x
+w = Wx
 \end{equation}
 
-Ces coefficients représentent l'image dans une base multi-échelle composée de :
+Ces coefficients correspondent à une représentation multi-échelle de l'image :
 
 \begin{equation}
 w = \left\{ a_J, d_J^H, d_J^V, d_J^D, \dots, d_1^H, d_1^V, d_1^D \right\}
 \end{equation}
 
-où :
+où $a_J$ désigne les coefficients d'approximation à l'échelle la plus grossière, et $d_j^H, d_j^V, d_j^D$ les coefficients de détail (horizontal, vertical, diagonal) au niveau $j$.
 
-\begin{itemize}[label=-]
-\item \(a_J\) représente les coefficients d'approximation à basse résolution,
-\item \(d_j^H, d_j^V, d_j^D\) représentent respectivement les coefficients de détail horizontal, vertical et diagonal au niveau \(j\).
-\end{itemize}
-
-Cette transformation correspond à une projection de l'image sur une base d'ondelettes :
+Dans le cas général, cette transformation peut être interprétée comme une projection sur une famille de fonctions d'ondelettes. En formulation discrète, on distingue :
 
 \begin{equation}
-w_i = \langle x, \psi_i \rangle
+w_i = \langle x, \psi_i \rangle \quad \text{(cas orthogonal)}, \qquad
+w_i = \langle x, \tilde{\psi}_i \rangle \quad \text{(cas biorthogonal)}
 \end{equation}
 
-où \(\psi_i\) représente les fonctions de base d'ondelettes.
+où $\psi_i$ désigne les fonctions d'analyse dans le cas orthogonal, et $\tilde{\psi}_i$ les fonctions d'analyse (base duale) dans le cas biorthogonal.
 
-L'opérateur adjoint \(W^T\) permet la reconstruction de l'image à partir des coefficients :
+L'opérateur adjoint $W^T$ est défini par la relation :
 
 \begin{equation}
-x = W^T w
+\langle Wx, w \rangle = \langle x, W^T w \rangle
 \end{equation}
 
-Dans le cas d'ondelettes orthogonales, on a la propriété importante :
+Il joue un rôle central dans les méthodes d'optimisation, notamment dans les algorithmes de type gradient ou proximal. Il convient toutefois de distinguer soigneusement cet opérateur adjoint de l'opérateur de reconstruction.
+
+\subsubsection{Ondelettes orthogonales}
+
+Dans le cas des ondelettes orthogonales, les bases d'analyse et de synthèse coïncident. L'opérateur $W$ est alors orthogonal, et vérifie :
 
 \begin{equation}
 W^T = W^{-1}
 \end{equation}
 
-et donc :
+ce qui implique :
 
 \begin{equation}
 W^T W = I
 \end{equation}
 
-où \(I\) est l'opérateur identité.
+Ainsi, la transformation conserve l'énergie du signal (propriété de Parseval) :
 
-Dans le cas général, \(W \in \mathbb{R}^{m \times n}\), avec :
-
-\begin{equation}
-n = H \times W
-\end{equation}
-\begin{equation}
-m = \text{nombre total de coefficients}
-\end{equation}
-
-La transformation directe correspond à l'application :
-
-\begin{equation}
-x \mapsto W x
-\end{equation}
-
-tandis que la transformation adjointe correspond à :
-
-\begin{equation}
-w \mapsto W^T w
-\end{equation}
-
-Le diagramme de la Figure~\ref{fig:wt_creation} montre les différentes étapes de construction de cet opérateur :
-
-\begin{itemize}[label=-]
-\item la définition de l'espace image \(\mathbb{R}^n\),
-\item la construction de la structure des coefficients,
-\item la définition de l'opérateur direct \(W\),
-\item la définition de l'opérateur adjoint \(W^T\),
-\item la création de l'opérateur linéaire complet.
-\end{itemize}
-
-Les coefficients sont organisés sous forme hiérarchique, permettant une représentation multi-échelle efficace. Pour assurer la reconstruction correcte, deux éléments essentiels sont conservés :
-
-\begin{itemize}[label=-]
-\item la structure des coefficients,
-\item les dimensions associées à chaque niveau de décomposition.
-\end{itemize}
-
-Cet opérateur possède plusieurs propriétés importantes :
-
-\begin{itemize}[label=-]
-\item Linéarité :
-\begin{equation}
-W(ax + by) = aWx + bWy
-\end{equation}
-
-\item Structure matricielle implicite :
-\begin{equation}
-W \in \mathbb{R}^{m \times n}
-\end{equation}
-
-\item Adjoint bien défini :
-\begin{equation}
-\langle Wx, w \rangle = \langle x, W^T w \rangle
-\end{equation}
-
-\item Conservation de l'énergie pour les bases orthogonales :
 \begin{equation}
 \|Wx\|_2 = \|x\|_2
 \end{equation}
+
+Dans ce cas, l'adjoint $W^T$ coïncide avec l'opérateur de reconstruction. Les ondelettes orthogonales fournissent une représentation non redondante ($m = n$), mais sont en général dépourvues de symétrie, ce qui peut induire des distorsions de phase dans certaines applications.
+
+\subsubsection{Ondelettes biorthogonales}
+
+Dans le cadre biorthogonal, deux bases distinctes sont introduites : une base d'analyse et une base de synthèse. L'opérateur de transformation $W$ (analyse) et l'opérateur de reconstruction $\tilde{W}$ (synthèse) sont alors distincts.
+
+Les filtres associés sont :
+\begin{itemize}[label=-]
+\item filtres d'analyse : $h$ (passe-bas) et $g$ (passe-haut),
+\item filtres de synthèse : $\tilde{h}$ (passe-bas) et $\tilde{g}$ (passe-haut).
 \end{itemize}
 
-En pratique, l'opérateur n'est pas construit explicitement sous forme matricielle, mais implémenté comme un opérateur linéaire implicite, comme illustré dans l'Annexe~B, afin d'éviter le stockage d'une matrice potentiellement très grande.
+Les fonctions d'ondelettes associées vérifient la condition de biorthogonalité :
 
-Cette structure permet d'intégrer efficacement la transformation en ondelettes dans des problèmes inverses, tels que :
+\begin{equation}
+\langle \psi_{j,k}, \tilde{\psi}_{j',k'} \rangle = \delta_{j,j'} \delta_{k,k'}
+\end{equation}
+
+où $\psi$ désigne les ondelettes d'analyse et $\tilde{\psi}$ les ondelettes de synthèse.
+
+La reconstruction parfaite est assurée par la relation :
+
+\begin{equation}
+\tilde{W} W = I
+\end{equation}
+
+Contrairement au cas orthogonal, l'adjoint de l'opérateur d'analyse ne coïncide généralement pas avec l'opérateur de reconstruction :
+
+\begin{equation}
+W^T \neq \tilde{W}
+\end{equation}
+
+Cette distinction est essentielle dans les algorithmes d'optimisation, où $W^T$ intervient dans les calculs de gradients, tandis que $\tilde{W}$ est utilisé pour la reconstruction effective du signal à partir des coefficients.
+
+Dans certaines implémentations numériques, notamment dans des bibliothèques de traitement du signal, l'opérateur utilisé comme ``adjoint'' dans les algorithmes correspond en pratique à l'opérateur de synthèse $\tilde{W}$. Cette approximation est souvent adoptée pour des raisons pratiques, bien qu'elle ne coïncide pas strictement avec l'adjoint mathématique de l'opérateur d'analyse.
+
+Les ondelettes biorthogonales présentent plusieurs avantages pratiques :
+\begin{itemize}[label=-]
+\item possibilité de concevoir des filtres symétriques (phase linéaire),
+\item meilleure préservation des contours et des structures géométriques,
+\item flexibilité accrue dans la conception des filtres.
+\end{itemize}
+
+\subsubsection{Formulation générale et implémentation}
+
+Dans le cas d'une transformée en ondelettes discrète critique, on a généralement $m = n$. Toutefois, certaines variantes redondantes (frames, ondelettes non sous-échantillonnées) conduisent à $m > n$.
+
+En pratique, l'opérateur $W$ n'est pas construit explicitement sous forme matricielle, mais implémenté comme un opérateur linéaire implicite, afin de limiter les coûts mémoire et computationnels. On distingue :
 
 \begin{itemize}[label=-]
-\item la reconstruction d'images,
-\item le débruitage,
-\item la compression,
-\item les méthodes d'optimisation régularisées.
+\item la transformation directe : $x \mapsto Wx$,
+\item l'adjoint (implémenté numériquement) : $w \mapsto W^T w$.
 \end{itemize}
-La transformation fournit ainsi une représentation compacte et multi-résolution de l'image, facilitant l'analyse et la manipulation des structures à différentes échelles.\\
 
-Afin de rendre concrète l'implémentation de l'opérateur de transformation en ondelettes présenté précédemment, il est utile de formaliser les différentes étapes de sa construction sous forme algorithmique. Cette approche permet de clarifier la manière dont la transformation directe et son adjoint sont définis et utilisés dans le cadre d'un opérateur linéaire.\\
+Cette structuration permet une intégration efficace dans les méthodes de résolution de problèmes inverses, notamment pour :
 
-Le pseudo-code suivant décrit le processus de création de l'opérateur ondelette ainsi que de son adjoint, en s'appuyant sur la structure des coefficients obtenue par décomposition multi-résolution. Il met en évidence les étapes nécessaires à la conversion entre l'espace image et l'espace des coefficients d'ondelettes.\\
+\begin{itemize}[label=-]
+\item la reconstruction tomographique,
+\item le débruitage,
+\item la compression d'images,
+\item les méthodes d'optimisation régularisées (L1, TV, etc.).
+\end{itemize}
 
-Cette formulation algorithmique facilite également l'intégration de l'opérateur dans des méthodes numériques et des algorithmes d'optimisation, où les transformations directe et adjointe doivent être appliquées de manière efficace sans construire explicitement la matrice associée.
-\subsubsection*{Pseudo-code de l'ondelette}
+\subsubsection{Pseudo-code de l'opérateur ondelette générique}
 \begin{algorithm}[H]
-    \caption{Création de l'opérateur ondelette $W$ et de son adjoint $W^T$}
-    \KwIn{Dimensions de l'image $(h,w)$, ondelette $wavelet$, niveau de décomposition $level$}
-    \KwOut{Opérateur linéaire $W_{op}$}
+\caption{Création de l'opérateur ondelette ($W$) et de son adjoint ($W^T$)}
+\KwIn{Dimensions de l'image $(h,w)$, ondelette (wavelet), niveau de décomposition (level)}
+\KwOut{Opérateur linéaire $W_{op}$}
 
-    $n_{pixels} \leftarrow h \times w$\;
+$n_{pixels} \leftarrow h \times w$\;
 
-    Créer une image nulle $I_{ref}$ de taille $(h,w)$\;
+Créer une image nulle $I_{ref}$ de taille $(h,w)$\;
 
-    $\{c_{ref}\} \leftarrow$ Décomposition en ondelettes 2D de $I_{ref}$\;
+$\{c_{ref}\} \leftarrow$ Décomposition en ondelettes 2D de $I_{ref}$\;
 
-    $(C_{ref}, slices) \leftarrow$ Conversion des coefficients en tableau\;
+$(C_{ref}, slices) \leftarrow$ Conversion des coefficients en tableau\;
 
-    $shape_C \leftarrow$ dimensions de $C_{ref}$\;
+$shape_C \leftarrow$ dimensions de $C_{ref}$\;
 
-    $n_{coeffs} \leftarrow$ nombre total d'éléments de $C_{ref}$\;
+$n_{coeffs} \leftarrow$ nombre total d'éléments de $C_{ref}$\;
 
-    \vspace{0.3cm}
-    \textbf{Définir la fonction directe $W(x)$ :}
+\vspace{0.3cm}
+\textbf{Définir la fonction directe $W(x)$ :}
 
-    \Indp
-    Redimensionner $x$ en image $(h,w)$\;
+\Indp
+Redimensionner $x$ en image $(h,w)$\;
 
-    $\{c\} \leftarrow$ Décomposition en ondelettes 2D de l'image\;
+$\{c\} \leftarrow$ Décomposition en ondelettes 2D de l'image\;
 
-    $C \leftarrow$ Conversion des coefficients en tableau\;
+$C \leftarrow$ Conversion des coefficients en tableau\;
 
-    Retourner $C$ vectorisé\;
-    \Indm
+Retourner $C$ vectorisé\;
+\Indm
 
-    \vspace{0.3cm}
-    \textbf{Définir l'adjoint $W^T(w)$ :}
+\vspace{0.3cm}
+\textbf{Définir l'adjoint $W^T(w)$ (implémenté via la transformée inverse) :}
 
-    \Indp
-    Redimensionner $w$ selon $shape_C$\;
+\Indp
+Redimensionner $w$ selon $shape_C$\;
 
-    $\{c\} \leftarrow$ Reconstruction de la structure des coefficients\;
+$\{c\} \leftarrow$ Reconstruction de la structure des coefficients\;
 
-    $I \leftarrow$ Reconstruction inverse par ondelettes 2D\;
+$I \leftarrow$ Reconstruction inverse par ondelettes 2D\;
 
-    Retourner l'image reconstruite (recadrée à $(h,w)$) vectorisée\;
-    \Indm
+Retourner l'image reconstruite (recadrée à $(h,w)$) vectorisée\;
+\Indm
 
-    \vspace{0.3cm}
-    Construire l'opérateur linéaire $W_{op}$ de dimension 
-    $(n_{coeffs}, n_{pixels})$ utilisant :
+\vspace{0.3cm}
+Construire l'opérateur linéaire $W_{op}$ de dimension 
+$(n_{coeffs}, n_{pixels})$ utilisant :
 
-    \Indp
-    \quad -- $W(x)$ comme multiplication directe\;
+\Indp
+\quad -- $W(x)$ comme multiplication directe\;
 
-    \quad -- $W^T(w)$ comme multiplication adjointe\;
-    \Indm
+\quad -- $W^T(w)$ comme multiplication adjointe\;
+\Indm
 
-    \Return{$W_{op}$}\;
+\Return{$W_{op}$}\;
 \end{algorithm}
+
+\subsubsection{Exemple : ondelettes biorthogonales Bior4.4}
+
+Les ondelettes biorthogonales Bior4.4 constituent un cas d'étude particulièrement pertinent en imagerie. Elles reposent sur des filtres symétriques permettant une phase linéaire, propriété essentielle pour la préservation des contours.
+
+La transformation est réalisée par décomposition itérative à l'aide de filtres passe-bas et passe-haut, suivie d'un sous-échantillonnage. La reconstruction s'effectue par sur-échantillonnage et filtrage de synthèse, garantissant une reconstruction parfaite grâce aux conditions de biorthogonalité.
+
+Cette famille d'ondelettes est largement utilisée en traitement d'images en raison de son compromis favorable entre régularité, symétrie et performance en compression.
+
 \subsubsection*{Pseudo-code de la transformée en ondelettes Bior4.4}
-
 \begin{algorithm}[H]
-    \caption{Transformée en ondelettes biorthogonales Bior4.4 (DWT/IDWT)}
+\caption{Transformée en ondelettes biorthogonales Bior4.4 (DWT/IDWT)}
+\KwIn{Signal $x$, filtres $h, g, \tilde{h}, \tilde{g}$, nombre de niveaux $L$}
+\KwOut{Coefficients ondelettes $(a_L, \{d_1, \dots, d_L\})$ et signal reconstruit $\hat{x}$}
+
+\vspace{0.3cm}
+\textbf{Initialisation :}
+
+$a^0 \leftarrow x$\;
+
+\vspace{0.3cm}
+\textbf{Phase de décomposition (analyse) :}
+
+\For{$l = 1$ \KwTo $L$}{
+    \textbf{1. Filtrage passe-bas :}
     
-    \KwIn{Signal $x$, filtres $h, g, \tilde{h}, \tilde{g}$, nombre de niveaux $L$}
-    \KwOut{Coefficients ondelettes $(a_L, \{d_1, \dots, d_L\})$ et signal reconstruit $\hat{x}$}
+    $a_{\text{conv}} \leftarrow a^{l-1} * h$\;
+    
+    \textbf{2. Filtrage passe-haut :}
+    
+    $d_{\text{conv}} \leftarrow a^{l-1} * g$\;
+    
+    \textbf{3. Sous-échantillonnage :}
+    
+    $a^l \leftarrow a_{\text{conv}}[2k]$\;
+    
+    $d^l \leftarrow d_{\text{conv}}[2k]$\;
+}
 
-    \vspace{0.3cm}
-    \textbf{Initialisation :}
+\vspace{0.3cm}
+\textbf{Phase de reconstruction (synthèse) :}
 
-    $a^0 \leftarrow x$\;
+$a^L \leftarrow$ approximation finale\;
 
-    \vspace{0.3cm}
-    \textbf{Phase de décomposition (analyse) :}
+\For{$l = L$ \KwTo $1$}{
+    \textbf{1. Sur-échantillonnage :}
+    
+    $a_u \leftarrow$ insertion de zéros entre les échantillons de $a^l$\;
+    
+    $d_u \leftarrow$ insertion de zéros entre les échantillons de $d^l$\;
+    
+    \textbf{2. Filtrage de reconstruction :}
+    
+    $a_{\text{rec}} \leftarrow a_u * \tilde{h}$\;
+    
+    $d_{\text{rec}} \leftarrow d_u * \tilde{g}$\;
+    
+    \textbf{3. Combinaison :}
+    
+    $a^{l-1} \leftarrow a_{\text{rec}} + d_{\text{rec}}$\;
+}
 
-    \For{$l = 1$ \KwTo $L$}{
+\vspace{0.3cm}
+$\hat{x} \leftarrow a^0$\;
 
-        \vspace{0.2cm}
-        \textbf{1. Filtrage passe-bas :}
-
-        $a_{\text{conv}} \leftarrow a^{l-1} * h$\;
-
-        \vspace{0.2cm}
-        \textbf{2. Filtrage passe-haut :}
-
-        $d_{\text{conv}} \leftarrow a^{l-1} * g$\;
-
-        \vspace{0.2cm}
-        \textbf{3. Sous-échantillonnage :}
-
-        $a^l \leftarrow a_{\text{conv}}[2k]$\;
-
-        $d^l \leftarrow d_{\text{conv}}[2k]$\;
-    }
-
-    \vspace{0.3cm}
-    \textbf{Phase de reconstruction (synthèse) :}
-
-    $a^L \leftarrow$ approximation finale\;
-
-    \For{$l = L$ \KwTo $1$}{
-
-        \vspace{0.2cm}
-        \textbf{1. Sur-échantillonnage :}
-
-        $a_u \leftarrow$ insertion de zéros entre les échantillons de $a^l$\;
-
-        $d_u \leftarrow$ insertion de zéros entre les échantillons de $d^l$\;
-
-        \vspace{0.2cm}
-        \textbf{2. Filtrage de reconstruction :}
-
-        $a_{\text{rec}} \leftarrow a_u * \tilde{h}$\;
-
-        $d_{\text{rec}} \leftarrow d_u * \tilde{g}$\;
-
-        \vspace{0.2cm}
-        \textbf{3. Combinaison :}
-
-        $a^{l-1} \leftarrow a_{\text{rec}} + d_{\text{rec}}$\;
-    }
-
-    \vspace{0.3cm}
-    $\hat{x} \leftarrow a^0$\;
-
-    \Return{$(a_L, \{d_1,\dots,d_L\}, \hat{x})$}\;
-
+\Return{$(a_L, \{d_1,\dots,d_L\}, \hat{x})$}\;
 \end{algorithm}
 
 \subsection{Reconstruction d'images en tomographie par transformée de Radon}
@@ -570,7 +549,7 @@ L'algorithme suivant formalise cette approche en définissant explicitement les 
     \Return{$A$}\;
 \end{algorithm}
 
-\subsection{Reconstruction tomographique par séparation de variables (ADMM)}
+\subsection{Reconstruction tomographique par séparation de variables}
 La reconstruction d'image à partir de données de projection constitue un problème inverse généralement mal posé, en particulier lorsque les données sont incomplètes, bruitées ou acquises en nombre limité. Dans ce contexte, les méthodes analytiques classiques montrent rapidement leurs limites, ce qui motive le recours à des approches itératives. Ces méthodes consistent à partir d'une estimation initiale de l'image, puis à l'améliorer progressivement en minimisant l'écart entre les projections simulées et les données observées. L'objectif est ainsi de résoudre un problème d'optimisation qui équilibre la fidélité aux données et l'introduction de contraintes a priori, afin de garantir la stabilité et la qualité de la reconstruction. Une implémentation complète de cette approche itérative est présentée en Annexe~D.
 
 Parmi ces méthodes, l'algorithme ADMM (\textit{Alternating Direction Method of Multipliers}) constitue une stratégie particulièrement efficace pour résoudre ce type de problème. Son principe repose sur une décomposition du problème global en sous-problèmes plus simples, traités de manière alternée. Dans ce cadre, il devient possible de dissocier le terme de fidélité aux données et le terme de régularisation, notamment en exploitant une représentation parcimonieuse dans un domaine transformé tel que celui des ondelettes. L'algorithme repose alors sur trois étapes principales : la mise à jour de l'image via la résolution d'un système linéaire impliquant l'opérateur de projection et son adjoint, la mise à jour des coefficients transformés à l'aide d'un seuillage doux favorisant la parcimonie, et enfin la mise à jour de la variable duale assurant la cohérence entre les différentes variables du modèle. L'introduction de la parcimonie permet d'obtenir des reconstructions plus robustes, en réduisant le bruit et en préservant les structures importantes de l'image, même en présence de données limitées. Le schéma global de cet algorithme est illustré dans la Figure~\ref{fig:ADMM_diagram_algorithm}, tandis que son implémentation détaillée est fournie en Annexe~D.
@@ -694,7 +673,7 @@ La Figure~\ref{fig:primal_residual} illustre l'évolution de ce résidu au cours
     \label{fig:primal_residual}
 \end{figure}
 
-\paragraph{Analyse détaillée :} On distingue tout d'abord une phase transitoire (itérations 1 à 30) caractérisée par une décroissance rapide du résidu primal, qui passe d'environ \(10^0\) à \(10^{-1}\). Cette diminution traduit une correction efficace de l'erreur initiale grâce à l'alternance entre la mise à jour de l'image (résolution du sous-problème en \(x\)) et la mise à jour des coefficients parcimonieux (seuillage en \(z\)). La pente observée dans cette phase est représentative de la vitesse de convergence de l'algorithme. À partir d'environ 30 itérations, une phase de stabilisation s'installe : la décroissance devient plus lente et le résidu se rapproche progressivement de \(10^{-2}\), valeur atteinte vers la 60\textsuperscript{e} itération. Cela indique que la contrainte \(Wx = z\) est satisfaite avec une bonne précision. Ce niveau est généralement considéré comme un critère d'arrêt acceptable en pratique, les gains ultérieurs devenant marginaux. Enfin, de légères oscillations résiduelles apparaissent après cette phase de stabilisation. Ce phénomène, classique dans les méthodes ADMM, peut s'expliquer par plusieurs facteurs : l'utilisation d'un paramètre de pénalité \(\rho\) constant, qui pourrait être ajusté dynamiquement pour améliorer la convergence, la résolution approchée du sous-problème en \(x\) via un algorithme de gradient conjugué introduisant des erreurs numériques, ainsi que des effets liés à la précision machine. Ces oscillations restent toutefois bornées et n'affectent pas la convergence globale de l'algorithme.
+\subsubsection*{Analyse détaillé} On distingue tout d'abord une phase transitoire (itérations 1 à 30) caractérisée par une décroissance rapide du résidu primal, qui passe d'environ \(10^0\) à \(10^{-1}\). Cette diminution traduit une correction efficace de l'erreur initiale grâce à l'alternance entre la mise à jour de l'image (résolution du sous-problème en \(x\)) et la mise à jour des coefficients parcimonieux (seuillage en \(z\)). La pente observée dans cette phase est représentative de la vitesse de convergence de l'algorithme. À partir d'environ 30 itérations, une phase de stabilisation s'installe : la décroissance devient plus lente et le résidu se rapproche progressivement de \(10^{-2}\), valeur atteinte vers la 60\textsuperscript{e} itération. Cela indique que la contrainte \(Wx = z\) est satisfaite avec une bonne précision. Ce niveau est généralement considéré comme un critère d'arrêt acceptable en pratique, les gains ultérieurs devenant marginaux. Enfin, de légères oscillations résiduelles apparaissent après cette phase de stabilisation. Ce phénomène, classique dans les méthodes ADMM, peut s'expliquer par plusieurs facteurs : l'utilisation d'un paramètre de pénalité \(\rho\) constant, qui pourrait être ajusté dynamiquement pour améliorer la convergence, la résolution approchée du sous-problème en \(x\) via un algorithme de gradient conjugué introduisant des erreurs numériques, ainsi que des effets liés à la précision machine. Ces oscillations restent toutefois bornées et n'affectent pas la convergence globale de l'algorithme.
 
 \subsubsection{Convergence du résidu dual}
 Le résidu dual mesure l'évolution de la variable duale (ou multiplicateur de Lagrange) associée à la contrainte \(Wx = z\). Il quantifie la stabilité de la solution parcimonieuse au fil des itérations et est défini comme \( \rho \|W(x^{k+1} - x^k)\|_2 \).
@@ -704,11 +683,11 @@ La Figure~\ref{fig:dual_residual} présente l'évolution de ce résidu dual.
 \begin{figure}[H]
     \centering
     \includegraphics[height=7cm, keepaspectratio]{images/ADMM Dual Residual Convergence.png}
-    \caption{Décroissance du résidu dual — ADMM combinée avec Bior4.4}
+    \caption{Décroissance du résidu dual, ADMM combinée avec Bior4.4}
     \label{fig:dual_residual}
 \end{figure}
 
-\paragraph{Analyse détaillée :}
+\subsubsection{Analyse détaillée}
 Similairement au résidu primal, le résidu dual diminue rapidement au début des itérations, indiquant que les mises à jour de la variable duale deviennent progressivement plus petites, ce qui est un signe de stabilisation du processus d'optimisation. Le résidu dual atteint ensuite des valeurs proches de \(10^{-3}\), soit un ordre de grandeur inférieur au résidu primal, une différence cohérente avec la théorie de l'ADMM qui montre que le résidu dual converge généralement plus rapidement ; cette valeur de \(10^{-3}\) indique une stabilisation presque parfaite des coefficients parcimonieux et de la variable duale associée. On observe quelques fluctuations pendant la phase de convergence (entre les itérations 20 et 50), mais celles-ci restent bornées et leur amplitude décroît avec le temps, un comportement typique de l'ADMM qui reflète la \textit{poursuite} entre la mise à jour de l'image et celle des coefficients parcimonieux. L'absence de divergence ou d'oscillations croissantes confirme la stabilité numérique de l'algorithme.
 
 
@@ -719,14 +698,14 @@ Dans le cadre de cette expérimentation, les différentes méthodes de reconstru
 \centering
 \caption{Évaluation comparative des performances de reconstruction}
 \label{tab:quantitative_results}
-\begin{tabular}{lccc}
+\begin{tabular}{lcc}
 \hline
-\textbf{Méthode} & \textbf{PSNR $\uparrow$ (dB)} & \textbf{SSIM $\uparrow$} & \textbf{Temps (s)} \\
+\textbf{Méthode} & \textbf{PSNR $\uparrow$ (dB)} & \textbf{SSIM $\uparrow$}  \\
 \hline
-FBP & 25.04 & 0.678 & -- \\
-ISTA & 24.83 & 0.768 & -- \\
-FISTA & 31.50 & 0.758 & -- \\
-ADMM-Bior4.4 & \textbf{37.31} & \textbf{0.972} & -- \\
+FBP & 25.04 & 0.678 \\
+ISTA & 24.83 & 0.768  \\
+FISTA & 31.50 & 0.758  \\
+ADMM-Bior4.4 & \textbf{37.31} & \textbf{0.972}  \\
 \hline
 \end{tabular}
 \end{table}
@@ -783,14 +762,14 @@ Le choix de la transformée en ondelettes est un élément central de toute appr
 \end{itemize}
 La valeur élevée du SSIM (0.972) confirme empiriquement la capacité de cette base à conserver la structure globale de l'image. Pour quantifier cet aspect, on pourrait calculer le pourcentage de coefficients d'ondelettes préservés après seuillage : dans nos expériences, seulement 13\% des coefficients étaient non-nuls après convergence, démontrant l'efficacité de la représentation parcimonieuse.
 
-\subsection{Compromis fidélité–parcimonie et choix du paramètre \(\lambda\)}
+\subsection{Compromis fidélité-parcimonie et choix du paramètre \(\lambda\)}
 L'algorithme ADMM résout itérativement le problème d'optimisation suivant :
 \begin{equation}
 \min_{x} \frac{1}{2}\|Ax - y\|_2^2 + \lambda \|Wx\|_1
 \end{equation}
 
 où le premier terme (attache aux données) assure la fidélité aux mesures \(y\) acquises par le système tomographique, et le second terme (régularisation parcimonieuse) impose que la représentation en ondelettes de l'image soit sparse.
-\paragraph{Analyse du compromis :}
+\subsubsection*{Analyse du compromis}
 \begin{itemize}[label=-]
     \item \textbf{Rôle de \(\lambda\)} : Le paramètre de régularisation \(\lambda\) contrôle l'équilibre entre ces deux termes. Un \(\lambda\) trop faible conduirait à une solution sur-ajustée aux données (bruitée), tandis qu'un \(\lambda\) trop élevé produirait une image trop lisse (perte de détails).
     
@@ -817,10 +796,10 @@ Malgré la supériorité quantitative observée pour l'approche ADMM-Bior4.4 (PS
     Les écarts-types observés, notamment pour ISTA et FBP, indiquent une forte variabilité des résultats selon les images. Cela suggère une sensibilité accrue à la nature des données d'entrée (niveau de bruit, structures présentes). À l'inverse, ADMM-Bior4.4 présente une meilleure stabilité, mais cette robustesse pourrait encore être améliorée par des mécanismes adaptatifs ou des régularisations plus avancées.
 
 \end{itemize}
-\section{Innovation de l'approche ADMM combinée à BIOR4.4}
+\section{Innovation}
 L'innovation de ce travail réside dans la validation rigoureuse et la démonstration de la supériorité du couplage spécifique entre l'algorithme ADMM (Alternating Direction Method of Multipliers) et la transformée en ondelettes biorthogonales Bior4.4 pour la reconstruction tomographique en contexte sous-échantillonné.\\
 Il ne s'agit pas d'une simple application d'outils existants, mais d'une combinaison raisonnée et justifiée dont nous prouvons quantitativement l'efficacité à travers une analyse comparative approfondie et une étude détaillée de la convergence.
-\subsection{Choix de l'ADMM comme algorithme d'optimisation}
+\subsection{Justification du choix de la méthode des multiplicateurs de directions alternées}
 L'ADMM est un algorithme d'optimisation convexe qui présente une caractéristique fondamentale pour notre problème : sa structure de séparation des variables. Dans la formulation :
 $$\min_{x} \frac{1}{2}\|Ax - y\|_2^2 + \lambda \|Wx\|_1$$
 l'ADMM décompose le problème en sous-problèmes plus simples traités alternativement :
@@ -909,6 +888,4 @@ Ainsi, ce travail constitue une base solide pouvant être enrichie par des déve
 Voici la conclusion en deux paragraphes, rédigée à partir des éléments de votre chapitre :
 
 \section*{Conclusion}
-Ce chapitre a présenté le développement et l'évaluation d'une approche innovante pour la reconstruction tomographique en contexte sous-échantillonné, combinant l'algorithme ADMM à une régularisation parcimonieuse dans le domaine des ondelettes biorthogonales Bior4.4. L'étude a démontré que cette synergie algorithmique permet de surmonter les limitations des méthodes analytiques classiques telles que la rétroprojection filtrée, particulièrement lorsque les contraintes cliniques imposent une réduction du nombre de projections. Les résultats quantitatifs obtenus sur l'ensemble des 19 images tests attestent de la supériorité de l'approche proposée, avec un PSNR moyen de 26,20 dB et un SSIM moyen de 0,866, surpassant significativement les performances des méthodes conventionnelles FBP (21,61 dB, 0,559), ISTA (22,40 dB, 0,650) et FISTA (25,13 dB, 0,677). L'analyse approfondie de la convergence a par ailleurs validé la stabilité numérique de l'algorithme, avec une décroissance rapide des résidus primal et dual, respectivement stabilisés à \(10^{-2}\) et \(10^{-3}\), confirmant ainsi la robustesse de la formulation ADMM pour ce problème inverse.
-
-L'innovation de ce travail réside dans la validation rigoureuse du couplage spécifique entre l'ADMM et la Bior4.4, dont la symétrie et les propriétés de préservation des contours sont idéalement exploitées par la structure de séparation des variables de l'algorithme. La capacité de cette approche à reconstruire des images de haute qualité à partir de données sous-échantillonnées ouvre des perspectives prometteuses pour la réduction de dose en imagerie médicale. Les perspectives de ce travail incluent l'optimisation computationnelle via une implémentation sur GPU pour répondre aux contraintes cliniques temps réel, le développement de schémas adaptatifs pour les hyperparamètres, ainsi que l'extension à la reconstruction volumique 3D et la validation sur des données cliniques réelles. L'intégration de techniques hybrides combinant méthodes variationnelles et apprentissage profond constitue également une voie de recherche prometteuse pour améliorer encore la qualité et la robustesse des reconstructions.
+Ce chapitre valide notre approche de reconstruction tomographique sous-échantillonnée combinant l'algorithme ADMM et une régularisation par ondelettes Bior4.4, démontrant sa supériorité sur les méthodes classiques (FBP) et itératives (ISTA, FISTA) avec un PSNR moyen de $26.20 dB$ et un SSIM de $0.866$. L'innovation réside dans l'exploitation de la symétrie et des propriétés de préservation des contours des ondelettes au sein d'une structure de séparation des variables stable, confirmée par une convergence rapide des résidus. En permettant une imagerie de haute qualité à partir de données réduites, ce modèle ouvre des perspectives majeures pour la réduction de dose, avec des évolutions prévues vers l'accélération sur GPU, l'extension à la 3D et l'intégration de l'apprentissage profond pour répondre aux exigences cliniques temps réel.
